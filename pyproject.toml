@@ -1,0 +1,115 @@
+[project]
+name = "encourage"
+version = "0.1.0"
+description = "ENCOURAGE"
+readme = "README.md"
+requires-python = ">= 3.12"
+authors = [{ name = "dida Datenschmiede GmbH", email = "info@dida.do" }]
+dependencies = [
+    "jinja2",
+    "PyYAML",
+    "tomlkit>=0.13.0",
+    "llama-index-vector-stores-qdrant",
+    "typer>=0.12.4",
+    "types-PyYAML",
+    "types-requests",
+    "tqdm==4.66.4",
+    "pre-commit",
+    "qdrant-client",
+    "uv",
+    "vllm>=0.6",
+    "torch==2.4.0+cu121",
+    "torchvision==0.19.0+cu121",
+]
+
+[cereals.cpu]
+dependencies = ["torch==2.4.0+cpu", "torchvision==0.19.0+cpu"]
+extra_index_urls = ["https://download.pytorch.org/whl/cpu"]
+[cereals.cu121]
+dependencies = ["torch==2.4.0+cu121", "torchvision==0.19.0+cu121"]
+extra_index_urls = ["https://download.pytorch.org/whl/cu121"]
+
+[project.optional-dependencies]
+dev= [
+    "jupyterlab>=4.0",
+    "jupytext>=1.16.3",
+    "notebook>=7.0",
+    "matplotlib>=3.9.1",
+]
+ci = [
+    "ruff",
+    "isort",
+    "mypy",
+    "pytest",
+    "pytest-cov>=5.0.0",
+    "pytest-mock",
+]
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["encourage*"]
+
+[tool.mypy]
+# Uncomment the following if you use Pydantic in the project
+# plugins = ["pydantic.mypy"]
+show_error_codes = true
+disallow_incomplete_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "encourage.*"
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = "src/tests"
+addopts = "-v -ra --cov=encourage"
+pythonpath = ["."]
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+line-length = 100
+lint.select = ["E", "F", "W", "I", "D", "A", "N", "B", "SIM", "C4", "TID"]
+lint.ignore = [
+    "E741", # Ambiguous variable name
+    "D213", # Multi-line docstring summary should start at the second line
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in __init__
+    "D203", # 1 blank line required before class docstring
+    "D401", # First line should be in imperative mood; try rephrasing
+    "D407", # Missing dashed underline after section
+    "D406", # Section name should end with a newline
+    "D106", # Missing docstring in public nested class
+    "B006", # Do not use mutable data structures for argument defaults
+    "B008", # Do not perform function calls in argument defaults
+    "B905", # `zip()` without an explicit `strict=` parameter
+]
+lint.exclude = ["*.ipynb"]  # TODO: do we really want this?
+
+[tool.ruff.format]
+exclude = ["*.ipynb"]
+
+[tool.ruff.lint.per-file-ignores]
+"test_*.py" = ["D", "E402"]
+"__init__.py" = ["D"]
+"src/notebooks/*.py" = [
+    "D",    # Make docstrings entirely optional
+    "E402", # Module level import not at top of file
+    "SIM115", # Use context handler for opening files
+    "I", # Allow unordered imports
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.jupytext]
+# Always pair ipynb notebooks to py:percent files
+formats = ["ipynb", "py:percent"]

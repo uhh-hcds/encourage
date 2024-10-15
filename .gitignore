@@ -1,0 +1,29 @@
+# This file lists file patterns that should be ignored by Git.
+# Personal ignore patterns, which are not under version control and
+# shared with other users, can be added to the .git/info/exclude file.
+# See also `man gitignore` for more information.
+
+# Ignore top-level hidden files by default.  If such a file needs to be
+# tracked by Git, an exception should be added using the "!" notation.
+.*
+!.dockerignore
+!.dvc/config
+!.gitattributes
+!.gitignore
+!.gitlab-ci.yml
+!.pre-commit-config.yaml
+
+# User-specific package list
+requirements/extra.txt
+
+# Distribution / packaging
+*.egg-info/
+
+# Byte-compiled and C extension files
+__pycache__/
+*.py[cod]
+*.so
+
+# Logs and outputs
+*.log
+
