@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
 
-from vllm import RequestOutput
-
 from encourage.llm.inference_runner import BatchInferenceRunner, ChatInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.conversation import Conversation
@@ -26,7 +24,7 @@ class TestChatInferenceRunner(unittest.TestCase):
     def test_run_success(self):
         """Test successful run of ChatInferenceRunner."""
         # Mock LLM's chat method response
-        mock_request_output = MagicMock(spec=RequestOutput)
+        mock_request_output = MagicMock(spec=["outputs"])
         mock_request_output.outputs = [MagicMock(text="Hello, how can I help you?")]
         self.llm.chat.return_value = [mock_request_output]
 
@@ -44,7 +42,7 @@ class TestChatInferenceRunner(unittest.TestCase):
     def test_run_empty_response(self):
         """Test run with an empty response."""
         # Mock LLM's chat method to return an empty text response
-        mock_request_output = MagicMock(spec=RequestOutput)
+        mock_request_output = MagicMock(spec=["outputs"])
         mock_request_output.outputs = [MagicMock(text="")]
         self.llm.chat.return_value = [mock_request_output]
 
