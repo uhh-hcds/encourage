@@ -27,3 +27,5 @@ __pycache__/
 # Logs and outputs
 *.log
 
+# Remove files with test_gpu
+test_gpu*
