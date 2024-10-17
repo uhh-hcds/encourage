@@ -2,6 +2,15 @@
 
 import json
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class Role(Enum):
+    """Enum class to represent the role of a message in a conversation."""
+
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
 
 
 @dataclass
@@ -18,20 +27,20 @@ class Conversation:
 
     def add_message(self, role: str, content: str) -> None:
         """Add a new message to the conversation."""
-        if role not in {"system", "user", "assistant"}:
-            raise ValueError("Role must be 'system', 'user', or 'assistant'.")
+        if role not in {role.value for role in Role}:
+            raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
         self.dialog.append({"role": role, "content": content})
 
-    def get_messages_by_role(self, role: str) -> list[dict[str, str]]:
-        """Retrieve all messages with a specific role."""
-        if role not in {"system", "user", "assistant"}:
-            raise ValueError("Role must be 'system', 'user', or 'assistant'.")
-        return [msg for msg in self.dialog if msg["role"] == role]
+        def get_messages_by_role(self, role: Role) -> list[dict[str, str]]:
+            """Retrieve all messages with a specific role."""
+            if role not in Role:
+                raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
+            return [msg for msg in self.dialog if msg["role"] == role.value]
 
     def clear_conversation(self) -> None:
         """Clear all messages in the conversation."""
         self.dialog = []
-        self.add_message("system", self.sys_prompt)
+        self.add_message(Role.SYSTEM.value, self.sys_prompt)
 
     def to_json(self) -> str:
         """Serialize the Conversation object to a JSON string."""

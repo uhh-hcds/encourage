@@ -74,13 +74,13 @@ class PromptReformatter:
         template_name: str = "",
     ) -> str:
         """Reformats the conversation and adds custom key-value pairs to the template."""
-        if not model_name and not template_name:
+        if model_name:
+            template = cls.get_template(model_name)
+        elif template_name:
+            template = cls.env.get_template(template_name)
+        else:
             raise ValueError("Either model_name or template_name must be provided.")
 
-        if template_name == "":
-            template = cls.get_template(model_name)
-        else:
-            template = cls.env.get_template(template_name)
         return template.render({"user_prompt": user_prompt, **context})
 
     @classmethod
