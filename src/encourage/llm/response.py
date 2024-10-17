@@ -39,7 +39,7 @@ class Response:
         """Get formatted finished time."""
         return self.format_timestamp(self.finished_time)
 
-    def get_response_details(self) -> str:
+    def to_string(self) -> str:
         """Get the response details as a formatted string."""
         response_details = [
             "-" * 50,
@@ -50,12 +50,17 @@ class Response:
             keys = ", ".join(self.context[0].keys())
             response_details.append(f"📚 Added Context keys: {keys} (See Template for details.)")
 
+        if self.sys_prompt and len(self.sys_prompt) > 200:
+            system_prompt = f"🤖 System Prompt:\n{self.sys_prompt[:200]}[...]\n"
+        else:
+            system_prompt = f"🤖 System Prompt:\n{self.sys_prompt}\n"
+
         response_details.extend(
             [
                 "",
                 f"💬 Response:\n{self.response.strip()}",
                 "",
-                f"🤖 System Prompt:\n{self.sys_prompt}",
+                f"🤖 System Prompt:\n{system_prompt}",
                 f"🗂️ Metadata: {self.meta_data if self.meta_data else 'None'}",
                 f"🆔 Request ID: {self.request_id}",
                 f"🆔 Prompt ID: {self.prompt_id}",
@@ -69,4 +74,4 @@ class Response:
 
     def print_response(self) -> None:
         """Print or log the response details for a specific response."""
-        print(self.get_response_detail())
+        print(self.to_string())
