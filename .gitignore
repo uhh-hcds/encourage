@@ -18,6 +18,7 @@ requirements/extra.txt
 
 # Distribution / packaging
 *.egg-info/
+build
 
 # Byte-compiled and C extension files
 __pycache__/
