@@ -1,11 +1,15 @@
 import json
 import unittest
 from pathlib import Path
+from unittest import mock
 from unittest.mock import mock_open, patch
 
 import yaml
 
-from encourage.utils.file_manager import FileManager
+with mock.patch.dict("sys.modules", {"vllm": mock.MagicMock()}):
+    from encourage.utils.file_manager import FileManager
+
+# from encourage.utils.file_manager import FileManager
 
 
 class TestFileManager(unittest.TestCase):
