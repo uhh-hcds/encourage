@@ -1,9 +1,11 @@
 import json
 import unittest
+from unittest import mock
 from unittest.mock import patch
 
-from encourage.prompts.prompt_collection import PromptCollection
-from encourage.prompts.prompt_reformatter import PromptReformatter
+with mock.patch.dict("sys.modules", {"vllm": mock.MagicMock()}):
+    from encourage.prompts.prompt_collection import PromptCollection
+    from encourage.prompts.prompt_reformatter import PromptReformatter
 
 
 class TestPromptCollection(unittest.TestCase):
