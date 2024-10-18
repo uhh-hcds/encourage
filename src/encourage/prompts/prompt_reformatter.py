@@ -39,7 +39,7 @@ class PromptReformatter:
         **AYA_MODELS,
     }
 
-    TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "shared/prompts/templates"
+    TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "prompts/templates"
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
 
     @classmethod

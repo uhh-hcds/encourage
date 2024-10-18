@@ -46,14 +46,22 @@ class Response:
             f"🧑‍💻 User Prompt:\n{self.user_prompt}",
         ]
 
-        if self.context:
-            keys = ", ".join(self.context[0].keys())
+        if isinstance(self.context, dict):
+            keys = ", ".join(self.context.keys())
             response_details.append(f"📚 Added Context keys: {keys} (See Template for details.)")
+        elif isinstance(self.context, list) and self.context:
+            all_keys = set()
+            for item in self.context:
+                all_keys.update(item.keys())
+                keys = ", ".join(all_keys)
+                response_details.append(
+                    f"📚 Added Context keys: {keys} (See Template for details.)"
+                )
 
         if self.sys_prompt and len(self.sys_prompt) > 200:
-            system_prompt = f"🤖 System Prompt:\n{self.sys_prompt[:200]}[...]\n"
+            system_prompt = f"{self.sys_prompt[:200]}[...]\n"
         else:
-            system_prompt = f"🤖 System Prompt:\n{self.sys_prompt}\n"
+            system_prompt = f"{self.sys_prompt}\n"
 
         response_details.extend(
             [
