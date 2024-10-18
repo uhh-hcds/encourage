@@ -3,7 +3,7 @@
 from vllm import RequestOutput
 
 from encourage.llm.response import Response
-from encourage.prompts.conversation import Conversation
+from encourage.prompts.conversation import Conversation, Role
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
@@ -37,10 +37,10 @@ class ResponseWrapper:
         meta_datas: list[dict] = [],
     ) -> "ResponseWrapper":
         """Create ResponseWrapper from RequestOutput and Conversation."""
-        if len(request_outputs) != len(conversation.get_messages_by_role("user")):
+        if len(request_outputs) != len(conversation.get_messages_by_role(Role.USER)):
             raise ValueError("The number of request outputs does not match the number of messages.")
-        sys_prompt = conversation.get_messages_by_role("system")[0]["content"]
-        user_messages = [msg["content"] for msg in conversation.get_messages_by_role("user")]
+        sys_prompt = conversation.get_messages_by_role(Role.SYSTEM)[0]["content"]
+        user_messages = [msg["content"] for msg in conversation.get_messages_by_role(Role.USER)]
 
         responses = []
         for conversation_id, (request_output, user_message, meta_data) in enumerate(

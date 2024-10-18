@@ -32,17 +32,17 @@ class OpenAIChatInferenceRunner:
     """Class for model inference."""
 
     def __init__(
-        self, sampling_parameters: SamplingParams, model_name: str, api_key: str = None
+        self, sampling_parameters: SamplingParams, model_name: str, api_key: str = ""
     ) -> None:
         # Allow for overriding API key and fallback to env variable
-        api_key = api_key or os.getenv("OPENAI_API_KEY")
+        api_key = api_key or os.getenv("OPENAI_API_KEY") or ""
         if not api_key:
             raise ValueError("API key cannot be empty")
         self.client = OpenAI(api_key=api_key, base_url="https://api.openai.com/v1")
         self.sampling_parameters = sampling_parameters
         self.model_name = model_name
 
-    def run(self, conversation: Conversation) -> str:
+    def run(self, conversation: Conversation) -> RequestOutput:
         """Run the model with the given query."""
         completion = self.client.chat.completions.create(
             model=self.model_name,
@@ -59,7 +59,7 @@ class OpenAIChatInferenceRunner:
             outputs=[
                 CompletionOutput(
                     index=0,
-                    text=completion.choices[0].message.content,
+                    text=completion.choices[0].message.content or "",
                     token_ids=[],
                     cumulative_logprob=0.0,
                     logprobs=[],

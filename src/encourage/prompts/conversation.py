@@ -31,11 +31,11 @@ class Conversation:
             raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
         self.dialog.append({"role": role, "content": content})
 
-        def get_messages_by_role(self, role: Role) -> list[dict[str, str]]:
-            """Retrieve all messages with a specific role."""
-            if role not in Role:
-                raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
-            return [msg for msg in self.dialog if msg["role"] == role.value]
+    def get_messages_by_role(self, role: Role) -> list[dict[str, str]]:
+        """Retrieve all messages with a specific role."""
+        if role not in Role:
+            raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
+        return [msg for msg in self.dialog if msg["role"] == role.value]
 
     def clear_conversation(self) -> None:
         """Clear all messages in the conversation."""

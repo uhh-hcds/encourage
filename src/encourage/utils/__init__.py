@@ -1,1 +1,3 @@
-from ..utils.file_manager import FileManager
+from encourage.utils.file_manager import FileManager
+
+__all__ = ["FileManager"]
