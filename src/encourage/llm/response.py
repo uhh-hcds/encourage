@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Union
 
 
 @dataclass
@@ -16,7 +16,7 @@ class Response:
     response: str
     conversation_id: int = 0
     meta_data: list[dict[str, Any]] = field(default_factory=list)
-    context: list[dict[str, Any]] = field(default_factory=list)
+    context: Union[list[dict[str, Any]], dict[str, Any]] = field(default_factory=list)
     arrival_time: float = 0.0
     finished_time: float = 0.0
     processing_time: float = field(init=False)
@@ -50,7 +50,7 @@ class Response:
             keys = ", ".join(self.context.keys())
             response_details.append(f"📚 Added Context keys: {keys} (See Template for details.)")
         elif isinstance(self.context, list) and self.context:
-            all_keys = set()
+            all_keys: set[str] = set()
             for item in self.context:
                 all_keys.update(item.keys())
                 keys = ", ".join(all_keys)
