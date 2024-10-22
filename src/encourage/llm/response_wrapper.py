@@ -1,6 +1,5 @@
 """Module that defines the ResponseWrapper class."""
 
-import json
 import logging
 from typing import Iterator
 
@@ -167,6 +166,6 @@ class ResponseWrapper:
                 return response
         return None
 
-    def to_json(self) -> str:
-        """Converts the responses to a JSON string."""
-        return json.dumps([response.to_dict() for response in self.response_data], indent=4)
+    def to_output(self) -> list[dict[str, str]]:
+        """Converts the responses to a list of dicts to be parseable as json."""
+        return [response.to_dict() for response in self.response_data]
