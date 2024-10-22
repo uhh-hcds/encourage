@@ -80,6 +80,22 @@ class Response:
 
         return "\n".join(response_details)
 
+    def to_dict(self) -> dict[str, Any]:
+        """Get the response details as a dictionary."""
+        return {
+            "request_id": self.request_id,
+            "prompt_id": self.prompt_id,
+            "sys_prompt": self.sys_prompt,
+            "user_prompt": self.user_prompt,
+            "response": self.response,
+            "conversation_id": self.conversation_id,
+            "meta_data": self.meta_data,
+            "context": self.context,
+            "arrival_time": self.arrival_time,
+            "finished_time": self.finished_time,
+            "processing_time": self.processing_time,
+        }
+
     def print_response(self) -> None:
         """Print or log the response details for a specific response."""
         print(self.to_string())
