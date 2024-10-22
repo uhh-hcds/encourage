@@ -1,5 +1,9 @@
 """Module that defines the ResponseWrapper class."""
 
+import json
+import logging
+from typing import Iterator
+
 from vllm import RequestOutput
 
 from encourage.llm.response import Response
@@ -7,12 +11,20 @@ from encourage.prompts.conversation import Conversation, Role
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 class ResponseWrapper:
     """Class that aggregates RequestOutput with corresponding PromptCollection details."""
 
     def __init__(self, responses: list[Response]):
         self.response_data = responses
+
+    def __iter__(self) -> Iterator[Response]:
+        """Allows iteration over the responses."""
+        return iter(self.response_data)
 
     @classmethod
     def from_prompt_collection(
@@ -34,22 +46,35 @@ class ResponseWrapper:
         cls,
         request_outputs: list[RequestOutput],
         conversation: Conversation,
-        meta_datas: list[dict] = [],
+        meta_datas: list[dict] = None,
     ) -> "ResponseWrapper":
         """Create ResponseWrapper from RequestOutput and Conversation."""
+        # Handle the mutable default argument issue
+        if meta_datas is None:
+            meta_datas = []
+
+        # Check for mismatched lengths
         if len(request_outputs) != len(conversation.get_messages_by_role(Role.USER)):
             raise ValueError("The number of request outputs does not match the number of messages.")
-        sys_prompt = conversation.get_messages_by_role(Role.SYSTEM)[0]["content"]
+
+        # Safely access the system prompt, handle missing system messages
+        sys_messages = conversation.get_messages_by_role(Role.SYSTEM)
+        if not sys_messages:
+            raise ValueError("No system messages found in the conversation.")
+        sys_prompt = sys_messages[0]["content"]
+
+        # Extract user messages
         user_messages = [msg["content"] for msg in conversation.get_messages_by_role(Role.USER)]
 
         responses = []
         for conversation_id, (request_output, user_message, meta_data) in enumerate(
-            zip(request_outputs, user_messages, meta_datas)
+            zip(request_outputs, user_messages, meta_datas or [{}] * len(request_outputs))
         ):
             response = cls.handle_conversation_response(
                 sys_prompt, conversation_id, request_output, user_message, meta_data
             )
             responses.append(response)
+
         return cls(responses)
 
     @staticmethod
@@ -125,7 +150,7 @@ class ResponseWrapper:
         if response:
             response.print_response()
         else:
-            print(f"No response found for Request ID: {request_id}")
+            logger.error(f"No response found for Request ID: {request_id}")
 
     def get_response_by_prompt_id(self, prompt_id: str) -> Response | None:
         """Return the response details for a specific prompt ID."""
@@ -141,3 +166,7 @@ class ResponseWrapper:
             if getattr(response, key) == value:
                 return response
         return None
+
+    def to_json(self) -> str:
+        """Converts the responses to a JSON string."""
+        return json.dumps([response.to_dict() for response in self.response_data], indent=4)
