@@ -45,13 +45,9 @@ class ResponseWrapper:
         cls,
         request_outputs: list[RequestOutput],
         conversation: Conversation,
-        meta_datas: list[dict] = None,
+        meta_datas: list[dict] = [],
     ) -> "ResponseWrapper":
         """Create ResponseWrapper from RequestOutput and Conversation."""
-        # Handle the mutable default argument issue
-        if meta_datas is None:
-            meta_datas = []
-
         # Check for mismatched lengths
         if len(request_outputs) != len(conversation.get_messages_by_role(Role.USER)):
             raise ValueError("The number of request outputs does not match the number of messages.")

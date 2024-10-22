@@ -1,10 +1,14 @@
 """Module for reformatting prompts for batch inference."""
 
+import logging
+import os
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader, Template, exceptions
 
 from encourage.prompts.prompt import Prompt
+
+logger = logging.getLogger(__name__)
 
 
 class PromptReformatter:
@@ -77,7 +81,11 @@ class PromptReformatter:
         if model_name:
             template = cls.get_template(model_name)
         elif template_name:
-            template = cls.env.get_template(template_name)
+            try:
+                template = cls.env.get_template(template_name)
+            except exceptions.TemplateNotFound as e:
+                logger.info(e)
+                template = cls.get_custom_template(template_name)
         else:
             raise ValueError("Either model_name or template_name must be provided.")
 
@@ -90,3 +98,17 @@ class PromptReformatter:
         if not template_name:
             raise ValueError(f"Model {model_name} not supported.")
         return cls.env.get_template(template_name)
+
+    @classmethod
+    def get_custom_template(cls, template_name: str) -> Template:
+        """Returns a custom template."""
+        class_dir = os.path.dirname(os.path.abspath(cls.__module__))
+        try:
+            env = Environment(loader=FileSystemLoader(class_dir))
+
+            # Try to load and return the template
+            return env.get_template(template_name)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(
+                f"Template file '{template_name}' not found in '{class_dir}'."
+            ) from e
