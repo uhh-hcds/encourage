@@ -1,1 +1,53 @@
-A library that encourages the building of LLM and RAG systems.
+<p align="center" alt="logo" style="font-size:42px; font-family:bold;">
+  🌱 Encourage
+</p>
+
+<p align="center">
+    <b>Encourage - the all-in one solution for using local LLMs with RAG</b>. <br />
+    The fastest way to build scripts for LLM and RAG models. <br />
+    <a href="https://github.com/chroma-core/chroma/blob/master/LICENSE" target="_blank">
+      <img src="https://img.shields.io/static/v1?label=license&message=Apache 2.0&color=white" alt="License">
+    </a>
+
+</p>
+
+This repository provides a flexible library for running local inference with or without context, leveraging a variety of popular LLM libraries for enhanced functionality:
+
+- 📦 **[vllm](https://github.com/vllm-project/vllm)**
+  - Enables conversational and batch inference, optimizing parallel processing.
+- ⚙️ **[jinja2](https://github.com/pallets/jinja)**
+  - Offers a template engine for dynamic prompt generation.
+- 🧭 **[qdrant](https://github.com/qdrant/qdrant)**
+  - Supports robust vector search for efficient data retrieval.
+- 🔄 **[chroma](https://github.com/chroma-core/chroma)** *(Coming soon)*
+  - Planned as a strong alternative to qdrant for vector search.
+- 📝 **[outlines](https://github.com/dottxt-ai/outlines)** *(Coming soon)*
+  - Designed to ensure outputs are in a structured format.
+
+---
+
+### 🚀 Getting Started
+
+```python
+
+pip install encourage
+```
+
+To initialize the environment using `uv`, run the following command:
+
+```bash
+uv sync
+```
+
+### ⚡ Usage Inference Runners
+
+For understanding how to use the inference runners, refer to the following tutorials:
+
+- [ChatInferenceRunner](./docs/conversation.md)
+- [BatchInferenceRunner](./docs/batch_inference.md)
+
+### ⚙️ Custom Templates
+
+To use a custom template for the inference, follow the steps below:
+
+- [Create a custom template](./docs/templates.md)
