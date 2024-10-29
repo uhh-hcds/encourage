@@ -13,7 +13,7 @@ class Response:
     prompt_id: str
     sys_prompt: str
     user_prompt: str
-    response: str
+    response: Any | str
     conversation_id: int = 0
     meta_data: list[dict[str, Any]] = field(default_factory=list)
     context: Union[list[dict[str, Any]], dict[str, Any]] = field(default_factory=list)
@@ -66,7 +66,7 @@ class Response:
         response_details.extend(
             [
                 "",
-                f"💬 Response:\n{self.response.strip()}",
+                f"💬 Response:\n{self.response.strip() if isinstance(self.response, str) else str(self.response)}",  # noqa: E501
                 "",
                 f"🤖 System Prompt:\n{system_prompt}",
                 f"🗂️ Metadata: {self.meta_data if self.meta_data else 'None'}",

@@ -19,10 +19,10 @@ This repository provides a flexible library for running local inference with or 
   - Offers a template engine for dynamic prompt generation.
 - 🧭 **[qdrant](https://github.com/qdrant/qdrant)**
   - Supports robust vector search for efficient data retrieval.
+- 📝 **[outlines](https://github.com/dottxt-ai/outlines)**
+  - Designed to ensure outputs are in a structured format.
 - 🔄 **[chroma](https://github.com/chroma-core/chroma)** *(Coming soon)*
   - Planned as a strong alternative to qdrant for vector search.
-- 📝 **[outlines](https://github.com/dottxt-ai/outlines)** *(Coming soon)*
-  - Designed to ensure outputs are in a structured format.
 
 ---
 

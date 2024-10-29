@@ -15,7 +15,7 @@ class Prompt:
     conversation_id: int = 0
     context: list[dict] = field(default_factory=list)
     meta_data: list[dict] = field(default_factory=list)
-    reformated: str = ""
+    reformatted: str = ""
 
     def __len__(self) -> int:
         return len(self.sys_prompt) + len(self.user_prompt)
@@ -27,7 +27,7 @@ class Prompt:
             f"sys_prompt: {self.sys_prompt},"
             f"user_prompt: {self.user_prompt}, "
             f"context: {self.context}, "
-            f"meta_data: {self.meta_data}, reformated: {self.reformated}"
+            f"meta_data: {self.meta_data}, reformatted: {self.reformatted}"
         )
 
     def to_json(self) -> str:
@@ -40,7 +40,7 @@ class Prompt:
                 "user_prompt": self.user_prompt,
                 "context": self.context,
                 "meta_data": self.meta_data,
-                "reformated": self.reformated,
+                "reformatted": self.reformatted,
             }
         )
 
@@ -55,5 +55,5 @@ class Prompt:
             user_prompt=json_data.get("user_prompt", ""),
             context=json_data.get("context", []),
             meta_data=json_data.get("meta_data", []),
-            reformated=json_data.get("reformated", ""),
+            reformatted=json_data.get("reformatted", ""),
         )

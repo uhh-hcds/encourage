@@ -11,12 +11,15 @@ from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class ResponseWrapper:
     """Class that aggregates RequestOutput with corresponding PromptCollection details."""
+
+    def __repr__(self) -> str:
+        return f"ResponseWrapper({self.response_data})"
 
     def __init__(self, responses: list[Response]):
         self.response_data = responses
@@ -25,9 +28,15 @@ class ResponseWrapper:
         """Allows iteration over the responses."""
         return iter(self.response_data)
 
+    def __getitem__(self, key: int) -> Response:
+        """Returns the response at the given index."""
+        return self.response_data[key]
+
     @classmethod
     def from_prompt_collection(
-        cls, request_outputs: list[RequestOutput], collection: PromptCollection
+        cls,
+        request_outputs: list[RequestOutput],
+        collection: PromptCollection,
     ) -> "ResponseWrapper":
         """Create ResponseWrapper from RequestOutput and PromptCollection or Conversation."""
         if len(request_outputs) != len(collection.prompts):
@@ -161,7 +170,3 @@ class ResponseWrapper:
             if getattr(response, key) == value:
                 return response
         return None
-
-    def to_output(self) -> list[dict[str, str]]:
-        """Converts the responses to a list of dicts to be parseable as json."""
-        return [response.to_dict() for response in self.response_data]

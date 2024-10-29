@@ -107,3 +107,23 @@ You are an helpful AI that only speaks like a pirat
 ```
 
 </details>
+
+### BatchInferenceRunner with a structured output format 
+
+If you want to use a structured output format, you can use the `schema` parameter in the `run()` method:
+
+```python
+# Run inference on the prompt collection with structured output
+from pydantic import BaseModel
+
+class User(BaseModel):
+  name: str
+  id: int
+  ...
+
+responses = runner.run(prompt_collection, schema=User)
+```
+
+Further examples:
+
+- [Use structured schema](./examples/structured_output.ipynb)
