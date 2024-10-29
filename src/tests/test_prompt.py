@@ -43,7 +43,7 @@ class TestPromptCollection(unittest.TestCase):
             self.assertEqual(prompt.user_prompt, self.user_prompts[i])
             self.assertEqual(prompt.context, self.contexts[i])
             self.assertEqual(prompt.meta_data, self.meta_datas[i])
-            self.assertEqual(prompt.reformated, "Reformatted prompt")
+            self.assertEqual(prompt.reformatted, "Reformatted prompt")
 
     def test_create_prompts_mismatched_lengths(self):
         """Test that ValueError is raised when prompt lists have mismatched lengths."""
@@ -63,7 +63,7 @@ class TestPromptCollection(unittest.TestCase):
         for prompt in prompt_collection.prompts:
             self.assertEqual(prompt.context, [])
             self.assertEqual(prompt.meta_data, [])
-            self.assertEqual(prompt.reformated, "Reformatted prompt")
+            self.assertEqual(prompt.reformatted, "Reformatted prompt")
 
     def test_create_prompts_partial_contexts_and_meta_datas(self):
         """Test creation of PromptCollection with partial contexts and meta_datas."""
@@ -92,7 +92,7 @@ class TestPromptCollection(unittest.TestCase):
             self.assertEqual(original.user_prompt, deserialized.user_prompt)
             self.assertEqual(original.context, deserialized.context)
             self.assertEqual(original.meta_data, deserialized.meta_data)
-            self.assertEqual(original.reformated, deserialized.reformated)
+            self.assertEqual(original.reformatted, deserialized.reformatted)
 
     def test_to_json(self):
         """Test serialization of PromptCollection to JSON."""
@@ -107,7 +107,7 @@ class TestPromptCollection(unittest.TestCase):
                         "conversation_id": 0,
                         "context": [{"info": "context1"}],
                         "meta_data": [{"meta": "meta1"}],
-                        "reformated": "Reformatted prompt",
+                        "reformatted": "Reformatted prompt",
                     },
                     {
                         "id": json.loads(json_data)["prompts"][1]["id"],
@@ -116,7 +116,7 @@ class TestPromptCollection(unittest.TestCase):
                         "conversation_id": 0,
                         "context": [{"info": "context2"}],
                         "meta_data": [{"meta": "meta2"}],
-                        "reformated": "Reformatted prompt",
+                        "reformatted": "Reformatted prompt",
                     },
                 ]
             }

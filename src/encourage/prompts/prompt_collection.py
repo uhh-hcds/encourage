@@ -60,7 +60,9 @@ class PromptCollection:
                 context=context,  # type: ignore
                 meta_data=meta_data,  # type: ignore
             )
-            prompt.reformated = PromptReformatter.reformat_prompt(prompt, model_name, template_name)
+            prompt.reformatted = PromptReformatter.reformat_prompt(
+                prompt, model_name, template_name
+            )
             prompts.append(prompt)
 
         return cls(prompts=prompts)

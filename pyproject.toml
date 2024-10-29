@@ -21,6 +21,8 @@ dependencies = [
     "pytest",
     "vllm==0.6.2",
     "httpcore==0.15.0",
+    "outlines>=0.0.46",
+    "pydantic>=2.9.2",
 ]
 
 
