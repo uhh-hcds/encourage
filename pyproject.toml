@@ -18,10 +18,9 @@ dependencies = [
     "pre-commit",
     "qdrant-client",
     "uv",
+    "pytest",
     "vllm==0.6.2",
     "httpcore==0.15.0",
-    "torch==2.4.0+cu121",
-    "torchvision==0.19.0+cu121",
 ]
 
 
@@ -72,7 +71,6 @@ disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = "src/tests"
-addopts = "-v -ra --cov=encourage"
 pythonpath = ["."]
 
 [tool.isort]
