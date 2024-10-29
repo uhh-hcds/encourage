@@ -579,6 +579,7 @@ dependencies = [
     { name = "jinja2" },
     { name = "llama-index-vector-stores-qdrant" },
     { name = "pre-commit" },
+    { name = "pytest" },
     { name = "pyyaml" },
     { name = "qdrant-client" },
     { name = "tomlkit" },
@@ -619,6 +620,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'ci'" },
     { name = "notebook", marker = "extra == 'dev'", specifier = ">=7.0" },
     { name = "pre-commit" },
+    { name = "pytest" },
     { name = "pytest", marker = "extra == 'ci'" },
     { name = "pytest-cov", marker = "extra == 'ci'", specifier = ">=5.0.0" },
     { name = "pytest-mock", marker = "extra == 'ci'" },
@@ -3287,7 +3289,7 @@ name = "triton"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "filelock" },
+    { name = "filelock", marker = "python_full_version < '3.13'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/7b/7757205dee3628f75e7991021d15cd1bd0c9b044ca9affe99b50879fc0e1/triton-3.0.0-1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:34e509deb77f1c067d8640725ef00c5cbfcb2052a1a3cb6a6d343841f92624eb", size = 209464695 },
