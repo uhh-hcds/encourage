@@ -1,6 +1,6 @@
 [project]
 name = "encourage"
-version = "0.1.4"
+version = "0.1.5"
 description = "ENCOURAGE"
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -23,6 +23,8 @@ dependencies = [
     "httpcore==0.15.0",
     "outlines>=0.0.46",
     "pydantic>=2.9.2",
+    "sentence-transformers>=3.2.1",
+    "fastembed>=0.4.1",
 ]
 
 
