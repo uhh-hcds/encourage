@@ -12,6 +12,7 @@
 !.gitignore
 !.gitlab-ci.yml
 !.pre-commit-config.yaml
+!.vscode
 
 # User-specific package list
 requirements/extra.txt
