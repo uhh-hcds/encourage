@@ -34,7 +34,7 @@ format:
 	ruff format src/g4k src/tests 
 
 lint: uv
-	ruff check src/encourage src/test
+	ruff check src/encourage src/tests
 	# we don't check the typing in the notebooks
 	mypy src/encourage src/tests
 
