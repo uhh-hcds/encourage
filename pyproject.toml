@@ -1,6 +1,6 @@
 [project]
 name = "encourage"
-version = "0.1.5"
+version = "0.1.6"
 description = "ENCOURAGE"
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -8,7 +8,8 @@ authors = [{ name = "dida Datenschmiede GmbH", email = "info@dida.do" }]
 dependencies = [
     "jinja2",
     "PyYAML",
-    "httpx==0.24.1",
+    "httpx==0.26.0",
+    "httpcore>=0.15.0",
     "tomlkit>=0.13.0",
     "llama-index-vector-stores-qdrant",
     "typer>=0.12.4",
@@ -20,20 +21,11 @@ dependencies = [
     "uv",
     "pytest",
     "vllm==0.6.2",
-    "httpcore==0.15.0",
     "outlines>=0.0.46",
     "pydantic>=2.9.2",
     "sentence-transformers>=3.2.1",
     "fastembed>=0.4.1",
 ]
-
-
-[cereals.cpu]
-dependencies = ["torch==2.3.1+cpu", "torchvision==0.19.0+cpu"]
-extra_index_urls = ["https://download.pytorch.org/whl/cpu"]
-[cereals.cu121]
-dependencies = ["torch==2.3.1+cu121", "torchvision==0.19.0+cu121"]
-extra_index_urls = ["https://download.pytorch.org/whl/cu121"]
 
 [project.optional-dependencies]
 dev= [
