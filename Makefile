@@ -30,13 +30,13 @@ sync-all:
 	uv sync --all-extras
 
 format:
-	isort src/g4k src/tests src/notebooks
-	ruff format src/g4k src/tests src/notebooks
+	isort src/encourage src/tests
+	ruff format src/g4k src/tests 
 
 lint: uv
-	ruff check src/g4k src/tests src/notebooks
+	ruff check src/encourage src/test
 	# we don't check the typing in the notebooks
-	mypy src/g4k src/tests
+	mypy src/encourage src/tests
 
 tests: uv
 	pytest
