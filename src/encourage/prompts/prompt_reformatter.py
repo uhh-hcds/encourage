@@ -57,10 +57,17 @@ class PromptReformatter:
         if not model_name and not template_name:
             raise ValueError("Either model_name or template_name must be provided.")
 
-        if template_name == "":
+        if model_name:
             template = cls.get_template(model_name)
+        elif template_name:
+            try:
+                template = cls.env.get_template(template_name)
+            except exceptions.TemplateNotFound as e:
+                logger.info(e)
+                template = cls.get_custom_template(template_name)
         else:
-            template = cls.env.get_template(template_name)
+            raise ValueError("Either model_name or template_name must be provided.")
+
         return template.render(
             {
                 "system_prompt": prompt.sys_prompt,
