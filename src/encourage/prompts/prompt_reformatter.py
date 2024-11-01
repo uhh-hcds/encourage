@@ -62,8 +62,7 @@ class PromptReformatter:
         elif template_name:
             try:
                 template = cls.env.get_template(template_name)
-            except exceptions.TemplateNotFound as e:
-                logger.info(e)
+            except exceptions.TemplateNotFound:
                 template = cls.get_custom_template(template_name)
         else:
             raise ValueError("Either model_name or template_name must be provided.")
@@ -90,8 +89,7 @@ class PromptReformatter:
         elif template_name:
             try:
                 template = cls.env.get_template(template_name)
-            except exceptions.TemplateNotFound as e:
-                logger.info(e)
+            except exceptions.TemplateNotFound:
                 template = cls.get_custom_template(template_name)
         else:
             raise ValueError("Either model_name or template_name must be provided.")
