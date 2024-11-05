@@ -18,9 +18,17 @@ $(error "This Makefile needs to be run inside a virtual environment")
 endif
 endif
 
+UV_INSTALLED := $(shell command -v uv 2> /dev/null)
+
+
 uv:
+ifeq ($(UV_INSTALLED),)
+	echo "uv is not installed, installing it now"
 	pip install --upgrade pip
 	pip install uv==0.4.28
+else
+	uv pip install uv==0.4.28
+endif
 	uv sync --extra ci
 
 help:
@@ -31,7 +39,7 @@ sync-all:
 
 format:
 	isort src/encourage src/tests
-	ruff format src/g4k src/tests 
+	ruff format src/g4k src/tests
 
 lint: uv
 	ruff check src/encourage src/tests
