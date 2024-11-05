@@ -18,7 +18,7 @@ dependencies = [
     "tqdm==4.66.4",
     "pre-commit",
     "qdrant-client",
-    "uv",
+    "uv==0.4.28",
     "pytest",
     "vllm==0.6.2",
     "outlines>=0.0.46",
