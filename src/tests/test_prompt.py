@@ -67,20 +67,27 @@ class TestPromptCollection(unittest.TestCase):
 
     def test_create_prompts_partial_contexts_and_meta_datas(self):
         """Test creation of PromptCollection with partial contexts and meta_datas."""
-        # Only provide one context and meta_data, test if the second prompt uses empty values
-        partial_contexts = [[{"info": "context1"}]]
-        partial_meta_datas = [[{"meta": "meta1"}]]
-        prompt_collection = PromptCollection.create_prompts(
-            sys_prompts=self.sys_prompts,
-            user_prompts=self.user_prompts,
-            contexts=partial_contexts,
-            meta_datas=partial_meta_datas,
-        )
-        self.assertEqual(len(prompt_collection), 2)
-        self.assertEqual(prompt_collection.prompts[0].context, partial_contexts[0])
-        self.assertEqual(prompt_collection.prompts[0].meta_data, partial_meta_datas[0])
-        self.assertEqual(prompt_collection.prompts[1].context, [])
-        self.assertEqual(prompt_collection.prompts[1].meta_data, [])
+        # Test with a partial list of contexts, expecting a ValueError for contexts length mismatch
+        with self.assertRaises(
+            ValueError, msg="The number of contexts must match the number of prompts."
+        ):
+            PromptCollection.create_prompts(
+                sys_prompts=self.sys_prompts,
+                user_prompts=self.user_prompts,
+                contexts=[{"info": "context1"}],  # Partial context (1 item instead of 2)
+                meta_datas=[{"meta": "meta1"}, {"meta": "meta2"}],  # Full meta_data (2 items)
+            )
+
+        # Test with a partial list of meta_datas, expecting a ValueError for meta_datas mismatch
+        with self.assertRaises(
+            ValueError, msg="The number of meta_datas must match the number of prompts."
+        ):
+            PromptCollection.create_prompts(
+                sys_prompts=self.sys_prompts,
+                user_prompts=self.user_prompts,
+                contexts=[{"info": "context1"}, {"info": "context2"}],  # Full context (2 items)
+                meta_datas=[{"meta": "meta1"}],  # Partial meta_data (1 item instead of 2)
+            )
 
     def test_from_json(self):
         """Test deserialization of PromptCollection from JSON."""
