@@ -1,3 +1,3 @@
-from encourage import llm, prompts, utils, vector_store
+from encourage import llm, metrics, prompts, utils, vector_store
 
-__all__ = ["llm", "prompts", "utils", "vector_store"]
+__all__ = ["llm", "metrics", "prompts", "utils", "vector_store"]

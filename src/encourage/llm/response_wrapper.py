@@ -32,6 +32,10 @@ class ResponseWrapper:
         """Returns the response at the given index."""
         return self.response_data[key]
 
+    def __len__(self) -> int:
+        """Returns the number of responses."""
+        return len(self.response_data)
+
     @classmethod
     def from_prompt_collection(
         cls,

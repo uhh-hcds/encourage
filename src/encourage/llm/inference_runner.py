@@ -2,6 +2,7 @@
 
 import os
 import uuid
+from abc import abstractmethod
 from typing import Callable, Union
 
 from openai import OpenAI
@@ -14,12 +15,22 @@ from encourage.prompts.conversation import Conversation
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-class ChatInferenceRunner:
-    """Class for model inference."""
+class InferenceRunner:
+    """Handles inference for a model."""
 
     def __init__(self, llm: LLM, sampling_parameters: SamplingParams):
         self.llm = llm
         self.sampling_parameters = sampling_parameters
+
+    @abstractmethod
+    def run(self, prompts: Union[Conversation, PromptCollection]) -> RequestOutput: ...  # noqa: D102
+
+
+class ChatInferenceRunner(InferenceRunner):
+    """Class for model inference."""
+
+    def __init__(self, llm: LLM, sampling_parameters: SamplingParams):
+        super().__init__(llm, sampling_parameters)
 
     def run(
         self,
@@ -34,7 +45,7 @@ class ChatInferenceRunner:
         return chat_response[0]
 
 
-class OpenAIChatInferenceRunner:
+class OpenAIChatInferenceRunner(InferenceRunner):
     """Class for model inference."""
 
     def __init__(
@@ -59,12 +70,11 @@ class OpenAIChatInferenceRunner:
         return get_new_request_output(completion.choices[0].message.content or "")
 
 
-class BatchInferenceRunner:
+class BatchInferenceRunner(InferenceRunner):
     """Handles batch inference for a model with support for structured output."""
 
     def __init__(self, llm: LLM, sampling_parameters: SamplingParams):
-        self.llm = llm
-        self.sampling_parameters = sampling_parameters
+        super().__init__(llm, sampling_parameters)
 
     def run(
         self,
