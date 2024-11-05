@@ -44,7 +44,9 @@ class PromptReformatter:
     }
 
     TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "prompts/templates"
-    env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+    env = Environment(
+        loader=FileSystemLoader([str(p) for p in TEMPLATE_DIR.glob("**/") if p.is_dir()])
+    )
 
     @classmethod
     def reformat_prompt(
