@@ -43,16 +43,20 @@ class PromptCollection:
         """
         if isinstance(sys_prompts, str):
             sys_prompts = [sys_prompts] * len(user_prompts)
-        else:
-            if len(sys_prompts) != len(user_prompts):
-                raise ValueError(
-                    "The number of system prompts must match the number of user prompts."
-                )
+
+        if len(sys_prompts) != len(user_prompts):
+            raise ValueError("The number of system prompts must match the number of user prompts.")
+
+        if contexts and len(contexts) != len(sys_prompts):
+            raise ValueError("The number of contexts must match the number of prompts.")
+
+        if meta_datas and len(meta_datas) != len(sys_prompts):
+            raise ValueError("The number of meta_datas must match the number of prompts.")
 
         prompts = []
         for idx, (sys_prompt, user_prompt) in enumerate(zip(sys_prompts, user_prompts)):
-            context = contexts[idx] if contexts and idx < len(contexts) else []
-            meta_data = meta_datas[idx] if meta_datas and idx < len(meta_datas) else []
+            context = contexts[idx] if contexts else []
+            meta_data = meta_datas[idx] if meta_datas else []
 
             prompt = Prompt(
                 sys_prompt=sys_prompt,

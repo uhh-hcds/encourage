@@ -3,6 +3,7 @@
 import json
 import uuid
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -13,8 +14,8 @@ class Prompt:
     user_prompt: str
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     conversation_id: int = 0
-    context: list[dict] = field(default_factory=list)
-    meta_data: list[dict] = field(default_factory=list)
+    context: dict[str, Any] = field(default_factory=dict)
+    meta_data: dict[str, Any] = field(default_factory=dict)
     reformatted: str = ""
 
     def __len__(self) -> int:
@@ -53,7 +54,7 @@ class Prompt:
             conversation_id=json_data.get("conversation_id", 0),
             sys_prompt=json_data.get("sys_prompt", ""),
             user_prompt=json_data.get("user_prompt", ""),
-            context=json_data.get("context", []),
-            meta_data=json_data.get("meta_data", []),
+            context=json_data.get("context", {}),
+            meta_data=json_data.get("meta_data", {}),
             reformatted=json_data.get("reformatted", ""),
         )

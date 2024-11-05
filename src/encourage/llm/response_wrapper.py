@@ -97,8 +97,8 @@ class ResponseWrapper:
             sys_prompt=sys_prompt,
             user_prompt=message,
             response=request_output.outputs[0].text if request_output.outputs else "No response",
-            meta_data=[meta_data],
-            context=[],
+            meta_data=meta_data,
+            context={},
             arrival_time=(
                 request_output.metrics.arrival_time
                 if request_output.metrics and request_output.metrics.arrival_time is not None

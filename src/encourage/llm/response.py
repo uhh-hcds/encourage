@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 
 @dataclass
@@ -15,8 +15,8 @@ class Response:
     user_prompt: str
     response: Any | str
     conversation_id: int = 0
-    meta_data: list[dict[str, Any]] = field(default_factory=list)
-    context: Union[list[dict[str, Any]], dict[str, Any]] = field(default_factory=list)
+    meta_data: dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     arrival_time: float = 0.0
     finished_time: float = 0.0
     processing_time: float = field(init=False)
@@ -49,14 +49,6 @@ class Response:
         if isinstance(self.context, dict):
             keys = ", ".join(self.context.keys())
             response_details.append(f"📚 Added Context keys: {keys} (See Template for details.)")
-        elif isinstance(self.context, list) and self.context:
-            all_keys: set[str] = set()
-            for item in self.context:
-                all_keys.update(item.keys())
-                keys = ", ".join(all_keys)
-                response_details.append(
-                    f"📚 Added Context keys: {keys} (See Template for details.)"
-                )
 
         if self.sys_prompt and len(self.sys_prompt) > 200:
             system_prompt = f"{self.sys_prompt[:200]}[...]\n"

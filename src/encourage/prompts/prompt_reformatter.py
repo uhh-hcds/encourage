@@ -71,7 +71,7 @@ class PromptReformatter:
             {
                 "system_prompt": prompt.sys_prompt,
                 "user_prompt": prompt.user_prompt,
-                **prompt.context,  # type: ignore
+                **prompt.context,
             }
         )
 
