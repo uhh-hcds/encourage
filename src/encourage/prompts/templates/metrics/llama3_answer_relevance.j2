@@ -1,0 +1,29 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+## Instruction
+Consider the given answer and context. 
+Please generate a question for the answer. 
+The question should be specific, such that the answer is most likely the real answer.
+
+The output should be a well-formatted JSON instance that conforms to the JSON schema below.
+
+{{ output_model.model_json_schema() }}
+
+## Examples
+{% for example in examples %}
+Context: "{{ example.context }}"
+Answer: "{{ example.answer }}"
+Output: {{ example.model_dump()['output'] }}
+
+{% endfor %}
+
+<|start_header_id|>user<|end_header_id|>
+
+## Task
+Context: "{{ task.context }}"
+Answer: "{{ task.answer }}"
+Output:
+
+
+<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>

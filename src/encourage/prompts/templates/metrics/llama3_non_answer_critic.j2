@@ -1,0 +1,36 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+## Instruction
+Classify the given response as either an answer or a non-answer.
+
+Non-answers are responses that indicate a lack of information or inability to provide an answer. They typically include phrases such as:
+- "I don't know..."
+- "I can't provide information about..."
+- "It is not stated..."
+- "There is no answer"
+- "There is no information..."
+- Or other synonymous expressions indicating uncertainty or lack of information
+
+Any response that provides concrete information or a direct answer, even if brief, should be classified as an answer.
+Use 0 for answers and 1 for non-answers in the 'non_answer' field.
+
+For each response, provide a classification in the following JSON format:
+
+{{ output_model.model_json_schema() }}
+
+## Examples
+{% for example in examples %}
+Response: {{example.answer}}
+Classification: {{ example.model_dump()['classification'] }}
+
+{% endfor %}
+
+<|start_header_id|>user<|end_header_id|>
+
+## Task
+Now, classify the following response:
+Response: {{answer}}
+Classification:
+
+<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>

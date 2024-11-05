@@ -26,6 +26,12 @@ dependencies = [
     "sentence-transformers>=3.2.1",
     "fastembed>=0.4.1",
     "tornado>=6.4.1",
+    "evaluate>=0.4.3",
+    "ir-measures>=0.3.4",
+    "sacrebleu>=2.4.3",
+    "bert-score>=0.3.13",
+    "absl-py>=2.1.0",
+    "rouge-score>=0.1.2",
 ]
 
 [project.optional-dependencies]

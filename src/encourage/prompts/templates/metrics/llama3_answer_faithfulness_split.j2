@@ -1,0 +1,29 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+## Instruction
+You are given a question, an answer, and one sentence extracted from the answer. 
+Please break down the sentence into one or more fully understandable statements while also ensuring no pronouns are used in each statement.
+
+The output should be a well-formatted JSON instance that conforms to the JSON schema below.
+
+{{ output_model.model_json_schema() }}
+
+## Examples
+{% for example in examples %}
+Question: {{ example.question }}
+Answer: {{ example.answer }}
+Sentence: {{ example.sentence }}
+Analysis: {{ example.model_dump()['output'] }}
+
+{% endfor %}
+
+<|start_header_id|>user<|end_header_id|>
+
+## Task
+Question: {{ task.question }}
+Answer: {{ task.answer }}
+Sentence: {{ task.sentence }}
+Analysis:
+
+<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>

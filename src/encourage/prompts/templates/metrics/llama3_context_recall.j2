@@ -1,0 +1,30 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+## Instruction
+Given a context, and an answer, analyze each sentence in the answer and classify if the sentence can be attributed to the given context or not. 
+Provide the answer sentence, a rationale for your decision and the final classification label. 
+Use only 1 (Yes) or 0 (No) as a binary classification.
+
+The output should be a well-formatted JSON instance that conforms to the JSON schema below.
+
+{{ output_model.model_json_schema() }}
+
+## Examples
+{% for example in examples %}
+Question: "{{ example.question }}"
+Context: "{{ example.context }}"
+Answer: "{{ example.answer }}"
+Classification: {{ example.model_dump()['classification'] }}
+
+{% endfor %}
+
+<|start_header_id|>user<|end_header_id|>
+
+## Task
+Question: "{{ task.question }}"
+Context: "{{ task.context }}"
+Answer: "{{ task.answer }}"
+Classification:
+
+<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>
