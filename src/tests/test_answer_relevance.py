@@ -9,7 +9,7 @@ from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.answer_relevance import AnswerRelevance
 
 
-class TestLLMMetrics(unittest.TestCase):
+class TestMetrics(unittest.TestCase):
     def setUp(self):
         # Sample responses for testing
         self.responses = [
