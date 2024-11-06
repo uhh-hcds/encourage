@@ -1,6 +1,6 @@
 """Base class for metric calculations."""
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 
@@ -31,8 +31,8 @@ class MetricOutput:
     raw_output: list[str] | None = None
 
 
-class Metric:
-    """Base class for metric calculations."""
+class Metric(ABC):
+    """Base class for metric calculations with optional LLM support."""
 
     def __init__(
         self,
@@ -40,9 +40,11 @@ class Metric:
         description: str,
         required_meta_data: list[str] = [],
         required_context: list[str] = [],
+        runner: BatchInferenceRunner = None,  #  type: ignore
     ):
         self._name = name
         self._description = description
+        self._runner = runner  # Only used for LLM metrics
         self.required_meta_data = required_meta_data or []
         self.required_context = required_context or []
 
@@ -67,45 +69,5 @@ class Metric:
                     raise ValueError(f"context must contain '{field}' for {self._name} metric.")
 
     @abstractmethod
-    def __call__(self, responses: ResponseWrapper) -> MetricOutput: ...  # noqa: D102
-
-
-class LLMMetric:
-    """Base class for LLM metrics."""
-
-    def __init__(
-        self,
-        name: str,
-        description: str,
-        runner: BatchInferenceRunner,
-        required_meta_data: list[str] = [],
-        required_context: list[str] = [],
-    ):
-        self._name = name
-        self._description = description
-        self._runner = runner
-        self.required_meta_data = required_meta_data or []
-        self.required_context = required_context or []
-
-    @property
-    def name(self) -> str:
-        """Returns the name of the metric."""
-        return self._name
-
-    @property
-    def description(self) -> str:
-        """Returns a brief description of the metric."""
-        return self._description
-
-    def validate_nested_fields(self, responses: ResponseWrapper) -> None:
-        """Validates that each response contains required fields in meta_data and context."""
-        for response in responses:
-            for field in self.required_meta_data:
-                if field not in response.meta_data:
-                    raise ValueError(f"meta_data must contain '{field}' for {self._name} metric.")
-            for field in self.required_context:
-                if field not in response.context:
-                    raise ValueError(f"context must contain '{field}' for {self._name} metric.")
-
-    @abstractmethod
-    def __call__(self, responses: ResponseWrapper) -> MetricOutput | dict: ...  # noqa: D102
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput | dict:
+        """Abstract method to be implemented by subclasses."""

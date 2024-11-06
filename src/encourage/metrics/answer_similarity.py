@@ -6,10 +6,10 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import LLMMetric, MetricOutput
+from encourage.metrics.metric import Metric, MetricOutput
 
 
-class AnswerSimilarity(LLMMetric):
+class AnswerSimilarity(Metric):
     """Estimate the similarity between answer and reference embeddings."""
 
     def __init__(self, model_name: str) -> None:

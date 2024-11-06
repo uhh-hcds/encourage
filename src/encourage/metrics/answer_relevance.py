@@ -8,12 +8,12 @@ from sentence_transformers import SentenceTransformer
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import LLMMetric, MetricOutput, MetricTemplates
+from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.metrics.non_answer_critic import NonAnswerCritic
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-class AnswerRelevance(LLMMetric):
+class AnswerRelevance(Metric):
     """How relevant the answer is to the question."""
 
     def __init__(self, runner: BatchInferenceRunner, model_name: str = "all-mpnet-base-v2") -> None:

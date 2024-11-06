@@ -8,11 +8,11 @@ from pydantic import BaseModel, conint
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import LLMMetric, MetricTemplates
+from encourage.metrics.metric import Metric, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-class AnswerFaithfulness(LLMMetric):
+class AnswerFaithfulness(Metric):
     """Check how faithful the answer is to the question."""
 
     def __init__(self, runner: BatchInferenceRunner) -> None:
