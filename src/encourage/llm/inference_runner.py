@@ -2,7 +2,6 @@
 
 import os
 import uuid
-from abc import abstractmethod
 from typing import Callable, Union
 
 from openai import OpenAI
@@ -15,28 +14,22 @@ from encourage.prompts.conversation import Conversation
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-class InferenceRunner:
-    """Handles inference for a model."""
+class ChatInferenceRunner:
+    """Class for model inference."""
 
     def __init__(self, llm: LLM, sampling_parameters: SamplingParams):
         self.llm = llm
         self.sampling_parameters = sampling_parameters
 
-    @abstractmethod
-    def run(self, prompts: Union[Conversation, PromptCollection]) -> RequestOutput: ...  # noqa: D102
-
-
-class ChatInferenceRunner(InferenceRunner):
-    """Class for model inference."""
-
-    def __init__(self, llm: LLM, sampling_parameters: SamplingParams):
-        super().__init__(llm, sampling_parameters)
-
     def run(
-        self,
-        conversation: Conversation,
+        self, conversation: Conversation, schema: Union[str, BaseModel, Callable] = ""
     ) -> RequestOutput:
         """Run the model with the given query."""
+        if schema != "":
+            raise NotImplementedError(
+                "Schema-based output is not implemented for OpenAIChatInferenceRunner."
+            )
+
         chat_response = self.llm.chat(
             conversation.dialog,  # type: ignore
             self.sampling_parameters,
@@ -45,7 +38,7 @@ class ChatInferenceRunner(InferenceRunner):
         return chat_response[0]
 
 
-class OpenAIChatInferenceRunner(InferenceRunner):
+class OpenAIChatInferenceRunner:
     """Class for model inference."""
 
     def __init__(
@@ -59,8 +52,15 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         self.sampling_parameters = sampling_parameters
         self.model_name = model_name
 
-    def run(self, conversation: Conversation) -> RequestOutput:
+    def run(
+        self, conversation: Conversation, schema: Union[str, BaseModel, Callable] = ""
+    ) -> RequestOutput:
         """Run the model with the given query."""
+        if schema != "":
+            raise NotImplementedError(
+                "Schema-based output is not implemented for OpenAIChatInferenceRunner."
+            )
+
         completion = self.client.chat.completions.create(
             model=self.model_name,
             messages=conversation.dialog,  # type: ignore
@@ -70,11 +70,12 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         return get_new_request_output(completion.choices[0].message.content or "")
 
 
-class BatchInferenceRunner(InferenceRunner):
+class BatchInferenceRunner:
     """Handles batch inference for a model with support for structured output."""
 
     def __init__(self, llm: LLM, sampling_parameters: SamplingParams):
-        super().__init__(llm, sampling_parameters)
+        self.llm = llm
+        self.sampling_parameters = sampling_parameters
 
     def run(
         self,

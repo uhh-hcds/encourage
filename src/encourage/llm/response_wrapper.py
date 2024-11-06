@@ -30,6 +30,10 @@ class ResponseWrapper:
 
     def __getitem__(self, key: int) -> Response:
         """Returns the response at the given index."""
+        if not self.response_data:
+            raise IndexError("Response data is empty.")
+        if key < 0 or key >= len(self.response_data):
+            raise IndexError("Index out of range.")
         return self.response_data[key]
 
     def __len__(self) -> int:
