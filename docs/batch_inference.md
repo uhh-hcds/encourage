@@ -16,7 +16,7 @@ sampling_params = SamplingParams(temperature=0.5, max_tokens=1000)
 ## BatchInferenceRunner
 
 ```python
-from g4k.shared.llm import BatchInferenceRunner
+from encourage.llm import BatchInferenceRunner
 
 # For initializing the ChatInferenceRunner, you need to provide the LLM model and sampling parameters.
 runner = BatchInferenceRunner(llm, sampling_params)
