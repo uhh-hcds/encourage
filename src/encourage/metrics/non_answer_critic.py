@@ -4,7 +4,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel
 
-from encourage.llm.inference_runner import InferenceRunner
+from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import LLMMetric, MetricOutput, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
@@ -13,7 +13,7 @@ from encourage.prompts.prompt_collection import PromptCollection
 class NonAnswerCritic(LLMMetric):
     """Check if generated_answer is a non-answer."""
 
-    def __init__(self, runner: InferenceRunner) -> None:
+    def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
             name="non-answer_critic",
             description="Check if generated_answer is a non-answer.",
@@ -43,12 +43,15 @@ class NonAnswerCritic(LLMMetric):
         return self._calculate_metric()
 
     def _calculate_metric(self) -> MetricOutput:
-        good_answers = [not response.response.non_answer for response in self.responses]
+        if not self.responses:
+            return MetricOutput(score=0.0, raw=[], raw_output=[])
+
+        good_answers = [not response.response.non_answer for response in self.responses]  # type: ignore
 
         return MetricOutput(
             score=sum(good_answers) / len(self.responses),
-            raw=[response.response.non_answer for response in self.responses],
-            raw_output=[response.response.rationale for response in self.responses],
+            raw=[response.response.non_answer for response in self.responses],  # type: ignore
+            raw_output=[response.response.rationale for response in self.responses],  # type: ignore
         )
 
 

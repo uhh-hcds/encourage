@@ -1,5 +1,7 @@
 """Classic metrics for evaluating RAG."""
 
+from typing import Any
+
 import evaluate
 import ir_measures
 import numpy as np
@@ -12,7 +14,7 @@ from encourage.metrics.metric import Metric, MetricOutput
 class GeneratedAnswerLength(Metric):
     """Computes the average length of the generated answers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="generated_answer_length", description="Average length of the generated answers."
         )
@@ -20,14 +22,14 @@ class GeneratedAnswerLength(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         lengths = [len(word_tokenize(r.response)) for r in responses]
-        score = np.mean(lengths)
+        score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
 
 
 class ReferenceAnswerLength(Metric):
     """Computes the average length of the reference answers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="reference_answer_length",
             description="Average length of the reference answers",
@@ -38,14 +40,14 @@ class ReferenceAnswerLength(Metric):
         """Calls the metric calculation."""
         self.validate_nested_fields(responses)
         lengths = [len(word_tokenize(r.meta_data["reference_answer"])) for r in responses]
-        score = np.mean(lengths)
+        score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
 
 
 class ContextLength(Metric):
     """Computes the average length of the context."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="context_length",
             description="Average length of the context",
@@ -59,14 +61,14 @@ class ContextLength(Metric):
             sum(len(word_tokenize(context["content"])) for context in r.context["contexts"])
             for r in responses
         ]
-        score = np.mean(lengths)
+        score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
 
 
 class BLEU(Metric):
     """Computes the BLEU score for the generated answers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="bleu", description="BLEU score for the generated answers")
         self.metric = evaluate.load("sacrebleu")
 
@@ -83,7 +85,7 @@ class BLEU(Metric):
 class ROUGE(Metric):
     """Computes the ROUGE score for the generated answers."""
 
-    def __init__(self, rouge_type: str):
+    def __init__(self, rouge_type: str) -> None:
         assert rouge_type in ["rouge1", "rouge2", "rougeL", "rougeLsum"]
         super().__init__(
             name=rouge_type,
@@ -109,7 +111,7 @@ class ROUGE(Metric):
 class BERTScore(Metric):
     """Computes the BERTScore for the generated answers."""
 
-    def __init__(self, **metric_args):
+    def __init__(self, **metric_args: Any) -> None:
         super().__init__(
             name="bertscore",
             description="BERTScore for the generated answers",
@@ -139,7 +141,7 @@ class BERTScore(Metric):
 class MeanReciprocalRank(Metric):
     """Computes the Mean Reciprocal Rank (MRR) for the responses."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             name="mrr",
             description="Mean Reciprocal Rank (MRR) for the responses",

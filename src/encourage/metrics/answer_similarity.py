@@ -16,6 +16,7 @@ class AnswerSimilarity(LLMMetric):
         super().__init__(
             name="answer_similarity",
             description="Estimate the similarity between answer and reference embeddings.",
+            runner=None,  # type: ignore
             required_meta_data=["reference_answer"],
         )
         self.model = SentenceTransformer(model_name)
@@ -32,6 +33,10 @@ class AnswerSimilarity(LLMMetric):
             for response in responses
             if response.response is not None
         ]
+
+        if not generated_and_reference:
+            return MetricOutput(score=0.0, raw=[])
+
         generated, reference = zip(*generated_and_reference)
         answer_emb = self._get_embedding(list(generated))
         reference_emb = self._get_embedding(list(reference))

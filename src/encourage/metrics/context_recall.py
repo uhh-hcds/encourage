@@ -5,23 +5,23 @@ from typing import List, Literal, Optional
 import numpy as np
 from pydantic import BaseModel
 
-from encourage.llm.inference_runner import InferenceRunner
+from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import LLMMetric, MetricOutput, MetricTemplates
+from encourage.metrics.metric import LLMMetric, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
 
 
 class ContextRecall(LLMMetric):
     """How complete the context is for generating the ground-truth."""
 
-    def __init__(self, runner: InferenceRunner) -> None:
+    def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
             name="context-recall",
             description="Check how complete the context is for generating the ground-truth",
             runner=runner,
         )
 
-    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+    def __call__(self, responses: ResponseWrapper) -> dict:
         """Check how complete the context is for generating the ground-truth."""
         # Step 1: Prompts preparation
         contexts = [
@@ -48,14 +48,17 @@ class ContextRecall(LLMMetric):
         return self._calculate_metric()
 
     def _calculate_metric(self) -> dict:
-        all_sentences = [response.response.sentences for response in self.responses]
-        total = [len(response.response.sentences) for response in self.responses]
+        all_sentences = [response.response.sentences for response in self.responses]  # type: ignore
+        total = [len(response.response.sentences) for response in self.responses]  # type: ignore
         attributed = [
-            sum(sent.label == 1 for sent in response.response.sentences)
+            sum(sent.label == 1 for sent in response.response.sentences)  # type: ignore
             for response in self.responses
         ]
         scores = [a / t if t > 0 else np.nan for a, t in zip(attributed, total)]
-        agg = sum(attributed) / sum(total)
+
+        # Avoid division by zero when sum(total) is 0
+        total_sum = sum(total)
+        agg = sum(attributed) / total_sum if total_sum > 0 else 0.0
 
         return {
             "score": agg,

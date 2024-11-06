@@ -6,7 +6,7 @@ import numpy as np
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
-from encourage.llm.inference_runner import InferenceRunner
+from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import LLMMetric, MetricOutput, MetricTemplates
 from encourage.metrics.non_answer_critic import NonAnswerCritic
@@ -16,7 +16,7 @@ from encourage.prompts.prompt_collection import PromptCollection
 class AnswerRelevance(LLMMetric):
     """How relevant the answer is to the question."""
 
-    def __init__(self, runner: InferenceRunner, model_name: str = "all-mpnet-base-v2") -> None:
+    def __init__(self, runner: BatchInferenceRunner, model_name: str = "all-mpnet-base-v2") -> None:
         super().__init__(
             name="answer-relevance",
             description="Check how relevant the answer is to the question",
@@ -33,7 +33,7 @@ class AnswerRelevance(LLMMetric):
         similarities = self.embeddings_model.similarity(q_embedding, gen_embeddings)[0]
         return similarities.mean().item()
 
-    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+    def __call__(self, responses: ResponseWrapper) -> dict:
         """Check how relevant the answer is to the question."""
         # Step 1: identify noncomittal answers
         self.non_answer_result: MetricOutput = self.non_answer_critic(responses)
@@ -45,7 +45,14 @@ class AnswerRelevance(LLMMetric):
         ]
 
         if not committal_responses:
-            raise ValueError("No committal responses found.")
+            print("No committal responses found.")
+            return {
+                "score": np.mean(0.0),
+                "raw": 0,
+                "noncommittal": self.non_answer_result.raw,
+                "rationales": None,
+                "generated_questions": None,
+            }
 
         # Step 2: generate questions (only for valid answers)
         contexts = [
@@ -76,7 +83,7 @@ class AnswerRelevance(LLMMetric):
     def _calculate_metric(self, input_responses: ResponseWrapper) -> dict:
         # Step 3: Relevance calculation
         scores = [
-            self._question_similarity(response.user_prompt, generated.response.question)
+            self._question_similarity(response.user_prompt, generated.response.question)  # type: ignore
             for response, generated in zip(input_responses, self.responses)
         ]
 
@@ -84,7 +91,7 @@ class AnswerRelevance(LLMMetric):
         rationales = self.non_answer_result.raw_output
         committal_ixs = [i for i, label in enumerate(self.non_answer_result.raw) if label == 0]
 
-        full_scores = [None] * len(self.responses)
+        full_scores: list[Optional[float]] = [None] * len(self.responses)
         for i, score in zip(committal_ixs, scores):
             full_scores[i] = score
 

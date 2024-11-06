@@ -6,7 +6,7 @@ import nltk
 import numpy as np
 from pydantic import BaseModel, conint
 
-from encourage.llm.inference_runner import InferenceRunner
+from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import LLMMetric, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
@@ -15,7 +15,7 @@ from encourage.prompts.prompt_collection import PromptCollection
 class AnswerFaithfulness(LLMMetric):
     """Check how faithful the answer is to the question."""
 
-    def __init__(self, runner: InferenceRunner) -> None:
+    def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
             name="answer-faithfulness",
             description="Check how faithful the answer is to the question",
@@ -56,7 +56,7 @@ class AnswerFaithfulness(LLMMetric):
         responses_claims: ResponseWrapper = self._runner.run(prompt_collection, schema=OutputSplit)
 
         # Step 3: Gather claims per record
-        response_to_claims = [[] for _ in range(len(responses))]
+        response_to_claims: list[list] = [[] for _ in range(len(responses))]
         for response, response_idx in zip(responses_claims, response_indices):
             response_to_claims[response_idx] += response.response[1]
 
@@ -87,11 +87,12 @@ class AnswerFaithfulness(LLMMetric):
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> dict:
         # Step 6: Process results
         supported = [
-            sum(v.verdict == 1 for v in response.response.verdicts) for response in nli_responses
+            sum(v.verdict == 1 for v in response.response.verdicts)  # type: ignore
+            for response in nli_responses
         ]
-        total = [len(response.response.verdicts) for response in nli_responses]
+        total = [len(response.response.verdicts) for response in nli_responses]  # type: ignore
         scores = [s / t if t > 0 else np.nan for s, t in zip(supported, total)]
-        claims = [response.response.verdicts for response in nli_responses]
+        claims = [response.response.verdicts for response in nli_responses]  # type: ignore
 
         # micro-average over all responses
         agg = sum(supported) / sum(total)

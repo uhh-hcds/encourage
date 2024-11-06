@@ -5,7 +5,7 @@ from typing import List, Literal, Optional
 import numpy as np
 from pydantic import BaseModel
 
-from encourage.llm.inference_runner import InferenceRunner
+from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import LLMMetric, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
@@ -14,7 +14,7 @@ from encourage.prompts.prompt_collection import PromptCollection
 class ContextPrecision(LLMMetric):
     """How relevant the context is to the ground-truth answer."""
 
-    def __init__(self, runner: InferenceRunner) -> None:
+    def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
             name="context-precision",
             description="Check how relevant the context is to the ground-truth answer.",
@@ -27,12 +27,14 @@ class ContextPrecision(LLMMetric):
 
         Labels should be a list of binary labels, where 1 is relevant, and 0 is irrelevant.
         """
-        denominator = sum(labels) + 1e-10
-        numerator = sum([(sum(labels[: i + 1]) / (i + 1)) * labels[i] for i in range(len(labels))])
-        score = numerator / denominator
-        return score
+        total_relevant = sum(labels)
+        if total_relevant == 0:
+            return 0.0  # No relevant items, precision is undefined or zero
 
-    def __call__(self, responses: ResponseWrapper):
+        numerator = sum((sum(labels[: i + 1]) / (i + 1)) * labels[i] for i in range(len(labels)))
+        return numerator / total_relevant
+
+    def __call__(self, responses: ResponseWrapper) -> dict:
         """Check how relevant the context is to the ground-truth answer."""
         self.validate_nested_fields(responses)
         # Step 1: Prompts preparation
@@ -54,7 +56,7 @@ class ContextPrecision(LLMMetric):
             sys_prompts="",
             user_prompts=["" for _ in responses],
             contexts=contexts,
-            template_name=MetricTemplates.CONTEXT_PRECISION.value,
+            template_name=MetricTemplates.LLAMA3_CONTEXT_PRECISION.value,
         )
         self.responses = self._runner.run(prompt_collection, schema=Verdict)
         return self._calculate_metric(responses)
@@ -64,11 +66,10 @@ class ContextPrecision(LLMMetric):
         precisions_per_questions = []
         all_labels = []
         current_idx = 0
-        print(input_responses[0].context)
         for response in input_responses:
             contexts_cnt = len(response.context["contexts"])
-            verdicts = self.responses[current_idx : current_idx + contexts_cnt]
-            labels = [response.response.verdict for response in verdicts]
+            verdicts = self.responses[current_idx : current_idx + contexts_cnt]  # type: ignore
+            labels = [response.response.verdict for response in verdicts]  # type: ignore
             all_labels.append(labels)
             precision = self._average_precision(labels)
             precisions_per_questions.append(precision)
@@ -78,7 +79,7 @@ class ContextPrecision(LLMMetric):
 
         # Step 4: Detailed Output
         return {
-            "score": agg,
+            "score": agg if not np.isnan(agg) else 0.0,
             "raw": precisions_per_questions,
             "labeled_contexts": all_labels,
         }

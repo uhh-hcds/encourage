@@ -4,7 +4,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 
-from encourage.llm.inference_runner import InferenceRunner
+from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 
 
@@ -24,7 +24,7 @@ class MetricOutput:
     """Dataclass to store metric output."""
 
     score: float
-    raw: list[float]
+    raw: list[float] | list[int]
     precision: float | None = None
     recall: float | None = None
     f1: float | None = None
@@ -77,7 +77,7 @@ class LLMMetric:
         self,
         name: str,
         description: str,
-        runner: InferenceRunner | None = None,
+        runner: BatchInferenceRunner,
         required_meta_data: list[str] = [],
         required_context: list[str] = [],
     ):
@@ -108,4 +108,4 @@ class LLMMetric:
                     raise ValueError(f"context must contain '{field}' for {self._name} metric.")
 
     @abstractmethod
-    def __call__(self, responses: ResponseWrapper) -> MetricOutput: ...  # noqa: D102
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput | dict: ...  # noqa: D102
