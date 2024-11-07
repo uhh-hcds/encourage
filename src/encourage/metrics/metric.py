@@ -1,8 +1,9 @@
 """Base class for metric calculations."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
@@ -24,11 +25,8 @@ class MetricOutput:
     """Dataclass to store metric output."""
 
     score: float
-    raw: list[float] | list[int]
-    precision: float | None = None
-    recall: float | None = None
-    f1: float | None = None
-    raw_output: list[str] | None = None
+    raw: list[float] | list[int] | list[float | None]
+    misc: dict[str, Any] = field(default_factory=dict)
 
 
 class Metric(ABC):
@@ -69,5 +67,5 @@ class Metric(ABC):
                     raise ValueError(f"context must contain '{field}' for {self._name} metric.")
 
     @abstractmethod
-    def __call__(self, responses: ResponseWrapper) -> MetricOutput | dict:
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Abstract method to be implemented by subclasses."""

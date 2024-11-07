@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import Metric, MetricTemplates
+from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
 
 
@@ -21,7 +21,7 @@ class ContextRecall(Metric):
             runner=runner,
         )
 
-    def __call__(self, responses: ResponseWrapper) -> dict:
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how complete the context is for generating the ground-truth."""
         # Step 1: Prompts preparation
         contexts = [
@@ -47,26 +47,24 @@ class ContextRecall(Metric):
         self.responses = self._runner.run(prompt_collection, schema=ClassifiedSentencesList)
         return self._calculate_metric()
 
-    def _calculate_metric(self) -> dict:
+    def _calculate_metric(self) -> MetricOutput:
         all_sentences = [response.response.sentences for response in self.responses]  # type: ignore
         total = [len(response.response.sentences) for response in self.responses]  # type: ignore
         attributed = [
             sum(sent.label == 1 for sent in response.response.sentences)  # type: ignore
             for response in self.responses
         ]
-        scores = [a / t if t > 0 else np.nan for a, t in zip(attributed, total)]
+        raw = [a / t if t > 0 else np.nan for a, t in zip(attributed, total)]
 
         # Avoid division by zero when sum(total) is 0
         total_sum = sum(total)
-        agg = sum(attributed) / total_sum if total_sum > 0 else 0.0
+        score = sum(attributed) / total_sum if total_sum > 0 else 0.0
 
-        return {
-            "score": agg,
-            "raw": scores,
-            "total": total,
-            "attributed": attributed,
-            "sentences": all_sentences,
-        }
+        return MetricOutput(
+            score=score,
+            raw=raw,
+            misc={"total": total, "attributed": attributed, "sentences": all_sentences},
+        )
 
 
 class ClassifiedSentence(BaseModel):

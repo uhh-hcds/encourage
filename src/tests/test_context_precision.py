@@ -89,12 +89,10 @@ class TestContextPrecision(unittest.TestCase):
         result = metric(self.responses)
 
         # Assertions
-        self.assertIn("score", result)
-        self.assertIn("raw", result)
-        self.assertIn("labeled_contexts", result)
-        self.assertIsInstance(result["score"], float)
-        self.assertIsInstance(result["raw"], list)
-        self.assertIsInstance(result["labeled_contexts"], list)
+        self.assertIn("labeled_contexts", result.misc)
+        self.assertIsInstance(result.score, float)
+        self.assertIsInstance(result.raw, list)
+        self.assertIsInstance(result.misc["labeled_contexts"], list)
 
     def test_empty_responses(self):
         # Instantiate metric and use an empty ResponseWrapper
@@ -105,9 +103,9 @@ class TestContextPrecision(unittest.TestCase):
         result = metric(empty_responses)
 
         # Assertions for empty responses
-        self.assertEqual(result["score"], 0.0)  # Should be 0 score
-        self.assertEqual(result["raw"], [])  # Should have an empty raw list
-        self.assertEqual(result["labeled_contexts"], [])  # No labeled contexts
+        self.assertEqual(result.score, 0.0)  # Should be 0 score
+        self.assertEqual(result.raw, [])  # Should have an empty raw list
+        self.assertEqual(result.misc["labeled_contexts"], [])  # No labeled contexts
 
     def test_calculate_metric(self):
         # Setup verdicts for multiple contexts and calculate metric
@@ -126,8 +124,6 @@ class TestContextPrecision(unittest.TestCase):
         result = metric._calculate_metric(self.responses)
 
         # Assertions for calculated metric
-        self.assertIn("score", result)
-        self.assertIn("raw", result)
-        self.assertIn("labeled_contexts", result)
-        self.assertGreaterEqual(result["score"], 0.0)
-        self.assertLessEqual(result["score"], 1.0)
+        self.assertIn("labeled_contexts", result.misc)
+        self.assertGreaterEqual(result.score, 0.0)
+        self.assertLessEqual(result.score, 1.0)

@@ -6,11 +6,10 @@ import numpy as np
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
-from encourage.llm.inference_runner import BatchInferenceRunner
-from encourage.llm.response_wrapper import ResponseWrapper
+from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.metrics.non_answer_critic import NonAnswerCritic
-from encourage.prompts.prompt_collection import PromptCollection
+from encourage.prompts import PromptCollection
 
 
 class AnswerRelevance(Metric):
@@ -33,7 +32,7 @@ class AnswerRelevance(Metric):
         similarities = self.embeddings_model.similarity(q_embedding, gen_embeddings)[0]
         return similarities.mean().item()
 
-    def __call__(self, responses: ResponseWrapper) -> dict:
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how relevant the answer is to the question."""
         # Step 1: identify noncomittal answers
         self.non_answer_result: MetricOutput = self.non_answer_critic(responses)
@@ -46,13 +45,7 @@ class AnswerRelevance(Metric):
 
         if not committal_responses:
             print("No committal responses found.")
-            return {
-                "score": np.mean(0.0),
-                "raw": 0,
-                "noncommittal": self.non_answer_result.raw,
-                "rationales": None,
-                "generated_questions": None,
-            }
+            return MetricOutput(score=0.0, raw=[], misc=self.non_answer_result.misc)
 
         # Step 2: generate questions (only for valid answers)
         contexts = [
@@ -80,7 +73,7 @@ class AnswerRelevance(Metric):
         )
         return self._calculate_metric(input_responses=responses)
 
-    def _calculate_metric(self, input_responses: ResponseWrapper) -> dict:
+    def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
         # Step 3: Relevance calculation
         scores = [
             self._question_similarity(response.user_prompt, generated.response.question)  # type: ignore
@@ -88,20 +81,22 @@ class AnswerRelevance(Metric):
         ]
 
         # Return scores for all responses, where non-answers have a None score.
-        rationales = self.non_answer_result.raw_output
+        rationales = self.non_answer_result.misc["raw_output"]
         committal_ixs = [i for i, label in enumerate(self.non_answer_result.raw) if label == 0]
 
         full_scores: list[Optional[float]] = [None] * len(self.responses)
         for i, score in zip(committal_ixs, scores):
             full_scores[i] = score
 
-        return {
-            "score": np.mean(scores),
-            "raw": full_scores,
-            "noncommittal": self.non_answer_result.raw,
-            "rationales": rationales,
-            "generated_questions": self.responses,
-        }
+        return MetricOutput(
+            score=float(np.mean(scores)),
+            raw=full_scores,
+            misc={
+                "noncommittal": self.non_answer_result.raw,
+                "rationales": rationales,
+                "generated_questions": self.responses,
+            },
+        )
 
 
 class GeneratedQuestion(BaseModel):

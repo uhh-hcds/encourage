@@ -74,12 +74,12 @@ class BLEU(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
-        scores = self.metric.compute(
+        output = self.metric.compute(
             predictions=[r.response for r in responses],
             references=[r.meta_data["reference_answer"] for r in responses],
         )
-        scores["score"] = scores["score"] / 100  # Normalize
-        return MetricOutput(score=scores["score"], raw=scores)
+        output["score"] = output["score"] / 100  # Normalize
+        return MetricOutput(score=output["score"], raw=output)
 
 
 class ROUGE(Metric):
@@ -98,14 +98,14 @@ class ROUGE(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_fields(responses)
-        scores = self.metric.compute(
+        output = self.metric.compute(
             predictions=[r.response for r in responses],
             references=[r.meta_data["reference_answer"] for r in responses],
             rouge_types=[self.rouge_type],
             use_aggregator=False,
         )[self.rouge_type]
-        agg = np.mean(scores)
-        return MetricOutput(score=agg, raw=scores)
+        scores = np.mean(output)
+        return MetricOutput(score=scores, raw=output)
 
 
 class BERTScore(Metric):
@@ -128,13 +128,10 @@ class BERTScore(Metric):
             references=[r.meta_data["reference_answer"] for r in responses],
             **self.metric_args,
         )
-        score = np.mean(result["f1"])
         return MetricOutput(
-            score=score,
+            score=np.mean(result["f1"]),
             raw=result["f1"],
-            precision=result["precision"],
-            recall=result["recall"],
-            f1=result["f1"],
+            misc={"precision": result["precision"], "recall": result["recall"]},
         )
 
 

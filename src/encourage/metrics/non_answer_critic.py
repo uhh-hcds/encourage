@@ -44,14 +44,14 @@ class NonAnswerCritic(Metric):
 
     def _calculate_metric(self) -> MetricOutput:
         if not self.responses:
-            return MetricOutput(score=0.0, raw=[], raw_output=[])
+            return MetricOutput(score=0.0, raw=[], misc={"raw_output": []})
 
         good_answers = [not response.response.non_answer for response in self.responses]  # type: ignore
 
         return MetricOutput(
             score=sum(good_answers) / len(self.responses),
             raw=[response.response.non_answer for response in self.responses],  # type: ignore
-            raw_output=[response.response.rationale for response in self.responses],  # type: ignore
+            misc={"raw_output": [response.response.rationale for response in self.responses]},  # type: ignore
         )
 
 

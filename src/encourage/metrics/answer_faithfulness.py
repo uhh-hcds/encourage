@@ -6,10 +6,9 @@ import nltk
 import numpy as np
 from pydantic import BaseModel, conint
 
-from encourage.llm.inference_runner import BatchInferenceRunner
-from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import Metric, MetricTemplates
-from encourage.prompts.prompt_collection import PromptCollection
+from encourage.llm import BatchInferenceRunner, ResponseWrapper
+from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.prompts import PromptCollection
 
 
 class AnswerFaithfulness(Metric):
@@ -22,7 +21,7 @@ class AnswerFaithfulness(Metric):
             runner=runner,
         )
 
-    def __call__(self, responses: ResponseWrapper) -> dict:
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how faithful the answer is to the question."""
         # Step 1: Split records into claims
         claim_prompts, response_indices = [], []
@@ -84,7 +83,7 @@ class AnswerFaithfulness(Metric):
         nli_responses: ResponseWrapper = self._runner.run(nli_prompt_collection, schema=OutputNLI)
         return self._calculate_metric(nli_responses)
 
-    def _calculate_metric(self, nli_responses: ResponseWrapper) -> dict:
+    def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:
         # Step 6: Process results
         supported = [
             sum(v.verdict == 1 for v in response.response.verdicts)  # type: ignore
@@ -97,13 +96,9 @@ class AnswerFaithfulness(Metric):
         # micro-average over all responses
         agg = sum(supported) / sum(total)
 
-        return {
-            "score": agg,
-            "raw": scores,
-            "supported": supported,
-            "total": total,
-            "claims": claims,
-        }
+        return MetricOutput(
+            score=agg, raw=scores, misc={"supported": supported, "total": total, "claims": claims}
+        )
 
 
 class Verdict(BaseModel):

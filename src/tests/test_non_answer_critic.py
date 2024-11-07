@@ -85,7 +85,7 @@ class TestNonAnswerCritic(unittest.TestCase):
         # Assertions
         self.assertIsInstance(result.score, float)
         self.assertIsInstance(result.raw, list)
-        self.assertIsInstance(result.raw_output, list)
+        self.assertIsInstance(result.misc["raw_output"], list)
 
     def test_empty_responses(self):
         # Instantiate metric and use an empty ResponseWrapper
@@ -96,9 +96,9 @@ class TestNonAnswerCritic(unittest.TestCase):
         result = metric(empty_responses)
 
         # Assertions for empty responses
-        self.assertEqual(result.score, 0.0)  # Should be 0 score
-        self.assertEqual(result.raw, [])  # Should have an empty raw list
-        self.assertEqual(result.raw_output, [])  # No raw_output
+        self.assertEqual(result.score, 0.0)
+        self.assertEqual(result.raw, [])
+        self.assertEqual(result.misc["raw_output"], [])
 
     def test_calculate_metric_equal(self):
         # Setup mock for verdicts and non-answer flags

@@ -72,16 +72,14 @@ class TestContextRecall(unittest.TestCase):
         result = metric(self.responses)
 
         # Assertions
-        self.assertIn("score", result)
-        self.assertIn("raw", result)
-        self.assertIn("total", result)
-        self.assertIn("attributed", result)
-        self.assertIn("sentences", result)
-        self.assertIsInstance(result["score"], float)
-        self.assertIsInstance(result["raw"], list)
-        self.assertIsInstance(result["total"], list)
-        self.assertIsInstance(result["attributed"], list)
-        self.assertIsInstance(result["sentences"], list)
+        self.assertIn("total", result.misc)
+        self.assertIn("attributed", result.misc)
+        self.assertIn("sentences", result.misc)
+        self.assertIsInstance(result.score, float)
+        self.assertIsInstance(result.raw, list)
+        self.assertIsInstance(result.misc["total"], list)
+        self.assertIsInstance(result.misc["attributed"], list)
+        self.assertIsInstance(result.misc["sentences"], list)
 
     def test_calculate_metric(self):
         # Manually set up responses with varying sentence counts and labels
@@ -95,15 +93,13 @@ class TestContextRecall(unittest.TestCase):
         result = metric._calculate_metric()
 
         # Assertions for calculated metric
-        self.assertIn("score", result)
-        self.assertIn("raw", result)
-        self.assertIn("total", result)
-        self.assertIn("attributed", result)
-        self.assertIn("sentences", result)
-        self.assertGreaterEqual(result["score"], 0.0)
-        self.assertLessEqual(result["score"], 1.0)
-        self.assertIsInstance(result["raw"], list)
-        self.assertEqual(len(result["raw"]), len(metric.responses))
+        self.assertIn("total", result.misc)
+        self.assertIn("attributed", result.misc)
+        self.assertIn("sentences", result.misc)
+        self.assertGreaterEqual(result.score, 0.0)
+        self.assertLessEqual(result.score, 1.0)
+        self.assertIsInstance(result.raw, list)
+        self.assertEqual(len(result.raw), len(metric.responses))
 
     def test_empty_responses(self):
         # Instantiate with an empty ResponseWrapper
@@ -114,11 +110,11 @@ class TestContextRecall(unittest.TestCase):
         result = metric(empty_responses)
 
         # Assertions for empty responses
-        self.assertEqual(result["score"], 0.0)  # Should be 0 score if no sentences
-        self.assertEqual(result["raw"], [])  # Should have an empty raw list
-        self.assertEqual(result["total"], [])  # Should have an empty total list
-        self.assertEqual(result["attributed"], [])  # Should have an empty attributed list
-        self.assertEqual(result["sentences"], [])  # No sentences
+        self.assertEqual(result.score, 0.0)
+        self.assertEqual(result.raw, [])
+        self.assertEqual(result.misc["total"], [])
+        self.assertEqual(result.misc["attributed"], [])
+        self.assertEqual(result.misc["sentences"], [])
 
     def test_no_attributed_sentences(self):
         # Setup mock responses with only non-attributed sentences
@@ -134,6 +130,6 @@ class TestContextRecall(unittest.TestCase):
         result = metric._calculate_metric()
 
         # Check the score is zero as there are no attributed sentences
-        self.assertEqual(result["score"], 0.0)
-        self.assertEqual(sum(result["attributed"]), 0)
-        self.assertTrue(all(x == 0 for x in result["attributed"]))
+        self.assertEqual(result.score, 0.0)
+        self.assertEqual(sum(result.misc["attributed"]), 0)
+        self.assertTrue(all(x == 0 for x in result.misc["attributed"]))

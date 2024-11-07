@@ -71,14 +71,8 @@ class TestMetrics(unittest.TestCase):
         result = metric(wrapped_responses)
 
         # Check the result
-        self.assertIn("score", result)
-        self.assertIn("raw", result)
-        self.assertIn("supported", result)
-        self.assertIn("total", result)
+        self.assertIn("supported", result.misc)
+        self.assertIn("total", result.misc)
 
         # Specific test checks, these may vary depending on your mocked output logic
-        self.assertAlmostEqual(result["score"], 0.5, places=1)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertAlmostEqual(result.score, 0.5, places=1)

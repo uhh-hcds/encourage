@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.metric import Metric, MetricTemplates
+from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.prompts.prompt_collection import PromptCollection
 
 
@@ -34,7 +34,7 @@ class ContextPrecision(Metric):
         numerator = sum((sum(labels[: i + 1]) / (i + 1)) * labels[i] for i in range(len(labels)))
         return numerator / total_relevant
 
-    def __call__(self, responses: ResponseWrapper) -> dict:
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how relevant the context is to the ground-truth answer."""
         self.validate_nested_fields(responses)
         # Step 1: Prompts preparation
@@ -61,7 +61,7 @@ class ContextPrecision(Metric):
         self.responses = self._runner.run(prompt_collection, schema=Verdict)
         return self._calculate_metric(responses)
 
-    def _calculate_metric(self, input_responses: ResponseWrapper) -> dict:
+    def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
         # Step 3: Precision computation
         precisions_per_questions = []
         all_labels = []
@@ -75,14 +75,13 @@ class ContextPrecision(Metric):
             precisions_per_questions.append(precision)
             current_idx += contexts_cnt
 
-        agg = np.mean(precisions_per_questions)
+        agg = float(np.mean(precisions_per_questions))
+        agg = agg if not np.isnan(agg) else 0.0
 
         # Step 4: Detailed Output
-        return {
-            "score": agg if not np.isnan(agg) else 0.0,
-            "raw": precisions_per_questions,
-            "labeled_contexts": all_labels,
-        }
+        return MetricOutput(
+            score=agg, raw=precisions_per_questions, misc={"labeled_contexts": all_labels}
+        )
 
 
 class Verdict(BaseModel):

@@ -7,6 +7,7 @@ from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.answer_relevance import AnswerRelevance
+from encourage.metrics.metric import MetricOutput
 
 
 class TestMetrics(unittest.TestCase):
@@ -69,18 +70,26 @@ class TestMetrics(unittest.TestCase):
 
         # Mock the non_answer_critic output
         metric.non_answer_critic = MagicMock()
-        metric.non_answer_critic.return_value.raw = [1, 1, 1]  # All non-answers
+        metric.non_answer_critic.return_value = MetricOutput(
+            score=0.0,  # since all responses are non-answers
+            raw=[],  # assuming an empty list for raw non-answers
+            misc={
+                "noncommittal": [1, 1, 1],  # mock noncommittal responses
+                "rationales": None,
+                "generated_questions": None,
+            },
+        )
 
         # Create empty committal responses scenario
         responses = ResponseWrapper(self.responses)
         result = metric(responses)
 
         # Assertions for the empty case
-        self.assertEqual(result["score"], 0.0)
-        self.assertEqual(result["raw"], 0)
-        self.assertEqual(result["noncommittal"], [1, 1, 1])
-        self.assertIsNone(result["rationales"])
-        self.assertEqual(result["generated_questions"], None)
+        self.assertEqual(result.score, 0.0)
+        self.assertEqual(result.raw, [])
+        self.assertEqual(result.misc["noncommittal"], [1, 1, 1])
+        self.assertIsNone(result.misc["rationales"])
+        self.assertEqual(result.misc["generated_questions"], None)
 
     @patch("encourage.metrics.answer_relevance.SentenceTransformer", autospec=True)
     def test_answer_relevance_non_empty_committal_responses(self, mock_sentence_transformer):
@@ -101,13 +110,7 @@ class TestMetrics(unittest.TestCase):
         result = metric(responses)
 
         # Assertions for the non-empty case
-        self.assertIn("score", result)
-        self.assertIn("raw", result)
-        self.assertIn("noncommittal", result)
-        self.assertIn("rationales", result)
-        self.assertIn("generated_questions", result)
-        self.assertNotEqual(result["score"], 0.0)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertIn("noncommittal", result.misc)
+        self.assertIn("rationales", result.misc)
+        self.assertIn("generated_questions", result.misc)
+        self.assertNotEqual(result.score, 0.0)
