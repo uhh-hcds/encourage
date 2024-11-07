@@ -1,11 +1,14 @@
 import unittest
 
 from encourage.llm.response import Response
-from encourage.metrics.classic import (
+from encourage.metrics import (
     BLEU,
+    F1,
+    GLEU,
     ROUGE,
     BERTScore,
     ContextLength,
+    ExactMatch,
     GeneratedAnswerLength,
     MeanReciprocalRank,
     ReferenceAnswerLength,
@@ -83,6 +86,12 @@ class TestMetrics(unittest.TestCase):
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
 
+    def test_gleu(self):
+        metric = GLEU()
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+
     def test_rouge(self):
         metric = ROUGE(rouge_type="rouge1")
         output = metric(self.responses)
@@ -101,6 +110,18 @@ class TestMetrics(unittest.TestCase):
 
     def test_bertscore(self):
         metric = BERTScore(lang="en", rescale_with_baseline=True)
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+
+    def test_f1(self):
+        metric = F1()
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+
+    def test_exact_match(self):
+        metric = ExactMatch()
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)

@@ -82,6 +82,22 @@ class BLEU(Metric):
         return MetricOutput(score=output["score"], raw=output)
 
 
+class GLEU(Metric):
+    """Computes the GLEU score for the generated answers."""
+
+    def __init__(self) -> None:
+        super().__init__(name="gleu", description="GLEU score for the generated answers")
+        self.metric = evaluate.load("google_bleu")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        output = self.metric.compute(
+            predictions=[r.response for r in responses],
+            references=[r.meta_data["reference_answer"] for r in responses],
+        )
+        return MetricOutput(score=output["google_bleu"], raw=[])
+
+
 class ROUGE(Metric):
     """Computes the ROUGE score for the generated answers."""
 
@@ -133,6 +149,84 @@ class BERTScore(Metric):
             raw=result["f1"],
             misc={"precision": result["precision"], "recall": result["recall"]},
         )
+
+
+class F1(Metric):
+    """Computes the F1 score for the generated answers."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="f1",
+            description="F1 score for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.metric = evaluate.load("squad_v2")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        # Initialize empty lists for formatted predictions and references
+        formatted_predictions = []
+        formatted_references = []
+
+        # Use zip to iterate over predictions and references
+        for i, r in enumerate(responses):
+            formatted_predictions.append(
+                {"id": str(i), "prediction_text": r.response, "no_answer_probability": 0.0}
+            )
+            formatted_references.append(
+                {
+                    "id": str(i),
+                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
+                }
+            )
+
+        # Call the compute function with formatted data
+        output = self.metric.compute(
+            predictions=formatted_predictions,
+            references=formatted_references,
+        )
+        scores = np.mean(output["f1"])
+        return MetricOutput(score=scores, raw=output)
+
+
+class ExactMatch(Metric):
+    """Computes the exact match for the generated answers."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="exact_match",
+            description="Exact match for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.metric = evaluate.load("squad_v2")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        # Initialize empty lists for formatted predictions and references
+        formatted_predictions = []
+        formatted_references = []
+
+        # Use zip to iterate over predictions and references
+        for i, r in enumerate(responses):
+            formatted_predictions.append(
+                {"id": str(i), "prediction_text": r.response, "no_answer_probability": 0.0}
+            )
+            formatted_references.append(
+                {
+                    "id": str(i),
+                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
+                }
+            )
+
+        # Call the compute function with formatted data
+        output = self.metric.compute(
+            predictions=formatted_predictions,
+            references=formatted_references,
+        )
+        scores = np.mean(output["exact"])
+        return MetricOutput(score=scores, raw=output)
 
 
 class MeanReciprocalRank(Metric):
