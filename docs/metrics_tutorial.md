@@ -8,7 +8,6 @@ To use the metrics, you first need to import them into your project. You can imp
 from encourage.metrics import GeneratedAnswerLength, ReferenceAnswerLength, ContextLength, BLEU, GLEU, ROUGE, BERTScore, F1, ExactMatch, MeanReciprocalRank
 ```
 
-
 ## Calling the Metrics
 
 Once the metrics are imported, you can call them by instantiating each metric and passing a ResponseWrapper object containing the responses you want to evaluate. For example:
@@ -30,7 +29,6 @@ print(f"Raw values: {result.raw}")
 
 Each metric returns a `MetricResult` object containing the computed score and raw values. You can access these values using the `score` and `raw` attributes, respectively. Additional computed information are included in the `misc` attribute.
 
-
 ### Notes
 
 - Each metric requires a ResponseWrapper object that contains the responses to evaluate.
@@ -45,4 +43,3 @@ result = rouge_metric(responses)
 bertscore_metric = BERTScore(lang="en")
 result = bertscore_metric(responses)
 ```
-
