@@ -56,15 +56,15 @@ class Metric(ABC):
         """Returns a brief description of the metric."""
         return self._description
 
-    def validate_nested_fields(self, responses: ResponseWrapper) -> None:
+    def validate_nested_keys(self, responses: ResponseWrapper) -> None:
         """Validates that each response contains required fields in meta_data and context."""
         for response in responses:
-            for field in self.required_meta_data:
-                if field not in response.meta_data:
-                    raise ValueError(f"meta_data must contain '{field}' for {self._name} metric.")
-            for field in self.required_context:
-                if field not in response.context:
-                    raise ValueError(f"context must contain '{field}' for {self._name} metric.")
+            for key in self.required_meta_data:
+                if key not in response.meta_data:
+                    raise ValueError(f"meta_data must contain '{key}' for {self._name} metric.")
+            for key in self.required_context:
+                if key not in response.context:
+                    raise ValueError(f"context must contain '{key}' for {self._name} metric.")
 
     @abstractmethod
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
