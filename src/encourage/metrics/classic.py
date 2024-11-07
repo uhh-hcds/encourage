@@ -38,7 +38,7 @@ class ReferenceAnswerLength(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
-        self.validate_nested_fields(responses)
+        self.validate_nested_keys(responses)
         lengths = [len(word_tokenize(r.meta_data["reference_answer"])) for r in responses]
         score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
@@ -56,7 +56,7 @@ class ContextLength(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
-        self.validate_nested_fields(responses)
+        self.validate_nested_keys(responses)
         lengths = [
             sum(len(word_tokenize(context["content"])) for context in r.context["contexts"])
             for r in responses
@@ -97,7 +97,7 @@ class ROUGE(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
-        self.validate_nested_fields(responses)
+        self.validate_nested_keys(responses)
         output = self.metric.compute(
             predictions=[r.response for r in responses],
             references=[r.meta_data["reference_answer"] for r in responses],
@@ -122,7 +122,7 @@ class BERTScore(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
-        self.validate_nested_fields(responses)
+        self.validate_nested_keys(responses)
         result = self.metric.compute(
             predictions=[r.response for r in responses],
             references=[r.meta_data["reference_answer"] for r in responses],
@@ -161,7 +161,7 @@ class MeanReciprocalRank(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
-        self.validate_nested_fields(responses)
+        self.validate_nested_keys(responses)
         qrels, run = self.responses_to_trec(responses)
         mrr = ir_measures.MRR()
         scores = [score.value for score in mrr.iter_calc(qrels, run)]

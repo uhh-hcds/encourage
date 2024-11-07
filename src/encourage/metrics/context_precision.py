@@ -36,7 +36,7 @@ class ContextPrecision(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how relevant the context is to the ground-truth answer."""
-        self.validate_nested_fields(responses)
+        self.validate_nested_keys(responses)
         # Step 1: Prompts preparation
         contexts = [
             {
