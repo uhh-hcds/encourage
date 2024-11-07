@@ -11,7 +11,6 @@ from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
