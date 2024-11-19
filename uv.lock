@@ -611,7 +611,7 @@ wheels = [
 
 [[package]]
 name = "encourage"
-version = "0.1.14"
+version = "0.1.15"
 source = { editable = "." }
 dependencies = [
     { name = "absl-py" },
