@@ -59,8 +59,8 @@ class Response:
             for key, value in self.context.prompt_vars.items():
                 response_details.append(f"  {key}: {value}")
 
-        if self.sys_prompt and len(self.sys_prompt) > 200:
-            system_prompt = f"{self.sys_prompt[:200]}[...]\n"
+        if self.sys_prompt and len(self.sys_prompt) > 50:
+            system_prompt = f"{self.sys_prompt[:50]}[...]\n"
         else:
             system_prompt = f"{self.sys_prompt}\n"
 
@@ -81,12 +81,12 @@ class Response:
 
         return "\n".join(response_details)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, truncated: True) -> dict[str, Any]:
         """Get the response details as a dictionary."""
         return {
             "request_id": self.request_id,
             "prompt_id": self.prompt_id,
-            "sys_prompt": self.sys_prompt,
+            "sys_prompt": self.sys_prompt if not truncated else self.sys_prompt[:50],
             "user_prompt": self.user_prompt,
             "response": self.response,
             "conversation_id": self.conversation_id,
