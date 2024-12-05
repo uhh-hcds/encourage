@@ -22,7 +22,10 @@ Classification: {{ example.model_dump()['classification'] }}
 
 ## Task
 Question: "{{ task.question }}"
-Context: "{{ task.context }}"
+Context: 
+{% for document in documents %}
+{{ document.content }}
+{% endfor %}
 Answer: "{{ task.answer }}"
 Classification:
 

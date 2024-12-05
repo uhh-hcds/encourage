@@ -20,7 +20,10 @@ Output: {{ example.model_dump()['output'] }}
 <|start_header_id|>user<|end_header_id|>
 
 ## Task
-Context: "{{ task.context }}"
+Context: 
+{% for document in documents %}
+{{ document.content }}
+{% endfor %}
 Answer: "{{ task.answer }}"
 Output:
 
