@@ -6,7 +6,9 @@ from typing import Iterator
 from vllm import RequestOutput
 
 from encourage.llm.response import Response
+from encourage.prompts.context import Context
 from encourage.prompts.conversation import Conversation, Role
+from encourage.prompts.meta_data import MetaData
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
@@ -61,7 +63,8 @@ class ResponseWrapper:
         cls,
         request_outputs: list[RequestOutput],
         conversation: Conversation,
-        meta_datas: list[dict] = [],
+        contexts: list[Context] = [],
+        meta_datas: list[MetaData] = [],
     ) -> "ResponseWrapper":
         """Create ResponseWrapper from RequestOutput and Conversation."""
         # Check for mismatched lengths
@@ -78,11 +81,13 @@ class ResponseWrapper:
         user_messages = [msg["content"] for msg in conversation.get_messages_by_role(Role.USER)]
 
         responses = []
-        for conversation_id, (request_output, user_message, meta_data) in enumerate(
-            zip(request_outputs, user_messages, meta_datas or [{}] * len(request_outputs))
+        meta_datas = meta_datas or [MetaData()] * len(request_outputs)
+        contexts = contexts or [Context()] * len(request_outputs)
+        for conversation_id, (request_output, user_message, meta_data, context) in enumerate(
+            zip(request_outputs, user_messages, meta_datas, contexts)
         ):
             response = cls.handle_conversation_response(
-                sys_prompt, conversation_id, request_output, user_message, meta_data
+                sys_prompt, conversation_id, request_output, user_message, context, meta_data
             )
             responses.append(response)
 
@@ -94,7 +99,8 @@ class ResponseWrapper:
         conversation_id: int,
         request_output: RequestOutput,
         message: str,
-        meta_data: dict,
+        context: Context,
+        meta_data: MetaData,
     ) -> Response:
         """Create a Response object from a RequestOutput and Conversation."""
         return Response(
@@ -104,8 +110,8 @@ class ResponseWrapper:
             sys_prompt=sys_prompt,
             user_prompt=message,
             response=request_output.outputs[0].text if request_output.outputs else "No response",
+            context=context,
             meta_data=meta_data,
-            context={},
             arrival_time=(
                 request_output.metrics.arrival_time
                 if request_output.metrics and request_output.metrics.arrival_time is not None

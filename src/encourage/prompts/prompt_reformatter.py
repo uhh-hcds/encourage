@@ -6,6 +6,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, Template, exceptions
 
+from encourage.prompts.context import Context
 from encourage.prompts.prompt import Prompt
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,8 @@ class PromptReformatter:
             {
                 "system_prompt": prompt.sys_prompt,
                 "user_prompt": prompt.user_prompt,
-                **prompt.context,
+                "documents": getattr(prompt.context, "documents", []),
+                **(getattr(prompt.context, "prompt_vars", {}) or {}),
             }
         )
 
@@ -81,7 +83,7 @@ class PromptReformatter:
     def reformat_conversation(
         cls,
         user_prompt: str,
-        context: dict,
+        context: Context,
         model_name: str = "",
         template_name: str = "",
     ) -> str:
@@ -96,7 +98,13 @@ class PromptReformatter:
         else:
             raise ValueError("Either model_name or template_name must be provided.")
 
-        return template.render({"user_prompt": user_prompt, **context})
+        return template.render(
+            {
+                "user_prompt": user_prompt,
+                "documents": getattr(context, "documents", []),
+                **(getattr(context, "prompt_vars", {}) or {}),
+            }
+        )
 
     @classmethod
     def get_template(cls, model_name: str) -> Template:

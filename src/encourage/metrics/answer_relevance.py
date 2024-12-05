@@ -10,6 +10,7 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.metrics.non_answer_critic import NonAnswerCritic
 from encourage.prompts import PromptCollection
+from encourage.prompts.context import Context
 
 
 class AnswerRelevance(Metric):
@@ -49,14 +50,16 @@ class AnswerRelevance(Metric):
 
         # Step 2: generate questions (only for valid answers)
         contexts = [
-            {
-                "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
-                "task": {
-                    "context": response.context,
-                    "answer": response.response,
-                },
-                "output_model": GeneratedQuestion,
-            }
+            Context.from_prompt_vars(
+                {
+                    "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
+                    "task": {
+                        "context": response.context,
+                        "answer": response.response,
+                    },
+                    "output_model": GeneratedQuestion,
+                }
+            )
             for response in committal_responses
         ]
 
