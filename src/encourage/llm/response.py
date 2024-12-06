@@ -81,7 +81,7 @@ class Response:
 
         return "\n".join(response_details)
 
-    def to_dict(self, truncated: True) -> dict[str, Any]:
+    def to_dict(self, truncated: bool = True) -> dict[str, Any]:
         """Get the response details as a dictionary."""
         return {
             "request_id": self.request_id,

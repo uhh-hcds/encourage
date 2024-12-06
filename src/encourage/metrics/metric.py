@@ -37,10 +37,10 @@ class Metric(ABC):
         self,
         name: str,
         description: str,
+        runner: BatchInferenceRunner = None,  #  type: ignore
         required_meta_data: list[str] = [],
         required_prompt_vars: list[str] = [],
         required_documents: bool = False,
-        runner: BatchInferenceRunner = None,  #  type: ignore
     ):
         self._name = name
         self._description = description

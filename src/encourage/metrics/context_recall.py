@@ -47,7 +47,8 @@ class ContextRecall(Metric):
             contexts=contexts,
             template_name=MetricTemplates.LLAMA3_CONTEXT_RECALL.value,
         )
-        self.responses = self._runner.run(prompt_collection, schema=ClassifiedSentencesList)
+        self._runner.add_schema(ClassifiedSentencesList)
+        self.responses = self._runner.run(prompt_collection)
         return self._calculate_metric()
 
     def _calculate_metric(self) -> MetricOutput:

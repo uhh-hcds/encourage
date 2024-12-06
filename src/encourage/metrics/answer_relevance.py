@@ -71,9 +71,8 @@ class AnswerRelevance(Metric):
             template_name=MetricTemplates.LLAMA3_ANSWER_RELEVANCE.value,
         )
 
-        self.responses: ResponseWrapper = self._runner.run(
-            prompt_collection, schema=GeneratedQuestion
-        )
+        self._runner.add_schema(GeneratedQuestion)
+        self.responses: ResponseWrapper = self._runner.run(prompt_collection)
         return self._calculate_metric(input_responses=responses)
 
     def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
