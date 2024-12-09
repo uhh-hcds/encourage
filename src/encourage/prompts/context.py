@@ -32,27 +32,76 @@ class Context:
     prompt_vars: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def from_documents(cls, documents: list[Document] | list[str]) -> "Context":
+    def from_documents(cls, documents: list[Document | str]) -> "Context":
         """Create a Context instance from a list of documents.
 
         Args:
             documents (list[Document | str]): A list of Document objects or strings.
 
         Returns:
-            Context: A new Context instance with the given documents.
+            Context: A new Context instance with the processed documents.
 
         """
-        processed_documents = []
-        for doc in documents:
-            if isinstance(doc, str):
-                processed_documents.append(Document(content=doc, score=None))
-            elif isinstance(doc, dict):
-                processed_documents.append(
-                    Document(content=doc.get("content", ""), score=doc.get("score", None))
-                )
-            else:
-                processed_documents.append(doc)
+        processed_documents = cls._process_documents(documents)
         return cls(documents=processed_documents)
+
+    def add_document(self, document: Document | str) -> None:
+        """Add a single document to the context.
+
+        Args:
+            document (Document | str): The document to add.
+            Can be a Document instance or a string to be converted into a Document.
+
+        """
+        self.documents.append(self._process_single_document(document))
+
+    def add_documents(self, documents: list[Document | str]) -> None:
+        """Add a list of documents to the context.
+
+        Args:
+            documents (list[Document | str]): A list of Document objects or strings
+                                              to be added to the context.
+
+        """
+        self.documents.extend(self._process_documents(documents))
+
+    @staticmethod
+    def _process_single_document(document: Document | str) -> Document:
+        """Process a single document, converting it to a Document instance if needed.
+
+        Args:
+            document (Document | str): The document to process.
+            Can be:
+            - A string: Converted to a Document with default score.
+            - A dict: Converted to a Document using 'content' and 'score' keys.
+            - A Document: Returned as is.
+
+        Returns:
+            Document: A processed Document instance.
+
+        """
+        if isinstance(document, str):
+            return Document(content=document, score=None)
+        elif isinstance(document, dict):
+            return Document(content=document.get("content", ""), score=document.get("score", None))
+        return document
+
+    @classmethod
+    def _process_documents(cls, documents: list[Document | str]) -> list[Document]:
+        """Process a list of documents, converting each to a Document instance if needed.
+
+        Args:
+            documents (list[Document | str]): A list of documents to process.
+            Each document can be:
+            - A string
+            - A dict with 'content' and 'score' keys
+            - A Document instance
+
+        Returns:
+            list[Document]: A list of processed Document instances.
+
+        """
+        return [cls._process_single_document(doc) for doc in documents]
 
     @classmethod
     def from_prompt_vars(cls, prompt_vars: dict[str, Any]) -> "Context":
@@ -66,28 +115,6 @@ class Context:
 
         """
         return cls(prompt_vars=prompt_vars)
-
-    def add_document(self, document: Document | str) -> None:
-        """Add a document to the context.
-
-        Args:
-            document (Document | str): The document to add to the context.
-
-        """
-        if isinstance(document, str):
-            self.documents.append(Document(content=document, score=None))
-        else:
-            self.documents.append(document)
-
-    def add_documents(self, documents: list[Document] | list[str]) -> None:
-        """Add a list of documents to the context.
-
-        Args:
-            documents (List[Document | str]): A list of Document objects or strings.
-
-        """
-        for doc in documents:
-            self.add_document(doc)
 
     def add_prompt_vars(self, prompt_vars: dict[str, str]) -> None:
         """Add a dictionary of variables to the context.
