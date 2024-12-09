@@ -226,7 +226,7 @@ class ExactMatch(Metric):
             references=formatted_references,
         )
         scores = np.mean(output["exact"])
-        return MetricOutput(score=scores, raw=output)
+        return MetricOutput(score=scores, raw=output["exact"], misc={"output": output})
 
 
 class MeanReciprocalRank(Metric):
