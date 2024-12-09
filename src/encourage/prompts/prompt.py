@@ -3,7 +3,9 @@
 import json
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+
+from encourage.prompts.context import Context
+from encourage.prompts.meta_data import MetaData
 
 
 @dataclass
@@ -14,8 +16,8 @@ class Prompt:
     user_prompt: str
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     conversation_id: int = 0
-    context: dict[str, Any] = field(default_factory=dict)
-    meta_data: dict[str, Any] = field(default_factory=dict)
+    context: Context = field(default_factory=Context)
+    meta_data: MetaData = field(default_factory=MetaData)
     reformatted: str = ""
 
     def __len__(self) -> int:
@@ -28,7 +30,8 @@ class Prompt:
             f"sys_prompt: {self.sys_prompt},"
             f"user_prompt: {self.user_prompt}, "
             f"context: {self.context}, "
-            f"meta_data: {self.meta_data}, reformatted: {self.reformatted}"
+            f"meta_data: {self.meta_data},"
+            f"reformatted: {self.reformatted}"
         )
 
     def to_json(self) -> str:
@@ -54,7 +57,7 @@ class Prompt:
             conversation_id=json_data.get("conversation_id", 0),
             sys_prompt=json_data.get("sys_prompt", ""),
             user_prompt=json_data.get("user_prompt", ""),
-            context=json_data.get("context", {}),
-            meta_data=json_data.get("meta_data", {}),
+            context=json_data.get("context", Context()),
+            meta_data=json_data.get("meta_data", MetaData()),
             reformatted=json_data.get("reformatted", ""),
         )

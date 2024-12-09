@@ -20,8 +20,7 @@ dependencies = [
     "qdrant-client",
     "uv==0.4.28",
     "pytest",
-    "vllm==0.6.2",
-    "outlines>=0.0.46",
+    "vllm==0.6.4",
     "pydantic>=2.9.2",
     "sentence-transformers>=3.2.1",
     "fastembed>=0.4.1",
@@ -36,20 +35,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev= [
+dev = [
     "jupyterlab>=4.0",
     "jupytext>=1.16.3",
     "notebook>=7.0",
     "matplotlib>=3.9.1",
+    "ipywidgets>=8.1.5",
 ]
-ci = [
-    "ruff",
-    "isort",
-    "mypy",
-    "pytest",
-    "pytest-cov>=5.0.0",
-    "pytest-mock",
-]
+ci = ["ruff", "isort", "mypy", "pytest", "pytest-cov>=5.0.0", "pytest-mock"]
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
@@ -97,7 +90,7 @@ lint.ignore = [
     "B008", # Do not perform function calls in argument defaults
     "B905", # `zip()` without an explicit `strict=` parameter
 ]
-lint.exclude = ["*.ipynb"]  # TODO: do we really want this?
+lint.exclude = ["*.ipynb"] # TODO: do we really want this?
 
 [tool.ruff.format]
 exclude = ["*.ipynb"]
@@ -106,10 +99,10 @@ exclude = ["*.ipynb"]
 "test_*.py" = ["D", "E402"]
 "__init__.py" = ["D"]
 "src/notebooks/*.py" = [
-    "D",    # Make docstrings entirely optional
-    "E402", # Module level import not at top of file
+    "D",      # Make docstrings entirely optional
+    "E402",   # Module level import not at top of file
     "SIM115", # Use context handler for opening files
-    "I", # Allow unordered imports
+    "I",      # Allow unordered imports
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]

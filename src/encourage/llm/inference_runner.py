@@ -2,12 +2,11 @@
 
 import os
 import uuid
-from typing import Callable, Union
+from typing import Any
 
 from openai import OpenAI
-from outlines import generate, models
-from pydantic import BaseModel
 from vllm import LLM, CompletionOutput, RequestOutput, SamplingParams
+from vllm.sampling_params import GuidedDecodingParams
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.conversation import Conversation
@@ -21,15 +20,8 @@ class ChatInferenceRunner:
         self.llm = llm
         self.sampling_parameters = sampling_parameters
 
-    def run(
-        self, conversation: Conversation, schema: Union[str, BaseModel, Callable] = ""
-    ) -> RequestOutput:
+    def run(self, conversation: Conversation) -> RequestOutput:
         """Run the model with the given query."""
-        if schema != "":
-            raise NotImplementedError(
-                "Schema-based output is not implemented for OpenAIChatInferenceRunner."
-            )
-
         chat_response = self.llm.chat(
             conversation.dialog,  # type: ignore
             self.sampling_parameters,
@@ -52,15 +44,8 @@ class OpenAIChatInferenceRunner:
         self.sampling_parameters = sampling_parameters
         self.model_name = model_name
 
-    def run(
-        self, conversation: Conversation, schema: Union[str, BaseModel, Callable] = ""
-    ) -> RequestOutput:
+    def run(self, conversation: Conversation) -> RequestOutput:
         """Run the model with the given query."""
-        if schema != "":
-            raise NotImplementedError(
-                "Schema-based output is not implemented for OpenAIChatInferenceRunner."
-            )
-
         completion = self.client.chat.completions.create(
             model=self.model_name,
             messages=conversation.dialog,  # type: ignore
@@ -80,33 +65,24 @@ class BatchInferenceRunner:
     def run(
         self,
         prompt_collection: PromptCollection,
-        schema: Union[str, BaseModel, Callable] = "",
     ) -> "ResponseWrapper":
         """Performs batch inference on a collection of prompts.
 
         Args:
             prompt_collection (PromptCollection): The prompts for inference.
-            schema (str | BaseModel | callable): Schema required if structured_output is True.
 
         Returns:
             ResponseWrapper: Object containing formatted responses.
 
         """
         reformatted_prompts = [prompt.reformatted for prompt in prompt_collection.prompts]
-
-        # Choose generation method based on output structure requirement
-        if schema != "":
-            model = models.VLLM(self.llm)
-            generator = generate.json(model, schema_object=schema)
-            result = generator(reformatted_prompts, sampling_params=self.sampling_parameters)  # type: ignore
-            responses: list[RequestOutput] = [
-                get_new_request_output(response)  # type: ignore
-                for response in result  # type: ignore
-            ]
-        else:
-            responses = self.llm.generate(reformatted_prompts, self.sampling_parameters)
+        responses = self.llm.generate(reformatted_prompts, self.sampling_parameters)
 
         return ResponseWrapper.from_prompt_collection(responses, prompt_collection)
+
+    def add_schema(self, schema: Any) -> None:
+        """Add schema for structured output."""
+        self.sampling_parameters.guided_decoding = GuidedDecodingParams(json=schema)
 
 
 def get_new_request_output(generation_output: str) -> RequestOutput:

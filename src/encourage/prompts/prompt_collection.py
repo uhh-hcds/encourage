@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass
 from typing import Iterator, Union
 
+from encourage.prompts.context import Context
+from encourage.prompts.meta_data import MetaData
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_reformatter import PromptReformatter
 
@@ -19,8 +21,8 @@ class PromptCollection:
         cls,
         sys_prompts: list[str] | str,
         user_prompts: list[str],
-        contexts: list[dict] = [],
-        meta_datas: list[dict] = [],
+        contexts: list[Context] = [],
+        meta_datas: list[MetaData] = [],
         model_name: str = "",
         template_name: str = "",
     ) -> "PromptCollection":
@@ -29,8 +31,8 @@ class PromptCollection:
         Args:
             sys_prompts (List[str]): List of system prompts.
             user_prompts (List[str]): List of user prompts.
-            contexts (Optional[List[List[Dict]]]): List of context dictionaries.
-            meta_datas (Optional[List[List[Dict]]]): List of meta data dictionaries.
+            contexts (List[Context], optional): List of contexts. Defaults to [].
+            meta_datas (List[MetaData], optional): List of meta data. Defaults to [].
             model_name (str, optional): Name of the model. Defaults to "".
             template_name (str, optional): Name of the template. Defaults to "".
 
@@ -55,14 +57,14 @@ class PromptCollection:
 
         prompts = []
         for idx, (sys_prompt, user_prompt) in enumerate(zip(sys_prompts, user_prompts)):
-            context = contexts[idx] if contexts else []
-            meta_data = meta_datas[idx] if meta_datas else []
+            context = contexts[idx] if contexts else Context()
+            meta_data = meta_datas[idx] if meta_datas else MetaData()
 
             prompt = Prompt(
                 sys_prompt=sys_prompt,
                 user_prompt=user_prompt,
-                context=context,  # type: ignore
-                meta_data=meta_data,  # type: ignore
+                context=context,
+                meta_data=meta_data,
             )
             prompt.reformatted = PromptReformatter.reformat_prompt(
                 prompt, model_name, template_name

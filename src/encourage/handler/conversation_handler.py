@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 
 from encourage.llm.inference_runner import ChatInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
+from encourage.prompts.context import Context
 from encourage.prompts.conversation import Conversation
+from encourage.prompts.meta_data import MetaData
 from encourage.prompts.prompt_reformatter import PromptReformatter
 
 
@@ -15,8 +17,8 @@ class ConversationHandler:
     chat_inference_runner: ChatInferenceRunner
     system_prompt: str
     user_prompts: list[str]
-    contexts: list[dict] = field(default_factory=list)
-    meta_data: list[dict] = field(default_factory=list)
+    contexts: list[Context] = field(default_factory=list)
+    meta_data: list[MetaData] = field(default_factory=list)
     template_name: str = "generate_python_code_conv.j2"
     conversation: Conversation = field(init=False)
 
@@ -38,7 +40,7 @@ class ConversationHandler:
 
         request_outputs = []
         for idx, user_prompt in enumerate(self.user_prompts):
-            context = self.contexts[idx] if self.contexts else {}
+            context = self.contexts[idx] if self.contexts else Context()
             user_prompt_reformated = PromptReformatter.reformat_conversation(
                 user_prompt, context, template_name=self.template_name
             )
@@ -49,7 +51,9 @@ class ConversationHandler:
             conversation.add_message("assistant", request_output.outputs[0].text or "")
 
         self.conversation = conversation
-        return ResponseWrapper.from_conversation(request_outputs, conversation, self.meta_data)
+        return ResponseWrapper.from_conversation(
+            request_outputs, conversation, self.contexts, self.meta_data
+        )
 
     def __len__(self) -> int:
         return len(self.conversation)

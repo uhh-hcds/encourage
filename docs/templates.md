@@ -39,7 +39,7 @@ Important Context 2:
 Second, create a PromptCollection with the custom template:
 
 ```python
-contexts = [{"key1": "value1"}, {"key2": "value2"}] * 5
+contexts = [Context.from_prompt_vars({"key1": "value1"}), Context.from_prompt_vars({"key2": "value2"})] * 5
 prompt_collection = PromptCollection.create_prompts(
     ...
     contexts=contexts,

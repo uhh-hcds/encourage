@@ -9,6 +9,7 @@ from pydantic import BaseModel, conint
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.prompts import PromptCollection
+from encourage.prompts.context import Context
 
 
 class AnswerFaithfulness(Metric):
@@ -27,32 +28,30 @@ class AnswerFaithfulness(Metric):
         claim_prompts, response_indices = [], []
         for response_idx, response in enumerate(responses):
             sentences = nltk.sent_tokenize(response.response)
-            # Step 2: generate questions (only for valid answers)
-            contexts = [
-                {
+            for sent in sentences:
+                tmp = {
                     "examples": [EXAMPLE_1_SPLIT, EXAMPLE_2_SPLIT],
                     "task": {
-                        "context": response.context,
+                        "question": response.user_prompt,
                         "answer": response.response,
-                        "sentence": sen,
+                        "sentence": sent,
                     },
                     "output_model": OutputSplit,
                 }
-                for sen in sentences
-            ]
-            claim_prompts += contexts
-            response_indices += [response_idx] * len(sentences)
+                claim_prompts.append(Context.from_prompt_vars(tmp))
+                response_indices += [response_idx] * len(sentences)
 
         # Step 2: Prompt Collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts="",
-            user_prompts=["" for _ in contexts],
-            contexts=contexts,
+            user_prompts=["" for _ in claim_prompts],
+            contexts=claim_prompts,
             template_name=MetricTemplates.LLAMA3_ANSWER_FAITHFULNESS_SPLIT.value,
         )
 
         # Step 2: Generate claims
-        responses_claims: ResponseWrapper = self._runner.run(prompt_collection, schema=OutputSplit)
+        self._runner.add_schema(OutputSplit)
+        responses_claims: ResponseWrapper = self._runner.run(prompt_collection)
 
         # Step 3: Gather claims per record
         response_to_claims: list[list] = [[] for _ in range(len(responses))]
@@ -61,17 +60,18 @@ class AnswerFaithfulness(Metric):
 
         # Step 4: Prepare NLI prompts using PromptCollection
         nli_contexts = [
-            {
-                "examples": [EXAMPLE_1_NLI, EXAMPLE_2_NLI],
-                "task": {
-                    "context": response.context,
-                    "statements": claims,
-                },
-                "output_model": OutputNLI,
-            }
+            Context.from_prompt_vars(
+                {
+                    "examples": [EXAMPLE_1_NLI, EXAMPLE_2_NLI],
+                    "task": {
+                        "context": response.context,
+                        "statements": claims,
+                    },
+                    "output_model": OutputNLI,
+                }
+            )
             for response, claims in zip(responses, response_to_claims)
         ]
-
         nli_prompt_collection = PromptCollection.create_prompts(
             sys_prompts="",
             user_prompts=["" for _ in nli_contexts],
@@ -80,7 +80,8 @@ class AnswerFaithfulness(Metric):
         )
 
         # Step 4: Generate NLI responses
-        nli_responses: ResponseWrapper = self._runner.run(nli_prompt_collection, schema=OutputNLI)
+        self._runner.add_schema(OutputNLI)
+        nli_responses: ResponseWrapper = self._runner.run(nli_prompt_collection)
         return self._calculate_metric(nli_responses)
 
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:

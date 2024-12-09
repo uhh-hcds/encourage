@@ -3,6 +3,9 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 
+from encourage.prompts.context import Context
+from encourage.prompts.meta_data import MetaData
+
 with mock.patch.dict("sys.modules", {"vllm": mock.MagicMock()}):
     from encourage.prompts.prompt_collection import PromptCollection
     from encourage.prompts.prompt_reformatter import PromptReformatter
@@ -61,8 +64,8 @@ class TestPromptCollection(unittest.TestCase):
         )
         self.assertEqual(len(prompt_collection), 2)
         for prompt in prompt_collection.prompts:
-            self.assertEqual(prompt.context, [])
-            self.assertEqual(prompt.meta_data, [])
+            self.assertEqual(prompt.context, Context())
+            self.assertEqual(prompt.meta_data, MetaData())
             self.assertEqual(prompt.reformatted, "Reformatted prompt")
 
     def test_create_prompts_partial_contexts_and_meta_datas(self):

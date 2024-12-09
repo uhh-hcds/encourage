@@ -6,6 +6,8 @@ import numpy as np
 from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.answer_similarity import AnswerSimilarity
+from encourage.prompts.context import Context
+from encourage.prompts.meta_data import MetaData
 
 
 class TestAnswerSimilarity(unittest.TestCase):
@@ -19,16 +21,18 @@ class TestAnswerSimilarity(unittest.TestCase):
                 user_prompt="User prompt example.",
                 response="This is a generated answer.",
                 conversation_id=1,
-                meta_data={
-                    "reference_answer": "This is the reference answer.",
-                    "reference_document": ["doc1"],  # Required field for MRR
-                },
-                context={
-                    "contexts": [  # Required field for MRR
+                meta_data=MetaData(
+                    tags={
+                        "reference_answer": "This is the reference answer.",
+                        "reference_document": ["doc1"],
+                    }
+                ),
+                context=Context.from_documents(
+                    [
                         {"content": "Here is an example content", "document": "doc1", "score": 1.0},
                         {"content": "Here is example content", "document": "doc2", "score": 0.5},
                     ]
-                },
+                ),
                 arrival_time=0.0,
                 finished_time=1.0,
             ),
@@ -39,16 +43,18 @@ class TestAnswerSimilarity(unittest.TestCase):
                 user_prompt="Another user prompt.",
                 response="Another generated answer.",
                 conversation_id=2,
-                meta_data={
-                    "reference_answer": "Another reference answer.",
-                    "reference_document": ["doc2"],  # Required field for MRR
-                },
-                context={
-                    "contexts": [  # Required field for MRR
+                meta_data=MetaData(
+                    tags={
+                        "reference_answer": "Another reference answer.",
+                        "reference_document": ["doc2"],  # Required field for MRR
+                    }
+                ),
+                context=Context.from_documents(
+                    [
                         {"content": "Here is an example content", "document": "doc2", "score": 1.0},
                         {"content": "Here is an example content", "document": "doc1", "score": 0.0},
                     ]
-                },
+                ),
                 arrival_time=0.0,
                 finished_time=1.0,
             ),

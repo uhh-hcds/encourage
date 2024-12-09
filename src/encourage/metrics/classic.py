@@ -51,14 +51,14 @@ class ContextLength(Metric):
         super().__init__(
             name="context_length",
             description="Average length of the context",
-            required_context=["contexts"],
+            required_documents=True,
         )
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
         lengths = [
-            sum(len(word_tokenize(context["content"])) for context in r.context["contexts"])
+            sum(len(word_tokenize(document.content)) for document in r.context.documents)
             for r in responses
         ]
         score = float(np.mean(lengths))
@@ -237,7 +237,7 @@ class MeanReciprocalRank(Metric):
             name="mrr",
             description="Mean Reciprocal Rank (MRR) for the responses",
             required_meta_data=["reference_document"],
-            required_context=["contexts"],
+            required_documents=True,
         )
 
     def responses_to_trec(self, responses: ResponseWrapper) -> tuple:
@@ -247,7 +247,7 @@ class MeanReciprocalRank(Metric):
             query_id = response.request_id
             relevant = {source: 1 for source in response.meta_data["reference_document"]}
             retrieved = {
-                context["document"]: context["score"] for context in response.context["contexts"]
+                document.content: document.score for document in response.context.documents
             }
             qrels[query_id] = relevant
             run[query_id] = retrieved

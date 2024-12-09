@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from encourage.prompts.context import Context
+from encourage.prompts.meta_data import MetaData
+
 
 @dataclass
 class Response:
@@ -15,8 +18,8 @@ class Response:
     user_prompt: str
     response: Any | str
     conversation_id: int = 0
-    meta_data: dict[str, Any] = field(default_factory=dict)
-    context: dict[str, Any] = field(default_factory=dict)
+    context: Context = field(default_factory=Context)
+    meta_data: MetaData = field(default_factory=MetaData)
     arrival_time: float = 0.0
     finished_time: float = 0.0
     processing_time: float = field(init=False)
@@ -46,12 +49,18 @@ class Response:
             f"🧑‍💻 User Prompt:\n{self.user_prompt}",
         ]
 
-        if isinstance(self.context, dict):
-            keys = ", ".join(self.context.keys())
-            response_details.append(f"📚 Added Context keys: {keys} (See Template for details.)")
+        if self.context.documents:
+            response_details.append("📄 Context Documents:")
+            for idx, document in enumerate(self.context.documents):
+                response_details.append(
+                    f"  {idx + 1}. {document.content} (Score: {document.score})"
+                )
+            response_details.append(" Prompt Variables:")
+            for key, value in self.context.prompt_vars.items():
+                response_details.append(f"  {key}: {value}")
 
-        if self.sys_prompt and len(self.sys_prompt) > 200:
-            system_prompt = f"{self.sys_prompt[:200]}[...]\n"
+        if self.sys_prompt and len(self.sys_prompt) > 50:
+            system_prompt = f"{self.sys_prompt[:50]}[...]\n"
         else:
             system_prompt = f"{self.sys_prompt}\n"
 
@@ -72,12 +81,12 @@ class Response:
 
         return "\n".join(response_details)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, truncated: bool = True) -> dict[str, Any]:
         """Get the response details as a dictionary."""
         return {
             "request_id": self.request_id,
             "prompt_id": self.prompt_id,
-            "sys_prompt": self.sys_prompt,
+            "sys_prompt": self.sys_prompt if not truncated else self.sys_prompt[:50],
             "user_prompt": self.user_prompt,
             "response": self.response,
             "conversation_id": self.conversation_id,

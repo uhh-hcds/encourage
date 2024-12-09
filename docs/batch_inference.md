@@ -36,8 +36,8 @@ class Prompt:
     user_prompt: str        # The user's question or request
     id: str                 # A unique identifier for each prompt
     conversation_id: int    # An identifier for tracking conversations
-    context: list[dict]     # A list of dictionaries with additional context information
-    meta_data: list[dict]   # A list of dictionaries with metadata related to the prompt
+    context: list[Context]     # A list of dictionaries with additional context information
+    meta_data: list[MetaData]   # A list of dictionaries with metadata related to the prompt
     reformated: str         # Reformatted prompt data (used internally)
 ```
 
@@ -51,10 +51,10 @@ sys_prompts = "You are a helpful AI that only speaks like a pirate"
 user_prompts = ["User prompt 1", "User prompt 2"] * 5
 
 # Context information for each prompt (additional data or background info)
-contexts = [{"key1": "value1"}, {"key2": "value2"}] * 5
+contexts = [Context.from_prompt_vars({"key1": "value1"}), Context.from_prompt_vars({"key2": "value2"})] * 5
 
-# Metadata associated with each prompt (e.g., priority, tags)
-meta_datas = [{"meta": "data1"}, {"meta": "data2"}] * 5
+# # Metadata associated with each prompt (e.g., priority, tags)
+meta_datas = [MetaData({"meta": "data1"}), MetaData({"meta": "data2"})] * 5
 
 # Create a PromptCollection using the create_prompts method
 prompt_collection = PromptCollection.create_prompts(
@@ -121,7 +121,12 @@ class User(BaseModel):
   id: int
   ...
 
-responses = runner.run(prompt_collection, schema=User)
+sampling_params = SamplingParams(
+  temperature=0.5, 
+  max_tokens=1000, 
+  guided_decoding=GuidedDecodingParams(json=User.model_json_schema()))
+
+responses = runner.run(prompt_collection)
 ```
 
 Further examples:

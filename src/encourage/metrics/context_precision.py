@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
@@ -19,7 +20,6 @@ class ContextPrecision(Metric):
             name="context-precision",
             description="Check how relevant the context is to the ground-truth answer.",
             runner=runner,
-            required_context=["contexts"],
         )
 
     def _average_precision(self, labels: List[int]) -> float:
@@ -38,18 +38,20 @@ class ContextPrecision(Metric):
         """Check how relevant the context is to the ground-truth answer."""
         self.validate_nested_keys(responses)
         # Step 1: Prompts preparation
-        contexts = [
-            {
-                "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
-                "task": {
-                    "question": response.user_prompt,
-                    "context": response.context,
-                    "answer": response.response,
-                },
-                "output_model": Verdict,
-            }
-            for response in responses
-        ]
+        contexts = []
+        for response in responses:
+            context = Context.from_prompt_vars(
+                {
+                    "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
+                    "task": {
+                        "question": response.user_prompt,
+                        "answer": response.response,
+                    },
+                    "output_model": Verdict,
+                }
+            )
+            context.add_documents(response.context.documents)
+            contexts.append(context)
 
         # Step 2: Prompt Collection
         prompt_collection = PromptCollection.create_prompts(
@@ -58,7 +60,8 @@ class ContextPrecision(Metric):
             contexts=contexts,
             template_name=MetricTemplates.LLAMA3_CONTEXT_PRECISION.value,
         )
-        self.responses = self._runner.run(prompt_collection, schema=Verdict)
+        self._runner.add_schema(Verdict)
+        self.responses = self._runner.run(prompt_collection)
         return self._calculate_metric(responses)
 
     def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
@@ -67,7 +70,7 @@ class ContextPrecision(Metric):
         all_labels = []
         current_idx = 0
         for response in input_responses:
-            contexts_cnt = len(response.context["contexts"])
+            contexts_cnt = len(response.context.documents)
             verdicts = self.responses[current_idx : current_idx + contexts_cnt]  # type: ignore
             labels = [response.response.verdict for response in verdicts]  # type: ignore
             all_labels.append(labels)
