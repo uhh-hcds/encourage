@@ -7,7 +7,6 @@ from typing import Any
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.prompts.context import Document
 
 
 class MetricTemplates(Enum):
@@ -75,8 +74,6 @@ class Metric(ABC):
                 raise ValueError("response.context.documents must be a list of documents.")
 
             for doc in response.context.documents:
-                if not isinstance(doc, Document):
-                    raise ValueError("Each item in documents must be an instance of Document.")
                 if not doc.content:
                     raise ValueError("Each document must contain 'content'.")
                 if doc.score is not None and not isinstance(doc.score, (int, float)):
