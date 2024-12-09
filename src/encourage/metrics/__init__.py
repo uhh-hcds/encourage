@@ -16,6 +16,7 @@ from encourage.metrics.classic import (
 from encourage.metrics.context_precision import ContextPrecision
 from encourage.metrics.context_recall import ContextRecall
 from encourage.metrics.non_answer_critic import NonAnswerCritic
+from encourage.metrics.number_match import NumberMatch
 
 __all__ = [
     "AnswerFaithfulness",
@@ -34,4 +35,5 @@ __all__ = [
     "ContextPrecision",
     "ContextRecall",
     "NonAnswerCritic",
+    "NumberMatch",
 ]
