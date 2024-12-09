@@ -32,7 +32,7 @@ class Context:
     prompt_vars: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def from_documents(cls, documents: list[Document | str]) -> "Context":
+    def from_documents(cls, documents: list[Document] | list[str]) -> "Context":
         """Create a Context instance from a list of documents.
 
         Args:
@@ -55,7 +55,7 @@ class Context:
         """
         self.documents.append(self._process_single_document(document))
 
-    def add_documents(self, documents: list[Document | str]) -> None:
+    def add_documents(self, documents: list[Document] | list[str]) -> None:
         """Add a list of documents to the context.
 
         Args:
@@ -87,7 +87,7 @@ class Context:
         return document
 
     @classmethod
-    def _process_documents(cls, documents: list[Document | str]) -> list[Document]:
+    def _process_documents(cls, documents: list[Document] | list[str]) -> list[Document]:
         """Process a list of documents, converting each to a Document instance if needed.
 
         Args:
