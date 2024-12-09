@@ -23,7 +23,8 @@ class NumberMatch(Metric):
         self.validate_nested_keys(responses)
 
         scores = [
-            int(self.compute_score(r.response, r.meta_data["reference_answer"])) for r in responses
+            int(self.compute_score(r.response, r.meta_data["reference_answer"] or ""))
+            for r in responses
         ]
 
         score = 100.0 * sum(scores) / len(scores) if scores else 0.0
