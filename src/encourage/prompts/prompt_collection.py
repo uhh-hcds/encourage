@@ -86,6 +86,11 @@ class PromptCollection:
         """
         data = json.loads(json_data)
         prompts = [Prompt.from_json(json.dumps(p)) for p in data.get("prompts", [])]
+        for prompt in prompts:
+            documents = prompt.context["documents"]  # type: ignore
+            prompt.context = Context.from_prompt_vars(prompt.context["prompt_vars"])  # type: ignore
+            prompt.context.add_documents(documents)
+            prompt.meta_data = MetaData(tags=prompt.meta_data)  # type: ignore
         return cls(prompts=prompts)
 
     def to_json(self) -> str:

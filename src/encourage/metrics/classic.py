@@ -245,7 +245,8 @@ class MeanReciprocalRank(Metric):
         qrels, run = {}, {}
         for response in responses:
             query_id = response.request_id
-            relevant = {source: 1 for source in response.meta_data["reference_document"]}
+            # TODO: Handle the score correctly
+            relevant = {source: 1 for source in response.meta_data["reference_document"]}  # type: ignore
             retrieved = {
                 document.content: document.score for document in response.context.documents
             }

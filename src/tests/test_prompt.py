@@ -15,8 +15,11 @@ class TestPromptCollection(unittest.TestCase):
     def setUp(self):
         self.sys_prompts = ["System prompt 1", "System prompt 2"]
         self.user_prompts = ["User prompt 1", "User prompt 2"]
-        self.contexts = [[{"info": "context1"}], [{"info": "context2"}]]
-        self.meta_datas = [[{"meta": "meta1"}], [{"meta": "meta2"}]]
+        self.contexts = [
+            Context.from_prompt_vars({"info": "context1"}),
+            Context.from_prompt_vars({"info": "context2"}),
+        ]
+        self.meta_datas = [MetaData({"meta": "data1"}), MetaData({"meta": "data2"})]
         self.model_name = "ModelX"
         self.template_name = "TemplateA"
 
@@ -115,8 +118,8 @@ class TestPromptCollection(unittest.TestCase):
                         "sys_prompt": "System prompt 1",
                         "user_prompt": "User prompt 1",
                         "conversation_id": 0,
-                        "context": [{"info": "context1"}],
-                        "meta_data": [{"meta": "meta1"}],
+                        "context": {"documents": [], "prompt_vars": {"info": "context1"}},
+                        "meta_data": {"meta": "data1"},
                         "reformatted": "Reformatted prompt",
                     },
                     {
@@ -124,8 +127,8 @@ class TestPromptCollection(unittest.TestCase):
                         "sys_prompt": "System prompt 2",
                         "user_prompt": "User prompt 2",
                         "conversation_id": 0,
-                        "context": [{"info": "context2"}],
-                        "meta_data": [{"meta": "meta2"}],
+                        "context": {"documents": [], "prompt_vars": {"info": "context2"}},
+                        "meta_data": {"meta": "data2"},
                         "reformatted": "Reformatted prompt",
                     },
                 ]

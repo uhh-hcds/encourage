@@ -124,3 +124,10 @@ class Context:
 
         """
         self.prompt_vars.update(prompt_vars)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Context instance to a dictionary."""
+        return {
+            "documents": [{"content": doc.content, "score": doc.score} for doc in self.documents],
+            "prompt_vars": self.prompt_vars,
+        }

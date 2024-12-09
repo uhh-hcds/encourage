@@ -42,8 +42,8 @@ class Prompt:
                 "conversation_id": self.conversation_id,
                 "sys_prompt": self.sys_prompt,
                 "user_prompt": self.user_prompt,
-                "context": self.context,
-                "meta_data": self.meta_data,
+                "context": self.context.to_dict(),
+                "meta_data": self.meta_data.to_dict(),
                 "reformatted": self.reformatted,
             }
         )
