@@ -29,7 +29,7 @@ class AnswerSimilarity(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Estimate the similarity between answer and reference embeddings."""
         generated_and_reference = [
-            (response.response, response.meta_data.get_tag("reference_answer"))
+            (response.response, response.meta_data["reference_answer"])
             for response in responses
             if response.response is not None
         ]
