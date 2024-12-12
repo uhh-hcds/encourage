@@ -11,6 +11,7 @@ from vllm.sampling_params import GuidedDecodingParams
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.conversation import Conversation
 from encourage.prompts.prompt_collection import PromptCollection
+from encourage.utils.tracing import conditional_mlflow_trace
 
 
 class ChatInferenceRunner:
@@ -62,6 +63,7 @@ class BatchInferenceRunner:
         self.llm = llm
         self.sampling_parameters = sampling_parameters
 
+    @conditional_mlflow_trace
     def run(
         self,
         prompt_collection: PromptCollection,

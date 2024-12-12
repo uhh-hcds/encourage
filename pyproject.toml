@@ -1,6 +1,6 @@
 [project]
 name = "encourage"
-version = "0.1.17"
+version = "0.1.19"
 description = "ENCOURAGE"
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -32,6 +32,7 @@ dependencies = [
     "absl-py>=2.1.0",
     "rouge-score>=0.1.2",
     "nltk>=3.9.1",
+    "mlflow>=2.18.0",
 ]
 
 [project.optional-dependencies]

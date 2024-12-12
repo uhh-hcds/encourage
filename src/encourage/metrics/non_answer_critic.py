@@ -50,12 +50,12 @@ class NonAnswerCritic(Metric):
         if not self.responses:
             return MetricOutput(score=0.0, raw=[], misc={"raw_output": []})
 
-        good_answers = [not response.response.non_answer for response in self.responses]  # type: ignore
+        good_answers = [not response.response.non_answer for response in self.responses]
 
         return MetricOutput(
             score=sum(good_answers) / len(self.responses),
-            raw=[response.response.non_answer for response in self.responses],  # type: ignore
-            misc={"raw_output": [response.response.rationale for response in self.responses]},  # type: ignore
+            raw=[response.response.non_answer for response in self.responses],
+            misc={"raw_output": [response.response.rationale for response in self.responses]},
         )
 
 

@@ -1,7 +1,7 @@
 """Module that defines the ResponseWrapper class."""
 
 import logging
-from typing import Iterator
+from typing import Any, Iterator
 
 from vllm import RequestOutput
 
@@ -11,6 +11,7 @@ from encourage.prompts.conversation import Conversation, Role
 from encourage.prompts.meta_data import MetaData
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
+from encourage.utils.tracing import enable_tracing
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -94,6 +95,7 @@ class ResponseWrapper:
         return cls(responses)
 
     @staticmethod
+    @enable_tracing(span_name="handle_conversation_response")
     def handle_conversation_response(
         sys_prompt: str,
         conversation_id: int,
@@ -124,8 +126,9 @@ class ResponseWrapper:
             ),
         )
 
-    @staticmethod
-    def handle_prompt_response(request_output: RequestOutput, prompt: Prompt) -> Response:
+    @classmethod
+    @enable_tracing(span_name="handle_prompt_response")
+    def handle_prompt_response(cls, request_output: RequestOutput, prompt: Prompt) -> Response:
         """Create a Response object from a RequestOutput and Prompt."""
         return Response(
             request_id=request_output.request_id,
@@ -146,6 +149,40 @@ class ResponseWrapper:
                 if request_output.metrics and request_output.metrics.finished_time is not None
                 else 0.0
             ),
+        )
+
+    @staticmethod
+    def _trace_logic(
+        span: Any, func_input: tuple[Any, RequestOutput, Prompt], func_return: Response
+    ) -> None:
+        """Trace logic for handle_prompt_response."""
+        _ = func_return
+        request_output: RequestOutput = func_input[1]
+        prompt: Prompt = func_input[2]
+
+        span.set_inputs(
+            {
+                "prompt": prompt.user_prompt,
+                "sys_prompt": prompt.sys_prompt,
+                **prompt.meta_data.to_dict(),
+                **prompt.context.to_dict(),
+            }
+        )
+        span.set_outputs(
+            {
+                "response": request_output.outputs[0].text
+                if request_output.outputs
+                else "No response",
+            }
+        )
+        span.set_attributes(
+            {
+                "request_id": request_output.request_id,
+                "conversation_id": prompt.conversation_id,
+                "prompt_id": prompt.id,
+                "arrival_time": request_output.metrics.arrival_time,  # type: ignore
+                "finished_time": request_output.metrics.finished_time,  # type: ignore
+            }
         )
 
     def print_response_summary(self) -> None:
