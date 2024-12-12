@@ -52,10 +52,10 @@ class ContextRecall(Metric):
         return self._calculate_metric()
 
     def _calculate_metric(self) -> MetricOutput:
-        all_sentences = [response.response.sentences for response in self.responses]  # type: ignore
-        total = [len(response.response.sentences) for response in self.responses]  # type: ignore
+        all_sentences = [response.response.sentences for response in self.responses]
+        total = [len(response.response.sentences) for response in self.responses]
         attributed = [
-            sum(sent.label == 1 for sent in response.response.sentences)  # type: ignore
+            sum(sent.label == 1 for sent in response.response.sentences)
             for response in self.responses
         ]
         raw = [a / t if t > 0 else np.nan for a, t in zip(attributed, total)]

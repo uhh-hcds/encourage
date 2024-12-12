@@ -17,10 +17,10 @@ This repository provides a flexible library for running local inference with or 
   - Enables conversational and batch inference, optimizing parallel processing.
 - ⚙️ **[jinja2](https://github.com/pallets/jinja)**
   - Offers a template engine for dynamic prompt generation.
+- 📝 **[mlflow](https://github.com/mlflow/mlflow)**
+  - Designed to ensure observability of the model performance and tracing.
 - 🧭 **[qdrant](https://github.com/qdrant/qdrant)**
   - Supports robust vector search for efficient data retrieval.
-- 📝 **[outlines](https://github.com/dottxt-ai/outlines)**
-  - Designed to ensure outputs are in a structured format.
 - 🔄 **[chroma](https://github.com/chroma-core/chroma)** *(Coming soon)*
   - Planned as a strong alternative to qdrant for vector search.
 
@@ -51,3 +51,10 @@ For understanding how to use the inference runners, refer to the following tutor
 To use a custom template for the inference, follow the steps below:
 
 - [Create a custom template](./docs/templates.md)
+
+
+### 📈 Model Tracking
+
+For tracking the model performance, use the following commands:
+
+- [Track the model](./docs/mlflow.md)
