@@ -20,7 +20,7 @@ dependencies = [
     "qdrant-client",
     "uv==0.4.28",
     "pytest",
-    "vllm==0.6.2",
+    "vllm==0.6.4",
     "pydantic>=2.9.2",
     "sentence-transformers>=3.2.1",
     "fastembed>=0.4.1",
