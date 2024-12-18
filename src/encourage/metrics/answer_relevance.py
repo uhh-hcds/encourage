@@ -78,7 +78,7 @@ class AnswerRelevance(Metric):
     def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
         # Step 3: Relevance calculation
         scores = [
-            self._question_similarity(response.user_prompt, generated.response.question)  # type: ignore
+            self._question_similarity(response.user_prompt, generated.response.question)
             for response, generated in zip(input_responses, self.responses)
         ]
 

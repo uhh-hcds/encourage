@@ -71,8 +71,8 @@ class ContextPrecision(Metric):
         current_idx = 0
         for response in input_responses:
             contexts_cnt = len(response.context.documents)
-            verdicts = self.responses[current_idx : current_idx + contexts_cnt]
-            labels = [response.response.verdict for response in verdicts]
+            verdicts = self.responses[current_idx : current_idx + contexts_cnt]  # type: ignore
+            labels = [response.verdict for response in verdicts]  # type: ignore
             all_labels.append(labels)
             precision = self._average_precision(labels)
             precisions_per_questions.append(precision)

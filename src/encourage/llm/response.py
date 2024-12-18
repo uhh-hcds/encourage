@@ -16,7 +16,7 @@ class Response:
     prompt_id: str
     sys_prompt: str
     user_prompt: str
-    response: Any | str
+    response: Any
     conversation_id: int = 0
     context: Context = field(default_factory=Context)
     meta_data: MetaData = field(default_factory=MetaData)

@@ -1,5 +1,6 @@
 """Module for defining the Context class, which represents the context for a prompt."""
 
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -15,7 +16,9 @@ class Document:
     """
 
     content: str
-    score: float | None
+    score: float | None = None
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    meta_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -83,7 +86,11 @@ class Context:
         if isinstance(document, str):
             return Document(content=document, score=None)
         elif isinstance(document, dict):
-            return Document(content=document.get("content", ""), score=document.get("score", None))
+            return Document(
+                id=document.get("id", None),
+                content=document.get("content", ""),
+                score=document.get("score", None),
+            )
         return document
 
     @classmethod

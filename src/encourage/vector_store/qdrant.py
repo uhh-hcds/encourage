@@ -1,10 +1,10 @@
 """Qdrant vector store implementation."""
 
 import logging
-import uuid
 from typing import Any
 
-from llama_index.vector_stores.qdrant import QdrantVectorStore
+from llama_index.core.vector_stores.types import BasePydanticVectorStore
+from llama_index.vector_stores.chroma import ChromaVectorStore
 from qdrant_client import AsyncQdrantClient, QdrantClient, models
 from qdrant_client.conversions import common_types
 
@@ -61,8 +61,8 @@ class QdrantCustomClient(VectorStore):
             logger.info(f"Collection {collection_name} deleted")
             self.create_collection(collection_name)
 
-        ids = [str(uuid.uuid4()) for _ in range(len(vector_store_batch))]
-        texts = [doc.text for doc in vector_store_batch.documents]
+        ids = [str(doc.id) for doc in vector_store_batch.documents]
+        texts = [doc.content for doc in vector_store_batch.documents]
         meta_datas = [doc.meta_data for doc in vector_store_batch.documents]
         self.client.add(
             collection_name,
@@ -88,6 +88,7 @@ class QdrantCustomClient(VectorStore):
         """Query a Qdrant collection."""
         return self.client.search(collection_name, query, top_k, **kwargs)
 
-    def get_llama_index_class(self, collection_name: str) -> QdrantVectorStore:
+    def get_llama_index_class(self, collection_name: str) -> BasePydanticVectorStore:
         """Get the Llama index class."""
-        return QdrantVectorStore(client=self.client, collection_name=collection_name)
+        collection = self.client.get_collection(collection_name=collection_name)
+        return ChromaVectorStore(chroma_collection=collection)
