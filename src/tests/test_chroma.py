@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from contextlib import suppress
 
 from chromadb.errors import InvalidCollectionException
@@ -20,6 +21,7 @@ class TestChromaClient(unittest.TestCase):
         self.documents = [
             Document(content="This is document 1", meta_data=MetaData({"source": "test1"})),
             Document(content="This is document 2", meta_data=MetaData({"source": "test2"})),
+            Document(content="This is document 3", meta_data=MetaData({"source": "test3"})),
         ]
 
     def tearDown(self):
@@ -75,9 +77,57 @@ class TestChromaClient(unittest.TestCase):
         )
 
         # Verify results
-        self.assertEqual(len(query_result["documents"][0]), 1)
-        self.assertIn("This is document 1", query_result["documents"][0][0])
+        self.assertEqual(len(query_result), 1)  # Ensure only one document is returned
+
+        # Check that the first result is a valid Document
+        doc = query_result[0]
+        self.assertIsInstance(doc, Document)
+        self.assertIsInstance(doc.id, uuid.UUID)
+        self.assertIsInstance(doc.content, str)
+        self.assertIsInstance(doc.meta_data, MetaData)
+        self.assertIsInstance(doc.distance, (int, float))
+
+        # Verify the content of the document
+        self.assertEqual(doc.content, "This is document 1")  # Check that the content is correct
+
         print("Query executed successfully.")
+
+    def test_query_multiple_documents(self):
+        """Test querying multiple documents in a collection."""
+        batch = VectorStoreBatch(documents=self.documents)
+        self.chroma_client.insert_documents("test_collection", batch)
+
+        # Perform a query
+        query_result = self.chroma_client.query(
+            "test_collection", query=["Document for querying"], top_k=3
+        )
+
+        # Verify results
+        self.assertEqual(len(query_result), 3)
+
+        # Check that the first three results are valid Documents
+        for doc in query_result:
+            self.assertIsInstance(doc, Document)
+            self.assertIsInstance(doc.id, uuid.UUID)
+            self.assertIsInstance(doc.content, str)
+            self.assertIsInstance(doc.meta_data, MetaData)
+            self.assertIsInstance(doc.distance, (int, float))
+
+        # Verify the content of the documents
+        self.assertIn(
+            query_result[0].content,
+            ["This is document 1", "This is document 2", "This is document 3"],
+        )
+        self.assertIn(
+            query_result[1].content,
+            ["This is document 1", "This is document 2", "This is document 3"],
+        )
+        self.assertIn(
+            query_result[2].content,
+            ["This is document 1", "This is document 2", "This is document 3"],
+        )
+
+        print("Query for multiple documents executed successfully.")
 
     def test_delete_collection(self):
         """Test deleting a collection."""

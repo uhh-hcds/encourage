@@ -19,6 +19,7 @@ class Document:
 
     content: str
     score: float | None = None
+    distance: float | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     meta_data: MetaData = field(default_factory=MetaData)
 

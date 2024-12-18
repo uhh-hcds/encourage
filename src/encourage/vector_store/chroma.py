@@ -1,6 +1,7 @@
 """Chroma vector store implementation."""
 
 import logging
+import uuid
 from contextlib import suppress
 from typing import Any, Sequence
 
@@ -9,6 +10,7 @@ from llama_index.core.vector_stores.types import BasePydanticVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
 from encourage.prompts.context import Document
+from encourage.prompts.meta_data import MetaData
 from encourage.vector_store.vector_store import VectorStore, VectorStoreBatch
 
 logger = logging.getLogger(__name__)
@@ -69,9 +71,10 @@ class ChromaClient(VectorStore):
         result = collection.query(query_texts=query, n_results=top_k, **kwargs)
         return [
             Document(
-                id=result["ids"][0][i],
-                content=result["documents"][0][i],
-                meta_data=result["metadatas"][0][i],
+                id=uuid.UUID(result["ids"][0][i]),
+                content=result["documents"][0][i],  # type: ignore
+                meta_data=MetaData(tags=result["metadatas"][0][i]),  # type: ignore
+                distance=result["distances"][0][i],  # type: ignore
             )
             for i in range(len(result["ids"][0]))
         ]
