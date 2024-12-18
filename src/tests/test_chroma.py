@@ -4,6 +4,7 @@ from contextlib import suppress
 from chromadb.errors import InvalidCollectionException
 
 from encourage.prompts.context import Document
+from encourage.prompts.meta_data import MetaData
 from encourage.vector_store.chroma import ChromaClient
 from encourage.vector_store.vector_store import VectorStoreBatch
 
@@ -16,6 +17,10 @@ class TestChromaClient(unittest.TestCase):
         # Use an in-memory client
         self.chroma_client = ChromaClient()
         self.chroma_client.create_collection(collection_name="test_collection", overwrite=True)
+        self.documents = [
+            Document(content="This is document 1", meta_data=MetaData({"source": "test1"})),
+            Document(content="This is document 2", meta_data=MetaData({"source": "test2"})),
+        ]
 
     def tearDown(self):
         """Clean up after tests."""
@@ -31,13 +36,7 @@ class TestChromaClient(unittest.TestCase):
 
     def test_insert_documents(self):
         """Test inserting documents into a collection."""
-
-        # Create mock documents
-        documents = [
-            Document(content="This is document 1", meta_data={"source": "test1"}),
-            Document(content="This is document 2", meta_data={"source": "test2"}),
-        ]
-        batch = VectorStoreBatch(documents=documents)
+        batch = VectorStoreBatch(documents=self.documents)
 
         # Insert documents
         self.chroma_client.insert_documents("test_collection", batch)
@@ -52,13 +51,7 @@ class TestChromaClient(unittest.TestCase):
 
     def test_meta_data(self):
         """Test inserting documents with metadata into a collection."""
-
-        # Create mock documents
-        documents = [
-            Document(content="Document with metadata", meta_data={"source": "test1"}),
-            Document(content="Another document with metadata", meta_data={"source": "test2"}),
-        ]
-        batch = VectorStoreBatch(documents=documents)
+        batch = VectorStoreBatch(documents=self.documents)
 
         # Insert documents
         self.chroma_client.insert_documents("test_collection", batch)
@@ -68,18 +61,12 @@ class TestChromaClient(unittest.TestCase):
         result = collection.query(query_texts=["Document with metadata"], n_results=1)
 
         self.assertEqual(len(result["documents"][0]), 1)
-        self.assertEqual(result["documents"][0][0], "Document with metadata")
+        self.assertEqual(result["documents"][0][0], "This is document 1")
         print("Documents with metadata inserted successfully.")
 
     def test_query(self):
         """Test querying documents in a collection."""
-
-        # Create and insert documents
-        documents = [
-            Document(content="Document for querying", meta_data={"source": "query_test"}),
-            Document(content="Another document", meta_data={"source": "query_test"}),
-        ]
-        batch = VectorStoreBatch(documents=documents)
+        batch = VectorStoreBatch(documents=self.documents)
         self.chroma_client.insert_documents("test_collection", batch)
 
         # Perform a query
@@ -89,7 +76,7 @@ class TestChromaClient(unittest.TestCase):
 
         # Verify results
         self.assertEqual(len(query_result["documents"][0]), 1)
-        self.assertIn("Document for querying", query_result["documents"][0][0])
+        self.assertIn("This is document 1", query_result["documents"][0][0])
         print("Query executed successfully.")
 
     def test_delete_collection(self):
