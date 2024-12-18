@@ -18,7 +18,7 @@ class Document:
     """
 
     content: str
-    score: float | None = None
+    score: float = 0.0
     distance: float | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     meta_data: MetaData = field(default_factory=MetaData)
@@ -112,7 +112,7 @@ class Context:
             doc_id = uuid.uuid4()
 
         if isinstance(document, str):
-            return Document(content=document, score=None, id=doc_id, meta_data=meta_data)
+            return Document(content=document, score=0.0, id=doc_id, meta_data=meta_data)
         elif isinstance(document, dict):
             return Document(
                 id=document.get("id", None),
