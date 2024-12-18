@@ -1,6 +1,6 @@
 [project]
 name = "encourage"
-version = "0.1.20"
+version = "0.1.21"
 description = "ENCOURAGE"
 readme = "README.md"
 requires-python = ">= 3.12"
