@@ -19,10 +19,10 @@ This repository provides a flexible library for running local inference with or 
   - Offers a template engine for dynamic prompt generation.
 - 📝 **[mlflow](https://github.com/mlflow/mlflow)**
   - Designed to ensure observability of the model performance and tracing.
+- 🔄 **[chroma](https://github.com/chroma-core/chroma)**
+  - Strong in-memory vector database for efficient data retrieval.
 - 🧭 **[qdrant](https://github.com/qdrant/qdrant)**
   - Supports robust vector search for efficient data retrieval.
-- 🔄 **[chroma](https://github.com/chroma-core/chroma)** *(Coming soon)*
-  - Planned as a strong alternative to qdrant for vector search.
 
 ---
 

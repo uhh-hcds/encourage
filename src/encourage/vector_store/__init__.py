@@ -1,21 +1,10 @@
-from encourage.vector_store.chroma import ChromaCustomClient
-from encourage.vector_store.qdrant import (
-    QdrantClient,
-    QdrantCustomClient,
-    QdrantVectorStore,
-)
-from encourage.vector_store.vector_store import (
-    VectorStore,
-    VectorStoreBatch,
-    VectorStoreDocument,
-)
+from encourage.vector_store.chroma import ChromaClient
+from encourage.vector_store.qdrant import QdrantCustomClient
+from encourage.vector_store.vector_store import VectorStore, VectorStoreBatch
 
 __all__ = [
-    "ChromaCustomClient",
-    "QdrantClient",
+    "ChromaClient",
     "QdrantCustomClient",
-    "QdrantVectorStore",
     "VectorStore",
     "VectorStoreBatch",
-    "VectorStoreDocument",
 ]

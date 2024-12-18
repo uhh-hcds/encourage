@@ -9,27 +9,17 @@ from typing import Any, Optional, Type
 
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 
+from encourage.prompts.context import Document
 from encourage.utils.file_manager import FileManager
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class VectorStoreDocument:
-    """Vector store document class."""
-
-    text: str
-    meta_data: dict
-
-    def __str__(self) -> str:
-        return f"{self.text}, {self.meta_data}"
-
-
-@dataclass
 class VectorStoreBatch:
     """Vector store batch class."""
 
-    documents: list[VectorStoreDocument]
+    documents: list[Document]
 
     def __len__(self) -> int:
         return len(self.documents)
@@ -55,8 +45,8 @@ class VectorStoreBatch:
 
         # Create documents by pairing flattened documents with their respective meta_data
         documents = [
-            VectorStoreDocument(
-                text=flatten_dict({key: entry.get(key, "") for key in doc_keys}),
+            Document(
+                content=flatten_dict({key: entry.get(key, "") for key in doc_keys}),
                 meta_data={key: entry.get(key, "") for key in meta_keys},
             )
             for entry in json_data
@@ -68,14 +58,14 @@ class VectorStoreBatch:
 class VectorStore(ABC):
     """Abstract class for vector store implementations."""
 
-    def test_connection(self, host: str, port: int) -> None:
+    def test_connection(self, url: str, port: int) -> None:
         """Test the connection to the vector store."""
         try:
-            with socket.create_connection((host, port), timeout=5):
+            with socket.create_connection((url, port), timeout=5):
                 logger.info(f"Port {port} is reachable.")
         except (socket.timeout, ConnectionRefusedError) as e:
             raise RuntimeError(
-                f"Port {port} is NOT reachable on host: {host}. Docker Container is not reachable! Error: {e}"  # noqa: E501
+                f"Port {port} is NOT reachable on host: {url}. Docker Container is not reachable! Error: {e}"  # noqa: E501
             ) from e
 
     @abstractmethod
@@ -98,7 +88,7 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
-    def query(self, collection_name: str, query: list, top_k: int, **kwargs: Any) -> list:
+    def query(self, collection_name: str, query: list, top_k: int, **kwargs: Any) -> list | dict:
         """Query the collection."""
         pass
 

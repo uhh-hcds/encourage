@@ -87,12 +87,11 @@ class AnswerFaithfulness(Metric):
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:
         # Step 6: Process results
         supported = [
-            sum(v.verdict == 1 for v in response.response.verdicts)  # type: ignore
-            for response in nli_responses
+            sum(v.verdict == 1 for v in response.response.verdicts) for response in nli_responses
         ]
-        total = [len(response.response.verdicts) for response in nli_responses]  # type: ignore
+        total = [len(response.response.verdicts) for response in nli_responses]
         scores = [s / t if t > 0 else np.nan for s, t in zip(supported, total)]
-        claims = [response.response.verdicts for response in nli_responses]  # type: ignore
+        claims = [response.response.verdicts for response in nli_responses]
 
         # micro-average over all responses
         agg = sum(supported) / sum(total)
