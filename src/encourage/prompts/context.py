@@ -2,7 +2,9 @@
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Iterator
+
+from encourage.prompts.meta_data import MetaData
 
 
 @dataclass
@@ -18,7 +20,7 @@ class Document:
     content: str
     score: float | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    meta_data: dict[str, Any] = field(default_factory=dict)
+    meta_data: MetaData = field(default_factory=MetaData)
 
 
 @dataclass
@@ -35,41 +37,53 @@ class Context:
     prompt_vars: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def from_documents(cls, documents: list[Document] | list[str]) -> "Context":
+    def from_documents(
+        cls, documents: list[Document] | list[str], meta_datas: list[MetaData] = [MetaData()]
+    ) -> "Context":
         """Create a Context instance from a list of documents.
 
         Args:
             documents (list[Document | str]): A list of Document objects or strings.
+            meta_datas (list[MetaData] | None): A list of MetaData objects.
 
         Returns:
             Context: A new Context instance with the processed documents.
 
         """
-        processed_documents = cls._process_documents(documents)
+        if meta_datas != [MetaData()] and len(documents) != len(meta_datas):
+            raise ValueError("The length of documents and meta_datas must be equal.")
+
+        processed_documents = cls._process_documents(documents, meta_datas)
         return cls(documents=processed_documents)
 
-    def add_document(self, document: Document | str) -> None:
+    def add_document(self, document: Document | str, meta_data: MetaData = MetaData()) -> None:
         """Add a single document to the context.
 
         Args:
             document (Document | str): The document to add.
             Can be a Document instance or a string to be converted into a Document.
+            meta_data (MetaData): The meta data associated with the document.
 
         """
-        self.documents.append(self._process_single_document(document))
+        self.documents.append(self._process_single_document(document, meta_data))
 
-    def add_documents(self, documents: list[Document] | list[str]) -> None:
+    def add_documents(
+        self, documents: list[Document] | list[str], meta_datas: list[MetaData] = [MetaData()]
+    ) -> None:
         """Add a list of documents to the context.
 
         Args:
             documents (list[Document | str]): A list of Document objects or strings
                                               to be added to the context.
+            meta_datas (list[MetaData]): A list of MetaData objects associated with the documents.
 
         """
-        self.documents.extend(self._process_documents(documents))
+        self.documents.extend(self._process_documents(documents, meta_datas))
 
     @staticmethod
-    def _process_single_document(document: Document | str) -> Document:
+    def _process_single_document(
+        document: Document | str, meta_data: MetaData = MetaData()
+    ) -> Document:
         """Process a single document, converting it to a Document instance if needed.
 
         Args:
@@ -78,6 +92,7 @@ class Context:
             - A string: Converted to a Document with default score.
             - A dict: Converted to a Document using 'content' and 'score' keys.
             - A Document: Returned as is.
+            meta_data (dict): The meta data associated with the document.
 
         Returns:
             Document: A processed Document instance.
@@ -90,11 +105,14 @@ class Context:
                 id=document.get("id", None),
                 content=document.get("content", ""),
                 score=document.get("score", None),
+                meta_data=meta_data,
             )
         return document
 
     @classmethod
-    def _process_documents(cls, documents: list[Document] | list[str]) -> list[Document]:
+    def _process_documents(
+        cls, documents: list[Document] | list[str], meta_datas: list[MetaData] = [MetaData()]
+    ) -> list[Document]:
         """Process a list of documents, converting each to a Document instance if needed.
 
         Args:
@@ -103,12 +121,15 @@ class Context:
             - A string
             - A dict with 'content' and 'score' keys
             - A Document instance
+            meta_datas (list[MetaData] | list[str] | None): A list of MetaData objects or strings.
 
         Returns:
             list[Document]: A list of processed Document instances.
 
         """
-        return [cls._process_single_document(doc) for doc in documents]
+        if meta_datas == [MetaData()]:
+            meta_datas = [MetaData()] * len(documents)
+        return [cls._process_single_document(doc, meta) for doc, meta in zip(documents, meta_datas)]  # type: ignore
 
     @classmethod
     def from_prompt_vars(cls, prompt_vars: dict[str, Any]) -> "Context":
@@ -138,3 +159,12 @@ class Context:
             "documents": [{"content": doc.content, "score": doc.score} for doc in self.documents],
             "prompt_vars": self.prompt_vars,
         }
+
+    def __getitem__(self, key: int) -> Document:
+        return self.documents[key]
+
+    def __setitem__(self, key: int, value: Document) -> None:
+        self.documents[key] = value
+
+    def __iter__(self) -> Iterator:
+        return iter(self.documents)
