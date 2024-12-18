@@ -99,7 +99,7 @@ class Context:
 
         """
         if isinstance(document, str):
-            return Document(content=document, score=None)
+            return Document(content=document, score=None, meta_data=meta_data)
         elif isinstance(document, dict):
             return Document(
                 id=document.get("id", None),
