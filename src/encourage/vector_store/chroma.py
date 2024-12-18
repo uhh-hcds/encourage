@@ -25,13 +25,16 @@ class ChromaClient(VectorStore):
         distance: str = "cosine",
         size: int = 1000,
         overwrite: bool = False,
+        embedding_function: chromadb.EmbeddingFunction | None = None,
     ) -> None:
         """Create a collection."""
         if overwrite:
             with suppress(ValueError):
                 self.client.delete_collection(collection_name)
         self.client.create_collection(
-            name=collection_name, metadata={"distance": distance, "size": size}
+            name=collection_name,
+            metadata={"distance": distance, "size": size},
+            embedding_function=embedding_function,
         )
 
     def delete_collection(self, collection_name: str) -> None:
