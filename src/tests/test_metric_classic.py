@@ -14,7 +14,7 @@ from encourage.metrics import (
     ReferenceAnswerLength,
 )
 from encourage.metrics.metric import MetricOutput
-from encourage.prompts.context import Context
+from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 
 
@@ -32,7 +32,7 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "This is the reference answer.",
-                        "reference_document": {"id": "1"},
+                        "reference_document": Document(id="1", content=""),
                     }
                 ),
                 context=Context.from_documents(
@@ -54,7 +54,7 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "Another reference answer.",
-                        "reference_document": {"id": "0"},  # Required field for MRR
+                        "reference_document": Document(id="0", content=""),
                     }
                 ),
                 context=Context.from_documents(
