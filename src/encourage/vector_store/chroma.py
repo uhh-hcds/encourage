@@ -8,6 +8,7 @@ import chromadb
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
+from encourage.prompts.context import Document
 from encourage.vector_store.vector_store import VectorStore, VectorStoreBatch
 
 logger = logging.getLogger(__name__)
@@ -62,11 +63,18 @@ class ChromaClient(VectorStore):
         """Get the list of collections."""
         return self.client.list_collections()
 
-    def query(self, collection_name: str, query: list, top_k: int, **kwargs: Any) -> dict:
+    def query(self, collection_name: str, query: list, top_k: int, **kwargs: Any) -> list[Document]:
         """Query the collection."""
         collection = self.client.get_collection(name=collection_name)
         result = collection.query(query_texts=query, n_results=top_k, **kwargs)
-        return dict(result)
+        return [
+            Document(
+                id=result["ids"][0][i],
+                content=result["documents"][0][i],
+                meta_data=result["metadatas"][0][i],
+            )
+            for i in range(len(result["ids"][0]))
+        ]
 
     def get_llama_index_class(self, collection_name: str) -> BasePydanticVectorStore:
         """Get the Llama index class."""
