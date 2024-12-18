@@ -2,7 +2,7 @@
 
 import logging
 from contextlib import suppress
-from typing import Any
+from typing import Any, Sequence
 
 import chromadb
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
@@ -52,6 +52,15 @@ class ChromaClient(VectorStore):
         ids = [str(document.id) for document in vector_store_document.documents]
 
         collection.add(documents=documents, metadatas=meta_data, ids=ids)  # type: ignore
+
+    def count_documents(self, collection_name: str) -> int:
+        """Count the number of documents in the collection."""
+        collection = self.client.get_collection(name=collection_name)
+        return collection.count()
+
+    def list_collections(self) -> Sequence[chromadb.Collection]:
+        """Get the list of collections."""
+        return self.client.list_collections()
 
     def query(self, collection_name: str, query: list, top_k: int, **kwargs: Any) -> dict:
         """Query the collection."""
