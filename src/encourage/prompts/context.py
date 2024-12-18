@@ -23,6 +23,16 @@ class Document:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     meta_data: MetaData = field(default_factory=MetaData)
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the Document instance to a dictionary."""
+        return {
+            "content": self.content,
+            "score": self.score,
+            "distance": self.distance,
+            "id": str(self.id),
+            "meta_data": self.meta_data.to_dict(),
+        }
+
 
 @dataclass
 class Context:
