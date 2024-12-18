@@ -48,7 +48,7 @@ class ChromaClient(VectorStore):
         collection = self.client.get_collection(name=collection_name)
 
         documents = [document.content for document in vector_store_document.documents]
-        meta_data = [document.meta_data for document in vector_store_document.documents]
+        meta_data = [document.meta_data.to_dict() for document in vector_store_document.documents]
         ids = [str(document.id) for document in vector_store_document.documents]
 
         collection.add(documents=documents, metadatas=meta_data, ids=ids)  # type: ignore
