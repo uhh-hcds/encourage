@@ -43,7 +43,7 @@ def enable_tracing(span_name: str | None = None) -> Callable:
     return decorator
 
 
-def conditional_mlflow_trace(func: Callable) -> Callable:
+def mlflow_trace(func: Callable) -> Callable:
     """Apply mlflow.trace only if _TRACING_ENABLED is True."""
 
     @wraps(func)
