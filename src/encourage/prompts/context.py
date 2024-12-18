@@ -150,9 +150,9 @@ class Context:
         if ids is None:
             ids = [uuid.uuid4() for _ in range(len(documents))]
         return [
-            cls._process_single_document(doc, meta, doc_id)
+            cls._process_single_document(doc, meta, doc_id)  # type: ignore
             for doc, meta, doc_id in zip(documents, meta_datas, ids)
-        ]  # type: ignore
+        ]
 
     @classmethod
     def from_prompt_vars(cls, prompt_vars: dict[str, Any]) -> "Context":
