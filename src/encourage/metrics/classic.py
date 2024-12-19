@@ -186,7 +186,7 @@ class F1(Metric):
             predictions=formatted_predictions,
             references=formatted_references,
         )
-        scores = np.mean(output["f1"])
+        scores = np.mean(output["f1"]) / 100
         return MetricOutput(score=scores, raw=output)
 
 
@@ -225,7 +225,7 @@ class ExactMatch(Metric):
             predictions=formatted_predictions,
             references=formatted_references,
         )
-        scores = np.mean(output["exact"])
+        scores = np.mean(output["exact"]) / 100
         return MetricOutput(score=scores, raw=output["exact"], misc={"output": output})
 
 
