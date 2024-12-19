@@ -53,7 +53,7 @@ class NonAnswerCritic(Metric):
         critic_list: list[ClassifiedAnswer] = []
         for response in self.responses:
             critic_list.append(ClassifiedAnswer.model_validate_json(response.response))
-        good_answers = [not critic.non_answer for critic in critic_list]
+        good_answers = [critic.non_answer == 0 for critic in critic_list]
 
         return MetricOutput(
             score=sum(good_answers) / len(self.responses),
