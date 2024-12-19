@@ -1,6 +1,6 @@
 """Context Recall metric for evaluating the context completeness."""
 
-from typing import List, Literal, Optional
+from typing import Iterator, List, Literal, Optional
 
 import numpy as np
 from pydantic import BaseModel
@@ -52,22 +52,21 @@ class ContextRecall(Metric):
         return self._calculate_metric()
 
     def _calculate_metric(self) -> MetricOutput:
-        all_sentences = [response.response.sentences for response in self.responses]
-        total = [len(response.response.sentences) for response in self.responses]
+        sentence_lists: list[ClassifiedSentencesList] = []
+        for response in self.responses:
+            sentence_lists.append(ClassifiedSentencesList.model_validate_json(response.response))
+        total = [len(sentence_list) for sentence_list in sentence_lists]
         attributed = [
-            sum(sent.label == 1 for sent in response.response.sentences)
-            for response in self.responses
+            sum(sent.label == 1 for sent in sentence_list) for sentence_list in sentence_lists
         ]
         raw = [a / t if t > 0 else np.nan for a, t in zip(attributed, total)]
 
-        # Avoid division by zero when sum(total) is 0
-        total_sum = sum(total)
-        score = sum(attributed) / total_sum if total_sum > 0 else 0.0
+        score = sum(attributed) / sum(total) if sum(total) > 0 else 0.0
 
         return MetricOutput(
             score=score,
             raw=raw,
-            misc={"total": total, "attributed": attributed, "sentences": all_sentences},
+            misc={"total": total, "attributed": attributed, "sentences": sentence_lists},
         )
 
 
@@ -83,6 +82,12 @@ class ClassifiedSentencesList(BaseModel):
     """A list of classified sentences."""
 
     sentences: List[ClassifiedSentence]
+
+    def __len__(self) -> int:
+        return len(self.sentences)
+
+    def __iter__(self) -> Iterator[ClassifiedSentence]:  # type: ignore
+        return iter(self.sentences)
 
 
 class Example(BaseModel):
