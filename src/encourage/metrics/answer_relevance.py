@@ -29,7 +29,7 @@ class AnswerRelevance(Metric):
         )
         self.embeddings_model = SentenceTransformer(model_name)
         # TODO: Add a parameter for the number of generated questions
-        self.n = 3
+        self.n_claims = 3
         self.non_answer_critic = NonAnswerCritic(runner)
 
     def _question_similarity(self, question: str, generated: list[str]) -> float:
@@ -84,9 +84,9 @@ class AnswerRelevance(Metric):
         # Step 3: Relevance calculation
         question_list: list[GeneratedQuestion] = []
         for response in self.responses:
-            question_list.append(GeneratedQuestion.model_validate_json(question=response.response))
+            question_list.append(GeneratedQuestion.model_validate_json(response.response))
         scores = [
-            self._question_similarity(response.user_prompt, generated.question)
+            self._question_similarity(response.user_prompt, generated.question)  # type: ignore
             for response, generated in zip(input_responses, question_list)
         ]
 

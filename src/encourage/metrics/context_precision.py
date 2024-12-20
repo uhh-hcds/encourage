@@ -64,6 +64,7 @@ class ContextPrecision(Metric):
         self.responses = self._runner.run(prompt_collection)
         return self._calculate_metric(responses)
 
+    # TODO: Fix the calculation of the metric
     def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
         # Step 3: Precision computation
         precisions_per_questions = []

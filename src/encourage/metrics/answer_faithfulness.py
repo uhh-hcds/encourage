@@ -54,6 +54,7 @@ class AnswerFaithfulness(Metric):
         responses_claims: ResponseWrapper = self._runner.run(prompt_collection)
 
         # Step 3: Gather claims per record
+        # TODO Understand what happens here
         response_to_claims: list[list] = [[] for _ in range(len(responses))]
         for response, response_idx in zip(responses_claims, response_indices):
             response_to_claims[response_idx] += response.response[1]
@@ -86,6 +87,7 @@ class AnswerFaithfulness(Metric):
 
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:
         # Step 6: Process results
+        # TODO Sometimes the response does not stop generating
         verdicts_lists: list[OutputNLI] = []
         for response in nli_responses:
             verdicts_lists.append(OutputNLI.model_validate_json(response.response))

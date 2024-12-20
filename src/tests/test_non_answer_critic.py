@@ -63,7 +63,17 @@ class TestNonAnswerCritic(unittest.TestCase):
         ]
         self.responses = ResponseWrapper(self.responses)  # Wrap the provided responses
         self.runner = create_autospec(BatchInferenceRunner)  # Mock runner
-
+        self.runner.run.return_value = ResponseWrapper(
+            [
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 1}""",  # noqa: E501
+                )
+            ]
+        )
         # Create the NonAnswerCritic instance with the mocked runner
         self.non_answer_critic = NonAnswerCritic(self.runner)
 
@@ -77,11 +87,6 @@ class TestNonAnswerCritic(unittest.TestCase):
         # Mock prompt collection and runner
         mock_prompt_collection = mock_prompt_collection.return_value
         mock_prompt_collection.create_prompts.return_value = ["mock_prompt"] * len(self.responses)
-        self.runner.run.return_value = [
-            MagicMock(non_answer=False),  # Valid answer
-            MagicMock(non_answer=True),  # Non-answer
-            MagicMock(non_answer=False),  # Valid answer
-        ]
 
         # Instantiate metric with mocked runner
         metric = NonAnswerCritic(runner=self.runner)
@@ -99,6 +104,7 @@ class TestNonAnswerCritic(unittest.TestCase):
     def test_empty_responses(self):
         # Instantiate metric and use an empty ResponseWrapper
         metric = NonAnswerCritic(runner=self.runner)
+        self.runner.run.return_value = ResponseWrapper([])
         empty_responses = ResponseWrapper([])
 
         # Call with empty responses
@@ -114,13 +120,25 @@ class TestNonAnswerCritic(unittest.TestCase):
 
         # Instantiate metric
         metric = NonAnswerCritic(runner=self.runner)
-        metric.responses = [
-            MagicMock(response=MagicMock(non_answer=False)),
-            MagicMock(response=MagicMock(non_answer=True)),
-        ]
-
-        # Run _calculate_metric directly
-        result = metric._calculate_metric()
+        self.runner.run.return_value = ResponseWrapper(
+            [
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 1}""",  # noqa: E501
+                ),
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 0}""",  # noqa: E501
+                ),
+            ]
+        )
+        result = metric(self.responses)
 
         # Assertions for calculated metric
         self.assertGreaterEqual(result.score, 0.0)
@@ -132,13 +150,25 @@ class TestNonAnswerCritic(unittest.TestCase):
 
         # Instantiate metric
         metric = NonAnswerCritic(runner=self.runner)
-        metric.responses = [
-            MagicMock(response=MagicMock(non_answer=True)),
-            MagicMock(response=MagicMock(non_answer=True)),
-        ]
-
-        # Run _calculate_metric directly
-        result = metric._calculate_metric()
+        self.runner.run.return_value = ResponseWrapper(
+            [
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 1}""",  # noqa: E501
+                ),
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 1}""",  # noqa: E501
+                ),
+            ]
+        )
+        result = metric(self.responses)
 
         # Assertions for calculated metric
         self.assertGreaterEqual(result.score, 0.0)
@@ -146,17 +176,27 @@ class TestNonAnswerCritic(unittest.TestCase):
         self.assertLessEqual(result.score, 1.0)
 
     def test_calculate_metric_no_answers(self):
-        # Setup mock for verdicts and non-answer flags
-
         # Instantiate metric
         metric = NonAnswerCritic(runner=self.runner)
-        metric.responses = [
-            MagicMock(response=MagicMock(non_answer=False)),
-            MagicMock(response=MagicMock(non_answer=False)),
-        ]
-
-        # Run _calculate_metric directly
-        result = metric._calculate_metric()
+        self.runner.run.return_value = ResponseWrapper(
+            [
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 0}""",  # noqa: E501
+                ),
+                Response(
+                    request_id="1",
+                    prompt_id="p1",
+                    sys_prompt="System prompt example.",
+                    user_prompt="User prompt example.",
+                    response="""{"rationale": "The response indicates that there is no information about a fish with a name in the second part of the story, which is characteristic of a non-answer.", "non_answer": 0}""",  # noqa: E501
+                ),
+            ]
+        )
+        result = metric(self.responses)
 
         # Assertions for calculated metric
         self.assertGreaterEqual(result.score, 0.0)
