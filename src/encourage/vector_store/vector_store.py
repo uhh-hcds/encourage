@@ -72,7 +72,7 @@ class VectorStore(ABC):
     @abstractmethod
     def create_collection(
         self, collection_name: str, distance: Any, size: int, overwrite: bool
-    ) -> None:
+    ) -> Any:
         """Create a collection."""
         pass
 
