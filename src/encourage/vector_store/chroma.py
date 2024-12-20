@@ -29,12 +29,12 @@ class ChromaClient(VectorStore):
         size: int = 1000,
         overwrite: bool = False,
         embedding_function: chromadb.EmbeddingFunction | None = None,
-    ) -> None:
+    ) -> chromadb.Collection:
         """Create a collection."""
         if overwrite:
             with suppress(ValueError):
                 self.client.delete_collection(collection_name)
-        self.client.create_collection(
+        return self.client.create_collection(
             name=collection_name,
             metadata={"distance": distance, "size": size},
             embedding_function=embedding_function,
