@@ -10,6 +10,7 @@ from typing import Any, Optional, Type
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 
 from encourage.prompts.context import Document
+from encourage.prompts.meta_data import MetaData
 from encourage.utils.file_manager import FileManager
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class VectorStoreBatch:
         documents = [
             Document(
                 content=flatten_dict({key: entry.get(key, "") for key in doc_keys}),
-                meta_data={key: entry.get(key, "") for key in meta_keys},
+                meta_data=MetaData(tags={key: entry.get(key, "") for key in meta_keys}),
             )
             for entry in json_data
         ]
@@ -71,7 +72,7 @@ class VectorStore(ABC):
     @abstractmethod
     def create_collection(
         self, collection_name: str, distance: Any, size: int, overwrite: bool
-    ) -> None:
+    ) -> Any:
         """Create a collection."""
         pass
 

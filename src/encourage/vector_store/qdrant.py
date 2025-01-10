@@ -62,12 +62,12 @@ class QdrantCustomClient(VectorStore):
             self.create_collection(collection_name)
 
         ids = [str(doc.id) for doc in vector_store_batch.documents]
-        texts = [doc.content for doc in vector_store_batch.documents]
+        content = [doc.content for doc in vector_store_batch.documents]
         meta_datas = [doc.meta_data for doc in vector_store_batch.documents]
         self.client.add(
             collection_name,
-            documents=texts,
-            metadata=meta_datas,
+            documents=content,
+            metadata=meta_datas,  # type: ignore
             ids=ids,
         )
         logger.info(

@@ -1,6 +1,6 @@
 """Check how faithful the answer is to the question."""
 
-from typing import Optional
+from typing import Iterator, Optional
 
 import nltk
 import numpy as np
@@ -54,6 +54,7 @@ class AnswerFaithfulness(Metric):
         responses_claims: ResponseWrapper = self._runner.run(prompt_collection)
 
         # Step 3: Gather claims per record
+        # TODO Understand what happens here
         response_to_claims: list[list] = [[] for _ in range(len(responses))]
         for response, response_idx in zip(responses_claims, response_indices):
             response_to_claims[response_idx] += response.response[1]
@@ -86,18 +87,24 @@ class AnswerFaithfulness(Metric):
 
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:
         # Step 6: Process results
+        # TODO Sometimes the response does not stop generating
+        verdicts_lists: list[OutputNLI] = []
+        for response in nli_responses:
+            verdicts_lists.append(OutputNLI.model_validate_json(response.response))
+
+        total = [len(verdict_list) for verdict_list in verdicts_lists]
         supported = [
-            sum(v.verdict == 1 for v in response.response.verdicts) for response in nli_responses
+            sum(v.verdict == 1 for v in verdicts_list.verdicts) for verdicts_list in verdicts_lists
         ]
-        total = [len(response.response.verdicts) for response in nli_responses]
         scores = [s / t if t > 0 else np.nan for s, t in zip(supported, total)]
-        claims = [response.response.verdicts for response in nli_responses]
 
         # micro-average over all responses
-        agg = sum(supported) / sum(total)
+        agg = sum(supported) / sum(total) if sum(total) > 0 else 0.0
 
         return MetricOutput(
-            score=agg, raw=scores, misc={"supported": supported, "total": total, "claims": claims}
+            score=agg,
+            raw=scores,
+            misc={"supported": supported, "total": total, "claims": verdicts_lists},
         )
 
 
@@ -119,6 +126,12 @@ class OutputNLI(BaseModel):
     """Output model for the AnswerFaithfulness metric using the NLI task."""
 
     verdicts: list[Verdict]
+
+    def __len__(self) -> int:
+        return len(self.verdicts)
+
+    def __iter__(self) -> Iterator[Verdict]:  # type: ignore
+        return iter(self.verdicts)
 
 
 class ExampleSplit(BaseModel):

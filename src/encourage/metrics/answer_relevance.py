@@ -16,7 +16,12 @@ from encourage.prompts.context import Context
 class AnswerRelevance(Metric):
     """How relevant the answer is to the question."""
 
-    def __init__(self, runner: BatchInferenceRunner, model_name: str = "all-mpnet-base-v2") -> None:
+    def __init__(
+        self,
+        runner: BatchInferenceRunner,
+        model_name: str = "all-mpnet-base-v2",
+        n_claims: int = 3,
+    ) -> None:
         super().__init__(
             name="answer-relevance",
             description="Check how relevant the answer is to the question",
@@ -24,7 +29,7 @@ class AnswerRelevance(Metric):
         )
         self.embeddings_model = SentenceTransformer(model_name)
         # TODO: Add a parameter for the number of generated questions
-        self.n = 3
+        self.n_claims = 3
         self.non_answer_critic = NonAnswerCritic(runner)
 
     def _question_similarity(self, question: str, generated: list[str]) -> float:
@@ -77,16 +82,19 @@ class AnswerRelevance(Metric):
 
     def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
         # Step 3: Relevance calculation
+        question_list: list[GeneratedQuestion] = []
+        for response in self.responses:
+            question_list.append(GeneratedQuestion.model_validate_json(response.response))
         scores = [
-            self._question_similarity(response.user_prompt, generated.response.question)
-            for response, generated in zip(input_responses, self.responses)
+            self._question_similarity(response.user_prompt, generated.question)  # type: ignore
+            for response, generated in zip(input_responses, question_list)
         ]
 
         # Return scores for all responses, where non-answers have a None score.
         rationales = self.non_answer_result.misc["raw_output"]
         committal_ixs = [i for i, label in enumerate(self.non_answer_result.raw) if label == 0]
 
-        full_scores: list[Optional[float]] = [None] * len(self.responses)
+        full_scores: list[Optional[float]] = [None] * len(question_list)
         for i, score in zip(committal_ixs, scores):
             full_scores[i] = score
 
@@ -96,7 +104,7 @@ class AnswerRelevance(Metric):
             misc={
                 "noncommittal": self.non_answer_result.raw,
                 "rationales": rationales,
-                "generated_questions": self.responses,
+                "generated_questions": question_list,
             },
         )
 

@@ -25,7 +25,7 @@ class MetricOutput:
     """Dataclass to store metric output."""
 
     score: float
-    raw: list[float] | list[int] | list[float | None]
+    raw: list[float] | list[int] | list[float | None] | list[Any]
     misc: dict[str, Any] = field(default_factory=dict)
 
 

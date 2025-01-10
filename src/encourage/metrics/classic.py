@@ -186,7 +186,7 @@ class F1(Metric):
             predictions=formatted_predictions,
             references=formatted_references,
         )
-        scores = np.mean(output["f1"])
+        scores = np.mean(output["f1"]) / 100
         return MetricOutput(score=scores, raw=output)
 
 
@@ -225,7 +225,7 @@ class ExactMatch(Metric):
             predictions=formatted_predictions,
             references=formatted_references,
         )
-        scores = np.mean(output["exact"])
+        scores = np.mean(output["exact"]) / 100
         return MetricOutput(score=scores, raw=output["exact"], misc={"output": output})
 
 
@@ -245,7 +245,7 @@ class MeanReciprocalRank(Metric):
         qrels, run = {}, {}
         for response in responses:
             query_id = response.request_id
-            relevant = {response.meta_data["reference_document"]["id"]: 1}  # type: ignore
+            relevant = {str(response.meta_data["reference_document"].id): 1}  # type: ignore
             retrieved = {
                 str(document.id): document.score for document in response.context.documents
             }

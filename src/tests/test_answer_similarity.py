@@ -6,7 +6,7 @@ import numpy as np
 from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.answer_similarity import AnswerSimilarity
-from encourage.prompts.context import Context
+from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 
 
@@ -23,14 +23,14 @@ class TestAnswerSimilarity(unittest.TestCase):
                 conversation_id=1,
                 meta_data=MetaData(
                     tags={
-                        "reference_answer": "This is the reference answer.",
-                        "reference_document": ["doc1"],
+                        "reference_answer": "This is a generated answer.",
+                        "reference_document": Document(id="1", content=""),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"content": "Here is an example content", "document": "doc1", "score": 1.0},
-                        {"content": "Here is example content", "document": "doc2", "score": 0.5},
+                        {"id": 1, "content": "Here is an example content", "score": 1.0},
+                        {"id": 0, "content": "Here is example content", "score": 0.5},
                     ]
                 ),
                 arrival_time=0.0,
@@ -46,13 +46,16 @@ class TestAnswerSimilarity(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "Another reference answer.",
-                        "reference_document": ["doc2"],  # Required field for MRR
+                        "reference_document": Document(id="0", content=""),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"content": "Here is an example content", "document": "doc2", "score": 1.0},
-                        {"content": "Here is an example content", "document": "doc1", "score": 0.0},
+                        {"id": 1, "content": "Here is example content", "score": 1.0},
+                        {"id": 2, "content": "Here is an example content with extra", "score": 0.0},
+                        {"id": 3, "content": "Here is an example content with extra", "score": 0.0},
+                        {"id": 4, "content": "Here is an example content with extra", "score": 0.0},
+                        {"id": 0, "content": "Here is an example content with extra", "score": 0.0},
                     ]
                 ),
                 arrival_time=0.0,

@@ -50,12 +50,15 @@ class NonAnswerCritic(Metric):
         if not self.responses:
             return MetricOutput(score=0.0, raw=[], misc={"raw_output": []})
 
-        good_answers = [not response.response.non_answer for response in self.responses]
+        critic_list: list[ClassifiedAnswer] = []
+        for response in self.responses:
+            critic_list.append(ClassifiedAnswer.model_validate_json(response.response))
+        good_answers = [critic.non_answer == 0 for critic in critic_list]
 
         return MetricOutput(
             score=sum(good_answers) / len(self.responses),
-            raw=[response.response.non_answer for response in self.responses],
-            misc={"raw_output": [response.response.rationale for response in self.responses]},
+            raw=critic_list,
+            misc={"raw_output": [critic.rationale for critic in critic_list]},
         )
 
 

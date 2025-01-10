@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from typing import Iterator, Union
 
-from encourage.prompts.context import Context
+from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_reformatter import PromptReformatter
@@ -87,7 +87,7 @@ class PromptCollection:
         data = json.loads(json_data)
         prompts = [Prompt.from_json(json.dumps(p)) for p in data.get("prompts", [])]
         for prompt in prompts:
-            documents = prompt.context["documents"]  # type: ignore
+            documents: list[Document] = prompt.context["documents"]  # type: ignore
             prompt.context = Context.from_prompt_vars(prompt.context["prompt_vars"])  # type: ignore
             prompt.context.add_documents(documents)
             prompt.meta_data = MetaData(tags=prompt.meta_data)  # type: ignore

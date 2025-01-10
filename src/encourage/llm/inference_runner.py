@@ -82,7 +82,12 @@ class BatchInferenceRunner:
 
     def add_schema(self, schema: Any) -> None:
         """Add schema for structured output."""
-        self.sampling_parameters.guided_decoding = GuidedDecodingParams(json=schema)
+        self.sampling_parameters = SamplingParams(
+            temperature=self.sampling_parameters.temperature,
+            max_tokens=self.sampling_parameters.max_tokens,
+            top_p=self.sampling_parameters.top_p,
+            guided_decoding=GuidedDecodingParams(json=schema.model_json_schema()),
+        )
 
 
 def get_new_request_output(generation_output: str) -> RequestOutput:

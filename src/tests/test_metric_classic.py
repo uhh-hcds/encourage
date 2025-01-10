@@ -14,7 +14,7 @@ from encourage.metrics import (
     ReferenceAnswerLength,
 )
 from encourage.metrics.metric import MetricOutput
-from encourage.prompts.context import Context
+from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 
 
@@ -31,8 +31,8 @@ class TestMetrics(unittest.TestCase):
                 conversation_id=1,
                 meta_data=MetaData(
                     tags={
-                        "reference_answer": "This is the reference answer.",
-                        "reference_document": {"id": "1"},
+                        "reference_answer": "This is a generated answer.",
+                        "reference_document": Document(id="1", content=""),
                     }
                 ),
                 context=Context.from_documents(
@@ -54,7 +54,7 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "Another reference answer.",
-                        "reference_document": {"id": "0"},  # Required field for MRR
+                        "reference_document": Document(id="0", content=""),
                     }
                 ),
                 context=Context.from_documents(
@@ -94,46 +94,54 @@ class TestMetrics(unittest.TestCase):
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.76, places=2)
 
     def test_gleu(self):
         metric = GLEU()
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.785, places=2)
 
     def test_rouge(self):
         metric = ROUGE(rouge_type="rouge1")
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.83, places=2)
 
         metric = ROUGE(rouge_type="rouge2")
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.5, places=2)
 
         metric = ROUGE(rouge_type="rougeLsum")
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.83, places=2)
 
     def test_bertscore(self):
         metric = BERTScore(lang="en", rescale_with_baseline=True)
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.808, places=2)
 
     def test_f1(self):
         metric = F1()
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.83, places=2)
 
     def test_exact_match(self):
         metric = ExactMatch()
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.5)
 
     def test_mean_reciprocal_rank(self):
         metric = MeanReciprocalRank()
