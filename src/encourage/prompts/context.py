@@ -189,16 +189,7 @@ class Context:
     def to_dict(self) -> dict[str, Any]:
         """Convert the Context instance to a dictionary."""
         return {
-            "documents": [
-                {
-                    "content": doc.content,
-                    "score": doc.score,
-                    "distance": doc.distance,
-                    "id": str(doc.id),
-                    "meta_data": doc.meta_data.to_dict(),
-                }
-                for doc in self.documents
-            ],
+            "documents": [doc.to_dict() for doc in self.documents],
             "prompt_vars": self.prompt_vars,
         }
 
