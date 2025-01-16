@@ -50,8 +50,7 @@ class AnswerFaithfulness(Metric):
         )
 
         # Step 2: Generate claims
-        self._runner.add_schema(OutputSplit)
-        responses_claims: ResponseWrapper = self._runner.run(prompt_collection)
+        responses_claims: ResponseWrapper = self._runner.run(prompt_collection, OutputSplit)
 
         # Step 3: Gather claims per record
         # TODO Understand what happens here
@@ -81,8 +80,7 @@ class AnswerFaithfulness(Metric):
         )
 
         # Step 4: Generate NLI responses
-        self._runner.add_schema(OutputNLI)
-        nli_responses: ResponseWrapper = self._runner.run(nli_prompt_collection)
+        nli_responses: ResponseWrapper = self._runner.run(nli_prompt_collection, OutputNLI)
         return self._calculate_metric(nli_responses)
 
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:

@@ -60,8 +60,7 @@ class ContextPrecision(Metric):
             contexts=contexts,
             template_name=MetricTemplates.LLAMA3_CONTEXT_PRECISION.value,
         )
-        self._runner.add_schema(Verdict)
-        self.responses = self._runner.run(prompt_collection)
+        self.responses = self._runner.run(prompt_collection, Verdict)
         return self._calculate_metric(responses)
 
     # TODO: Fix the calculation of the metric

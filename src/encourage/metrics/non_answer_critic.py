@@ -42,8 +42,7 @@ class NonAnswerCritic(Metric):
             contexts=contexts,
             template_name=MetricTemplates.LLAMA3_NON_ANSWER_CRITIQUE.value,
         )
-        self._runner.add_schema(ClassifiedAnswer)
-        self.responses = self._runner.run(prompt_collection)
+        self.responses = self._runner.run(prompt_collection, ClassifiedAnswer)
         return self._calculate_metric()
 
     def _calculate_metric(self) -> MetricOutput:
