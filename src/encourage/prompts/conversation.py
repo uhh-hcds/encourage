@@ -3,6 +3,7 @@
 import json
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Iterator
 
 
 class Role(Enum):
@@ -11,19 +12,22 @@ class Role(Enum):
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
+    TOOL = "tool"
 
 
 @dataclass
 class Conversation:
     """Conversation dataclass to store conversation information."""
 
-    sys_prompt: str
     dialog: list[dict[str, str]] = field(default_factory=list)
 
-    def __post_init__(self) -> None:
+    def __init__(self, sys_prompt: str = "", user_prompt: str = "") -> None:
+        self.sys_prompt = sys_prompt
         self.dialog = [
-            {"role": "system", "content": self.sys_prompt},
+            {"role": Role.SYSTEM.value, "content": self.sys_prompt},
         ]
+        if user_prompt:
+            self.add_message(Role.USER.value, user_prompt)
 
     def add_message(self, role: str, content: str) -> None:
         """Add a new message to the conversation."""
@@ -36,6 +40,11 @@ class Conversation:
         if role not in Role:
             raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
         return [msg for msg in self.dialog if msg["role"] == role.value]
+
+    def get_last_message_by_user(self) -> str:
+        """Retrieve the last message with a specific role."""
+        user_messages = self.get_messages_by_role(Role.USER)
+        return user_messages[-1]["content"] if user_messages else ""
 
     def clear_conversation(self) -> None:
         """Clear all messages in the conversation."""
@@ -66,3 +75,15 @@ class Conversation:
 
     def __len__(self) -> int:
         return len(self.dialog)
+
+    def __getitem__(self, index: int) -> dict[str, str]:
+        return self.dialog[index]
+
+    def __setitem__(self, index: int, value: dict[str, str]) -> None:
+        self.dialog[index] = value
+
+    def __delitem__(self, index: int) -> None:
+        del self.dialog[index]
+
+    def __iter__(self) -> Iterator:
+        return iter(self.dialog)

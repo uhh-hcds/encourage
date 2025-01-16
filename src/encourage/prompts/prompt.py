@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass, field
 
 from encourage.prompts.context import Context
+from encourage.prompts.conversation import Conversation
 from encourage.prompts.meta_data import MetaData
 
 
@@ -12,26 +13,20 @@ from encourage.prompts.meta_data import MetaData
 class Prompt:
     """Prompt dataclass to store prompt information."""
 
-    sys_prompt: str
-    user_prompt: str
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    conversation_id: int = 0
+    conversation: Conversation = field(default_factory=Conversation)
     context: Context = field(default_factory=Context)
     meta_data: MetaData = field(default_factory=MetaData)
-    reformatted: str = ""
 
     def __len__(self) -> int:
-        return len(self.sys_prompt) + len(self.user_prompt)
+        return len(self.conversation)
 
     def __str__(self) -> str:
         return (
             f"id: {self.id}, "
-            f"conversation_id: {self.conversation_id}, "
-            f"sys_prompt: {self.sys_prompt},"
-            f"user_prompt: {self.user_prompt}, "
+            f"conversation: {self.conversation}, "
             f"context: {self.context}, "
             f"meta_data: {self.meta_data},"
-            f"reformatted: {self.reformatted}"
         )
 
     def to_json(self) -> str:
@@ -39,12 +34,9 @@ class Prompt:
         return json.dumps(
             {
                 "id": str(self.id),
-                "conversation_id": self.conversation_id,
-                "sys_prompt": self.sys_prompt,
-                "user_prompt": self.user_prompt,
+                "conversation": self.conversation.to_json(),
                 "context": self.context.to_dict(),
                 "meta_data": self.meta_data.to_dict(),
-                "reformatted": self.reformatted,
             }
         )
 
@@ -53,11 +45,8 @@ class Prompt:
         """Deserialize a JSON string to a Prompt object."""
         json_data = json.loads(data)
         return Prompt(
-            id=str(json_data.get("id", "")),
-            conversation_id=json_data.get("conversation_id", 0),
-            sys_prompt=json_data.get("sys_prompt", ""),
-            user_prompt=json_data.get("user_prompt", ""),
+            id=json_data.get("id", str(uuid.uuid4())),
+            conversation=Conversation.from_json(json_data.get("conversation", Conversation())),
             context=json_data.get("context", Context()),
             meta_data=json_data.get("meta_data", MetaData()),
-            reformatted=json_data.get("reformatted", ""),
         )
