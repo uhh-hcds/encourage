@@ -21,7 +21,8 @@ HUGGING_FACE_HUB_TOKEN=your_hugging_face_token
 ```
 
 ## **Usage**
- ### Command-Line Arguments
+### Command-Line Arguments
+
 - --model: The model to use (e.g., meta-llama/Meta-Llama-3.1-8B-Instruct). Default: meta-llama/Meta-Llama-3.1-8B-Instruct.
 - --gpu-memory-utilization: The fraction of GPU memory to use. Default: 0.95.
 
