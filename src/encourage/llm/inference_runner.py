@@ -150,12 +150,15 @@ class BatchInferenceRunner(InferenceRunner):
     def run(
         self,
         prompt_collection: PromptCollection,
-        response_format: Type[BaseModel] | None = None,
+        response_format: Type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Run the model with the given queries."""
         extra_body = {}
         if response_format:
-            extra_body = {"guided_json": response_format.model_json_schema()}
+            if isinstance(response_format, BaseModel):
+                extra_body = {"guided_json": response_format.model_json_schema()}
+            if isinstance(response_format, str):
+                extra_body = {"guided_json": response_format}
 
         messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
         responses = batch_completion(
