@@ -24,7 +24,7 @@ class PromptCollection:
         user_prompts: list[str],
         contexts: list[Context] = [],
         meta_datas: list[MetaData] = [],
-        template_name: str = "",
+        template_name: str = "default.j2",
     ) -> "PromptCollection":
         """Create a PromptCollection from the given data.
 
