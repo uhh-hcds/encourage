@@ -1,15 +1,17 @@
 # How to use BatchInferenceRunner
 
-This tutorial demonstrates how to use `ChatInferenceRunner` and `BatchInferenceRunner` with different metadata, contexts, and user prompts, utilizing a language model.
+This tutorial demonstrates how to use `BatchInferenceRunner` with different metadata, contexts, and user prompts, utilizing a language model.
 `ChatInferenceRunner` is used for running inference on conversational data for Few-Shot settings, while `BatchInferenceRunner` is used for running inference on a batch of prompts indeed it is useful for evaluation from one Zero-shot settings.
+
+To use the `BatchInferenceRunner`, you need to first start the vllm OpenAI server.
+You can find more information about that [here](./vllm_server.md).
 
 Initialize the LLM model and sampling parameters:
 
 ```python
-from vllm import LLM, SamplingParams
+from vllm import SamplingParams
 model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 
-llm = LLM(model=model_name, gpu_memory_utilization=0.95)
 sampling_params = SamplingParams(temperature=0.5, max_tokens=1000)
 ```
 
@@ -19,7 +21,7 @@ sampling_params = SamplingParams(temperature=0.5, max_tokens=1000)
 from encourage.llm import BatchInferenceRunner
 
 # For initializing the ChatInferenceRunner, you need to provide the LLM model and sampling parameters.
-runner = BatchInferenceRunner(llm, sampling_params)
+runner = BatchInferenceRunner(sampling_params, model_name=model_name)
 ```
 
 To create a `PromptCollection`, you need to include a list of `Prompt` objects.
@@ -62,7 +64,6 @@ prompt_collection = PromptCollection.create_prompts(
     user_prompts=user_prompts,  # List of user prompts
     contexts=contexts,  # List of context dictionaries (optional)
     meta_datas=meta_datas,  # List of metadata dictionaries (optional)
-    model_name=model_name,  # The name of the model being used (optional)
     template_name="template_name",  # The name of the template being used (optional)
 )
 ```
@@ -121,12 +122,9 @@ class User(BaseModel):
   id: int
   ...
 
-sampling_params = SamplingParams(
-  temperature=0.5, 
-  max_tokens=1000, 
-  guided_decoding=GuidedDecodingParams(json=User.model_json_schema()))
+sampling_params = SamplingParams(temperature=0.5, max_tokens=1000)
 
-responses = runner.run(prompt_collection)
+responses = runner.run(prompt_collection, User)
 ```
 
 Further examples:

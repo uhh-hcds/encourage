@@ -1,8 +1,7 @@
 
 ## Use another Template for the Inference
 
-You can use another template for the inference by providing the template name in the `create_prompts()
-` method and has to stored in the `/src/g4k/shared/prompts/templates` directory.
+You can use another template for the inference by providing the template name in the `create_prompts()` method.
 
 ```python
 prompt_collection = PromptCollection.create_prompts(
@@ -19,21 +18,14 @@ It will add the context to the prompt using the value for that.
 First, create a custom template `llama3_custom.j2` in the `/src/g4k/shared/prompts/templates` directory:
 
 ```jinja2
-<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-{{system_prompt}}
-<|start_header_id|>user<|end_header_id|>
-
-{{user_prompt}}<|eot_id|>
-<|start_header_id|>user<|end_header_id|>
+{{user_prompt}}
 
 Important Context 1:
 {{key1}}
 
 Important Context 2:
 {{key2}}
-<|eot_id|>
-<|start_header_id|>assistant<|end_header_id|>
 ```
 
 Second, create a PromptCollection with the custom template:
@@ -51,20 +43,11 @@ prompt_collection = PromptCollection.create_prompts(
 Now, the context information will be added to the prompt using the custom template And a prompt will look like this:
 
 ```bash
-<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-
-You are an helpful AI that only speaks like a pirat
-<|start_header_id|>user<|end_header_id|>
-
-User prompt 1<|eot_id|>
-<|start_header_id|>user<|end_header_id|>
+User prompt 1
 
 Important Context 1:
 value1
 
 Important Context 2:
 value2
-
-<|eot_id|>
-<|start_header_id|>assistant<|end_header_id|>
 ```

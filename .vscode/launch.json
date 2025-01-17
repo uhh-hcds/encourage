@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Start VLLM Server",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/start_vllm_server.py",
+            "args": [
+                "--model",
+                "meta-llama/Meta-Llama-3.1-8B-Instruct",
+                "--gpu-memory-utilization",
+                "0.95"
+            ],
+            "envFile": "${workspaceFolder}/.env",
+        }
+    ]
+}
