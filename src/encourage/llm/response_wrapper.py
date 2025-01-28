@@ -1,9 +1,9 @@
 """Module that defines the ResponseWrapper class."""
 
 import logging
-from typing import Any, Iterator
+from typing import Iterator
 
-from vllm import RequestOutput
+from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 from encourage.llm.response import Response
 from encourage.prompts.context import Context
@@ -18,58 +18,57 @@ logger = logging.getLogger(__name__)
 
 
 class ResponseWrapper:
-    """Class that aggregates RequestOutput with corresponding PromptCollection details."""
-
-    def __repr__(self) -> str:
-        return f"ResponseWrapper({self.response_data})"
-
-    def __init__(self, responses: list[Response]):
-        self.response_data = responses
-
-    def __iter__(self) -> Iterator[Response]:
-        """Allows iteration over the responses."""
-        return iter(self.response_data)
-
-    def __getitem__(self, key: int) -> Response:
-        """Returns the response at the given index."""
-        if not self.response_data:
-            raise IndexError("Response data is empty.")
-        if key < 0 or key >= len(self.response_data):
-            raise IndexError("Index out of range.")
-        return self.response_data[key]
-
-    def __len__(self) -> int:
-        """Returns the number of responses."""
-        return len(self.response_data)
+    """Class that aggregates ChatCompletion with corresponding PromptCollection details."""
 
     @classmethod
     def from_prompt_collection(
         cls,
-        request_outputs: list[RequestOutput],
+        chat_completions: list[ChatCompletion],
         collection: PromptCollection,
     ) -> "ResponseWrapper":
-        """Create ResponseWrapper from RequestOutput and PromptCollection or Conversation."""
-        if len(request_outputs) != len(collection.prompts):
+        """Create ResponseWrapper from ChatCompletion and PromptCollection or Conversation."""
+        if len(chat_completions) != len(collection.prompts):
             raise ValueError("The number of request outputs does not match the number of prompts.")
 
-        # Create responses for each request_output and its corresponding prompt
+        # Create responses for each chat_completion and its corresponding prompt
         responses = [
-            cls.handle_prompt_response(request_output, prompt)
-            for request_output, prompt in zip(request_outputs, collection.prompts)
+            cls.handle_prompt_response(chat_completion, prompt)
+            for chat_completion, prompt in zip(chat_completions, collection.prompts)
         ]
         return cls(responses)
 
     @classmethod
+    @enable_tracing(span_name="handle_prompt_response")
+    def handle_prompt_response(cls, chat_completion: ChatCompletion, prompt: Prompt) -> Response:
+        """Create a Response object from a ChatCompletion and Prompt."""
+        prompt.conversation = transform_chat_completion_to_conversation(prompt.conversation)
+
+        return Response(
+            request_id=chat_completion.id,
+            prompt_id=str(prompt.id),
+            conversation_id=0,
+            sys_prompt=prompt.conversation.sys_prompt,
+            user_prompt=prompt.conversation.get_last_message_by_user(),
+            response=chat_completion.choices[0].message.content
+            if chat_completion.choices
+            else "No response",
+            meta_data=prompt.meta_data,
+            context=prompt.context,
+            arrival_time=(chat_completion.created if chat_completion.created is not None else 0.0),
+            finished_time=0.0,
+        )
+
+    @classmethod
     def from_conversation(
         cls,
-        request_outputs: list[RequestOutput],
+        chat_completions: list[ChatCompletion],
         conversation: Conversation,
         contexts: list[Context] = [],
         meta_datas: list[MetaData] = [],
     ) -> "ResponseWrapper":
-        """Create ResponseWrapper from RequestOutput and Conversation."""
+        """Create ResponseWrapper from ChatCompletion and Conversation."""
         # Check for mismatched lengths
-        if len(request_outputs) != len(conversation.get_messages_by_role(Role.USER)):
+        if len(chat_completions) != len(conversation.get_messages_by_role(Role.USER)):
             raise ValueError("The number of request outputs does not match the number of messages.")
 
         # Safely access the system prompt, handle missing system messages
@@ -82,13 +81,13 @@ class ResponseWrapper:
         user_messages = [msg["content"] for msg in conversation.get_messages_by_role(Role.USER)]
 
         responses = []
-        meta_datas = meta_datas or [MetaData()] * len(request_outputs)
-        contexts = contexts or [Context()] * len(request_outputs)
-        for conversation_id, (request_output, user_message, meta_data, context) in enumerate(
-            zip(request_outputs, user_messages, meta_datas, contexts)
+        meta_datas = meta_datas or [MetaData()] * len(chat_completions)
+        contexts = contexts or [Context()] * len(chat_completions)
+        for conversation_id, (chat_completion, user_message, meta_data, context) in enumerate(
+            zip(chat_completions, user_messages, meta_datas, contexts)
         ):
             response = cls.handle_conversation_response(
-                sys_prompt, conversation_id, request_output, user_message, context, meta_data
+                sys_prompt, conversation_id, chat_completion, user_message, context, meta_data
             )
             responses.append(response)
 
@@ -99,90 +98,25 @@ class ResponseWrapper:
     def handle_conversation_response(
         sys_prompt: str,
         conversation_id: int,
-        request_output: RequestOutput,
+        chat_completion: ChatCompletion,
         message: str,
         context: Context,
         meta_data: MetaData,
     ) -> Response:
-        """Create a Response object from a RequestOutput and Conversation."""
+        """Create a Response object from a ChatCompletion and Conversation."""
         return Response(
-            request_id=request_output.request_id,
+            request_id=chat_completion.id,
             prompt_id="",
             conversation_id=conversation_id,
             sys_prompt=sys_prompt,
             user_prompt=message,
-            response=request_output.outputs[0].text if request_output.outputs else "No response",
+            response=chat_completion.choices[0].message.content
+            if chat_completion.choices
+            else "No response",
             context=context,
             meta_data=meta_data,
-            arrival_time=(
-                request_output.metrics.arrival_time
-                if request_output.metrics and request_output.metrics.arrival_time is not None
-                else 0.0
-            ),
-            finished_time=(
-                request_output.metrics.finished_time
-                if request_output.metrics and request_output.metrics.finished_time is not None
-                else 0.0
-            ),
-        )
-
-    @classmethod
-    @enable_tracing(span_name="handle_prompt_response")
-    def handle_prompt_response(cls, request_output: RequestOutput, prompt: Prompt) -> Response:
-        """Create a Response object from a RequestOutput and Prompt."""
-        return Response(
-            request_id=request_output.request_id,
-            prompt_id=str(prompt.id),
-            conversation_id=prompt.conversation_id,
-            sys_prompt=prompt.sys_prompt,
-            user_prompt=prompt.user_prompt,
-            response=request_output.outputs[0].text if request_output.outputs else "No response",
-            meta_data=prompt.meta_data,
-            context=prompt.context,
-            arrival_time=(
-                request_output.metrics.arrival_time
-                if request_output.metrics and request_output.metrics.arrival_time is not None
-                else 0.0
-            ),
-            finished_time=(
-                request_output.metrics.finished_time
-                if request_output.metrics and request_output.metrics.finished_time is not None
-                else 0.0
-            ),
-        )
-
-    @staticmethod
-    def _trace_logic(
-        span: Any, func_input: tuple[Any, RequestOutput, Prompt], func_return: Response
-    ) -> None:
-        """Trace logic for handle_prompt_response."""
-        _ = func_return
-        request_output: RequestOutput = func_input[1]
-        prompt: Prompt = func_input[2]
-
-        span.set_inputs(
-            {
-                "prompt": prompt.user_prompt,
-                "sys_prompt": prompt.sys_prompt,
-                **prompt.meta_data.to_dict(),
-                **prompt.context.to_dict(),
-            }
-        )
-        span.set_outputs(
-            {
-                "response": request_output.outputs[0].text
-                if request_output.outputs
-                else "No response",
-            }
-        )
-        span.set_attributes(
-            {
-                "request_id": request_output.request_id,
-                "conversation_id": prompt.conversation_id,
-                "prompt_id": prompt.id,
-                "arrival_time": request_output.metrics.arrival_time,  # type: ignore
-                "finished_time": request_output.metrics.finished_time,  # type: ignore
-            }
+            arrival_time=(chat_completion.created if chat_completion.created is not None else 0.0),
+            finished_time=0.0,
         )
 
     def print_response_summary(self) -> None:
@@ -220,3 +154,37 @@ class ResponseWrapper:
             if getattr(response, key) == value:
                 return response
         return None
+
+    def __repr__(self) -> str:
+        return f"ResponseWrapper({self.response_data})"
+
+    def __init__(self, responses: list[Response]):
+        self.response_data = responses
+
+    def __iter__(self) -> Iterator[Response]:
+        """Allows iteration over the responses."""
+        return iter(self.response_data)
+
+    def __getitem__(self, key: int) -> Response:
+        """Returns the response at the given index."""
+        if not self.response_data:
+            raise IndexError("Response data is empty.")
+        if key < 0 or key >= len(self.response_data):
+            raise IndexError("Index out of range.")
+        return self.response_data[key]
+
+    def __len__(self) -> int:
+        """Returns the number of responses."""
+        return len(self.response_data)
+
+
+def transform_chat_completion_to_conversation(conversation: Conversation) -> Conversation:
+    """Transforms a Conversation object to a ChatCompletion object."""
+    # Create a new conversation object
+    new_dialog = []
+    for message in conversation.dialog:
+        if isinstance(message, ChatCompletionMessage):  # type: ignore
+            message = {"role": Role.TOOL, "content": message.tool_calls[0].function.arguments}  # type: ignore
+        new_dialog.append(message)
+    conversation.dialog = new_dialog
+    return conversation

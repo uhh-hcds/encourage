@@ -1,15 +1,18 @@
 # How to use ChatInferenceRunner
 
-This tutorial demonstrates how to use `ChatInferenceRunner` and `BatchInferenceRunner` with different metadata, contexts, and user prompts, utilizing a language model.
-`ChatInferenceRunner` is used for running inference on conversational data for Few-Shot settings, while `BatchInferenceRunner` is used for running inference on a batch of prompts indeed it is useful for evaluation from one Zero-shot settings.
+This tutorial demonstrates how to use `ChatInferenceRunner` with different metadata, contexts, and user prompts, utilizing a language model.
+`ChatInferenceRunner` is used for running inference on conversational data for Few-Shot settings, indeed it is useful for evaluation from one Zero-shot settings.
+
+To use the `BatchInferenceRunner`, you need to first start the vllm OpenAI server.
+You can find more information about that [here](./docs/vllm_server.md).
+
 
 Initialize the LLM model and sampling parameters:
 
 ```python
-from vllm import LLM, SamplingParams
+from vllm import SamplingParams
 model_name = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 
-llm = LLM(model=model_name, gpu_memory_utilization=0.95)
 sampling_params = SamplingParams(temperature=0.5, max_tokens=1000)
 ```
 ## ChatInferenceRunner
@@ -19,7 +22,7 @@ from encourage.llm import ChatInferenceRunner
 from encourage.handler import ConversationHandler
 
 # For initializing the ChatInferenceRunner, you need to provide the LLM model and sampling parameters.
-runner = ChatInferenceRunner(llm, sampling_params)
+runner = ChatInferenceRunner(sampling_params, model_name=model_name)
 ```
 
 Then you need to create a `ConversationHandler` object with the metadata, context, and user prompts:
@@ -27,7 +30,6 @@ A `ConversationHandler` object contains one conversation and for each prompt you
 **Important to note**: A `ConversationHandler` object is a multi-turn conversation where each turn is a prompt that has been previously defined.
 
 
-```python
 
 Each conversation contains:
 
@@ -44,7 +46,7 @@ conversation_handler = ConversationHandler(
     user_prompts=user_prompts[:10], 
     contexts=contexts[:10],
     meta_data=meta_data[:10],
-    template_name="generate_python_code_conv.j2",
+    template_name="llama3_conv.j2",
 )
 
 response = conversation_handler.run()

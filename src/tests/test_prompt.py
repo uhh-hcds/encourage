@@ -1,14 +1,12 @@
 import json
 import unittest
 from unittest import mock
-from unittest.mock import patch
 
 from encourage.prompts.context import Context
 from encourage.prompts.meta_data import MetaData
 
 with mock.patch.dict("sys.modules", {"vllm": mock.MagicMock()}):
     from encourage.prompts.prompt_collection import PromptCollection
-    from encourage.prompts.prompt_reformatter import PromptReformatter
 
 
 class TestPromptCollection(unittest.TestCase):
@@ -20,36 +18,32 @@ class TestPromptCollection(unittest.TestCase):
             Context.from_prompt_vars({"info": "context2"}),
         ]
         self.meta_datas = [MetaData({"meta": "data1"}), MetaData({"meta": "data2"})]
-        self.model_name = "ModelX"
-        self.template_name = "TemplateA"
-
-        # Mock the PromptReformatter.reformat method to return a predictable string
-        self.reformat_patch = patch.object(
-            PromptReformatter, "reformat_prompt", return_value="Reformatted prompt"
-        )
-        self.mock_reformat = self.reformat_patch.start()
+        self.template_name = "llama3_conv.j2"
+        self.reformated_prompt = [
+            "Question: \nUser prompt 1\n\nAnswer: ",
+            "Question: \nUser prompt 2\n\nAnswer: ",
+        ]
 
         self.prompt_collection = PromptCollection.create_prompts(
             sys_prompts=self.sys_prompts,
             user_prompts=self.user_prompts,
             contexts=self.contexts,
             meta_datas=self.meta_datas,
-            model_name=self.model_name,
             template_name=self.template_name,
         )
-
-    def tearDown(self):
-        self.reformat_patch.stop()
 
     def test_create_prompts_success(self):
         """Test successful creation of PromptCollection with matching prompts."""
         self.assertEqual(len(self.prompt_collection), 2)
-        for i, prompt in enumerate(self.prompt_collection.prompts):
-            self.assertEqual(prompt.sys_prompt, self.sys_prompts[i])
-            self.assertEqual(prompt.user_prompt, self.user_prompts[i])
+        for i, prompt in enumerate(self.prompt_collection):
+            print(prompt)
+            self.assertEqual(prompt.conversation.sys_prompt, self.sys_prompts[i])
+            self.assertEqual(
+                prompt.conversation.get_last_message_by_user(),
+                self.reformated_prompt[i],
+            )
             self.assertEqual(prompt.context, self.contexts[i])
             self.assertEqual(prompt.meta_data, self.meta_datas[i])
-            self.assertEqual(prompt.reformatted, "Reformatted prompt")
 
     def test_create_prompts_mismatched_lengths(self):
         """Test that ValueError is raised when prompt lists have mismatched lengths."""
@@ -63,13 +57,18 @@ class TestPromptCollection(unittest.TestCase):
     def test_create_prompts_without_contexts_and_meta_datas(self):
         """Test creation of PromptCollection without providing contexts and meta_datas."""
         prompt_collection = PromptCollection.create_prompts(
-            sys_prompts=["Sys1", "Sys2"], user_prompts=["User1", "User2"]
+            sys_prompts=self.sys_prompts,
+            user_prompts=self.user_prompts,
+            template_name=self.template_name,
         )
         self.assertEqual(len(prompt_collection), 2)
-        for prompt in prompt_collection.prompts:
+        for i, prompt in enumerate(prompt_collection.prompts):
             self.assertEqual(prompt.context, Context())
             self.assertEqual(prompt.meta_data, MetaData())
-            self.assertEqual(prompt.reformatted, "Reformatted prompt")
+            self.assertEqual(
+                prompt.conversation.get_last_message_by_user(),
+                self.reformated_prompt[i],
+            )
 
     def test_create_prompts_partial_contexts_and_meta_datas(self):
         """Test creation of PromptCollection with partial contexts and meta_datas."""
@@ -101,11 +100,10 @@ class TestPromptCollection(unittest.TestCase):
         new_collection = PromptCollection.from_json(json_data)
         self.assertEqual(len(new_collection), len(self.prompt_collection))
         for original, deserialized in zip(self.prompt_collection.prompts, new_collection.prompts):
-            self.assertEqual(original.sys_prompt, deserialized.sys_prompt)
-            self.assertEqual(original.user_prompt, deserialized.user_prompt)
+            self.assertEqual(original.id, deserialized.id)
+            self.assertEqual(original.conversation, deserialized.conversation)
             self.assertEqual(original.context, deserialized.context)
             self.assertEqual(original.meta_data, deserialized.meta_data)
-            self.assertEqual(original.reformatted, deserialized.reformatted)
 
     def test_to_json(self):
         """Test serialization of PromptCollection to JSON."""
@@ -115,21 +113,15 @@ class TestPromptCollection(unittest.TestCase):
                 "prompts": [
                     {
                         "id": json.loads(json_data)["prompts"][0]["id"],
-                        "sys_prompt": "System prompt 1",
-                        "user_prompt": "User prompt 1",
-                        "conversation_id": 0,
+                        "conversation": '{"dialog": [{"role": "system", "content": "System prompt 1"}, {"role": "user", "content": "Question: \\nUser prompt 1\\n\\nAnswer: "}]}',  # noqa: E501
                         "context": {"documents": [], "prompt_vars": {"info": "context1"}},
                         "meta_data": {"meta": "data1"},
-                        "reformatted": "Reformatted prompt",
                     },
                     {
                         "id": json.loads(json_data)["prompts"][1]["id"],
-                        "sys_prompt": "System prompt 2",
-                        "user_prompt": "User prompt 2",
-                        "conversation_id": 0,
+                        "conversation": '{"dialog": [{"role": "system", "content": "System prompt 2"}, {"role": "user", "content": "Question: \\nUser prompt 2\\n\\nAnswer: "}]}',  # noqa: E501
                         "context": {"documents": [], "prompt_vars": {"info": "context2"}},
                         "meta_data": {"meta": "data2"},
-                        "reformatted": "Reformatted prompt",
                     },
                 ]
             }
