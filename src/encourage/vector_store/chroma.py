@@ -6,6 +6,7 @@ from contextlib import suppress
 from typing import Any, Sequence
 
 import chromadb
+from chromadb.config import Settings
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
@@ -20,7 +21,7 @@ class ChromaClient(VectorStore):
     """Chroma vector store implementation."""
 
     def __init__(self) -> None:
-        self.client = chromadb.Client()
+        self.client = chromadb.Client(Settings(anonymized_telemetry=False))
 
     def create_collection(
         self,
