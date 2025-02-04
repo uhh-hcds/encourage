@@ -10,7 +10,9 @@ from encourage.metrics import (
     ContextLength,
     ExactMatch,
     GeneratedAnswerLength,
+    HitRateAtK,
     MeanReciprocalRank,
+    RecallAtK,
     ReferenceAnswerLength,
 )
 from encourage.metrics.metric import MetricOutput
@@ -37,7 +39,11 @@ class TestMetrics(unittest.TestCase):
                 ),
                 context=Context.from_documents(
                     [
-                        {"id": 1, "content": "Here is an example content", "score": 1.0},
+                        {
+                            "id": 1,
+                            "content": "Here is an example content",
+                            "score": 1.0,
+                        },
                         {"id": 0, "content": "Here is example content", "score": 0.5},
                     ]
                 ),
@@ -60,10 +66,26 @@ class TestMetrics(unittest.TestCase):
                 context=Context.from_documents(
                     [
                         {"id": 1, "content": "Here is example content", "score": 1.0},
-                        {"id": 2, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 3, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 4, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 0, "content": "Here is an example content with extra", "score": 0.0},
+                        {
+                            "id": 2,
+                            "content": "Here is an example content with extra",
+                            "score": 0.0,
+                        },
+                        {
+                            "id": 3,
+                            "content": "Here is an example content with extra",
+                            "score": 0.0,
+                        },
+                        {
+                            "id": 4,
+                            "content": "Here is an example content with extra",
+                            "score": 0.0,
+                        },
+                        {
+                            "id": 0,
+                            "content": "Here is an example content with extra",
+                            "score": 0.0,
+                        },
                     ]
                 ),
                 arrival_time=0.0,
@@ -149,6 +171,20 @@ class TestMetrics(unittest.TestCase):
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
         self.assertAlmostEqual(output.score, 0.6)
+
+    def test_recall(self):
+        metric = RecallAtK(2)
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.5)
+
+    def test_hit_rate(self):
+        metric = HitRateAtK(2)
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.5)
 
 
 if __name__ == "__main__":

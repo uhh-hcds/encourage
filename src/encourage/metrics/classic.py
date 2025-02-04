@@ -16,7 +16,8 @@ class GeneratedAnswerLength(Metric):
 
     def __init__(self) -> None:
         super().__init__(
-            name="generated_answer_length", description="Average length of the generated answers."
+            name="generated_answer_length",
+            description="Average length of the generated answers.",
         )
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
@@ -39,7 +40,9 @@ class ReferenceAnswerLength(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
-        lengths = [len(word_tokenize(r.meta_data["reference_answer"])) for r in responses]
+        lengths = [
+            len(word_tokenize(r.meta_data["reference_answer"])) for r in responses
+        ]
         score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
 
@@ -58,7 +61,9 @@ class ContextLength(Metric):
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
         lengths = [
-            sum(len(word_tokenize(document.content)) for document in r.context.documents)
+            sum(
+                len(word_tokenize(document.content)) for document in r.context.documents
+            )
             for r in responses
         ]
         score = float(np.mean(lengths))
@@ -69,7 +74,9 @@ class BLEU(Metric):
     """Computes the BLEU score for the generated answers."""
 
     def __init__(self) -> None:
-        super().__init__(name="bleu", description="BLEU score for the generated answers")
+        super().__init__(
+            name="bleu", description="BLEU score for the generated answers"
+        )
         self.metric = evaluate.load("sacrebleu")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
@@ -86,7 +93,9 @@ class GLEU(Metric):
     """Computes the GLEU score for the generated answers."""
 
     def __init__(self) -> None:
-        super().__init__(name="gleu", description="GLEU score for the generated answers")
+        super().__init__(
+            name="gleu", description="GLEU score for the generated answers"
+        )
         self.metric = evaluate.load("google_bleu")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
@@ -172,12 +181,18 @@ class F1(Metric):
         # Use zip to iterate over predictions and references
         for i, r in enumerate(responses):
             formatted_predictions.append(
-                {"id": str(i), "prediction_text": r.response, "no_answer_probability": 0.0}
+                {
+                    "id": str(i),
+                    "prediction_text": r.response,
+                    "no_answer_probability": 0.0,
+                }
             )
             formatted_references.append(
                 {
                     "id": str(i),
-                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
+                    "answers": [
+                        {"text": r.meta_data["reference_answer"], "answer_start": 0}
+                    ],
                 }
             )
 
@@ -211,12 +226,18 @@ class ExactMatch(Metric):
         # Use zip to iterate over predictions and references
         for i, r in enumerate(responses):
             formatted_predictions.append(
-                {"id": str(i), "prediction_text": r.response, "no_answer_probability": 0.0}
+                {
+                    "id": str(i),
+                    "prediction_text": r.response,
+                    "no_answer_probability": 0.0,
+                }
             )
             formatted_references.append(
                 {
                     "id": str(i),
-                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
+                    "answers": [
+                        {"text": r.meta_data["reference_answer"], "answer_start": 0}
+                    ],
                 }
             )
 
@@ -229,7 +250,25 @@ class ExactMatch(Metric):
         return MetricOutput(score=scores, raw=output["exact"], misc={"output": output})
 
 
-class MeanReciprocalRank(Metric):
+class RetrievalMetric(Metric):
+    """Base class for retrieval specific metrics."""
+
+    def responses_to_trec(self, responses: ResponseWrapper) -> tuple:
+        """Converts responses to TREC format."""
+        qrels, run = {}, {}
+        for response in responses:
+            query_id = response.request_id
+            relevant = {str(response.meta_data["reference_document"].id): 1}  # type: ignore
+            retrieved = {
+                str(document.id): document.score
+                for document in response.context.documents
+            }
+            qrels[query_id] = relevant
+            run[query_id] = retrieved
+        return qrels, run
+
+
+class MeanReciprocalRank(RetrievalMetric):
     """Computes the Mean Reciprocal Rank (MRR) for the responses."""
 
     def __init__(self) -> None:
@@ -240,23 +279,58 @@ class MeanReciprocalRank(Metric):
             required_documents=True,
         )
 
-    def responses_to_trec(self, responses: ResponseWrapper) -> tuple:
-        """Converts responses to TREC format."""
-        qrels, run = {}, {}
-        for response in responses:
-            query_id = response.request_id
-            relevant = {str(response.meta_data["reference_document"].id): 1}  # type: ignore
-            retrieved = {
-                str(document.id): document.score for document in response.context.documents
-            }
-            qrels[query_id] = relevant
-            run[query_id] = retrieved
-        return qrels, run
-
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
         qrels, run = self.responses_to_trec(responses)
         mrr = ir_measures.MRR()
         scores = [score.value for score in mrr.iter_calc(qrels, run)]
+        return MetricOutput(score=np.mean(scores), raw=scores)
+
+
+class RecallAtK(RetrievalMetric):
+    """Computes Recall@k for the responses."""
+
+    def __init__(self, k: int) -> None:
+        super().__init__(
+            name=f"recall@{k}",
+            description=(
+                "Measures the proportion of relevant documents found "
+                "within the top-k retrieved documents."
+            ),
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+        self.k = k
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        qrels, run = self.responses_to_trec(responses)
+        recall = ir_measures.R(cutoff=self.k)
+        scores = [score.value for score in recall.iter_calc(qrels, run)]
+        return MetricOutput(score=np.mean(scores), raw=scores)
+
+
+class HitRateAtK(RetrievalMetric):
+    """Computes HitRate@k for the responses."""
+
+    def __init__(self, k: int) -> None:
+        super().__init__(
+            name=f"hit@{k}",
+            description=(
+                "Checks if at least one relevant document is "
+                "in the top-k retrieved documents."
+            ),
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+        self.k = k
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        qrels, run = self.responses_to_trec(responses)
+        hit_rate = ir_measures.Success(cutoff=self.k)
+        scores = [score.value for score in hit_rate.iter_calc(qrels, run)]
         return MetricOutput(score=np.mean(scores), raw=scores)
