@@ -6,7 +6,9 @@ from contextlib import suppress
 from typing import Any, Sequence
 
 import chromadb
+from chromadb import EmbeddingFunction
 from chromadb.config import Settings
+from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
@@ -29,7 +31,7 @@ class ChromaClient(VectorStore):
         distance: str = "cosine",
         size: int = 1000,
         overwrite: bool = False,
-        embedding_function: chromadb.EmbeddingFunction | None = None,
+        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
     ) -> chromadb.Collection:
         """Create a collection."""
         if overwrite:
@@ -46,10 +48,16 @@ class ChromaClient(VectorStore):
         self.client.delete_collection(name=collection_name)
 
     def insert_documents(
-        self, collection_name: str, vector_store_document: VectorStoreBatch
+        self,
+        collection_name: str,
+        vector_store_document: VectorStoreBatch,
+        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
     ) -> None:
         """Insert documents."""
-        collection = self.client.get_collection(name=collection_name)
+        collection = self.client.get_collection(
+            name=collection_name,
+            embedding_function=embedding_function,
+        )
 
         documents = [document.content for document in vector_store_document.documents]
         meta_data = [document.meta_data.to_dict() for document in vector_store_document.documents]
@@ -57,18 +65,35 @@ class ChromaClient(VectorStore):
 
         collection.add(documents=documents, metadatas=meta_data, ids=ids)  # type: ignore
 
-    def count_documents(self, collection_name: str) -> int:
+    def count_documents(
+        self,
+        collection_name: str,
+        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
+    ) -> int:
         """Count the number of documents in the collection."""
-        collection = self.client.get_collection(name=collection_name)
+        collection = self.client.get_collection(
+            name=collection_name,
+            embedding_function=embedding_function,
+        )
         return collection.count()
 
     def list_collections(self) -> Sequence[chromadb.Collection]:
         """Get the list of collections."""
         return self.client.list_collections()
 
-    def query(self, collection_name: str, query: list, top_k: int, **kwargs: Any) -> list[Document]:
+    def query(
+        self,
+        collection_name: str,
+        query: list,
+        top_k: int,
+        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
+        **kwargs: Any,
+    ) -> list[Document]:
         """Query the collection."""
-        collection = self.client.get_collection(name=collection_name)
+        collection = self.client.get_collection(
+            name=collection_name,
+            embedding_function=embedding_function,
+        )
         result = collection.query(query_texts=query, n_results=top_k, **kwargs)
         return [
             Document(
@@ -80,7 +105,14 @@ class ChromaClient(VectorStore):
             for i in range(len(result["ids"][0]))
         ]
 
-    def get_llama_index_class(self, collection_name: str) -> BasePydanticVectorStore:
+    def get_llama_index_class(
+        self,
+        collection_name: str,
+        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
+    ) -> BasePydanticVectorStore:
         """Get the Llama index class."""
-        collection = self.client.get_collection(name=collection_name)
+        collection = self.client.get_collection(
+            name=collection_name,
+            embedding_function=embedding_function,
+        )
         return ChromaVectorStore(chroma_collection=collection)
