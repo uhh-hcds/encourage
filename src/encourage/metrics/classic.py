@@ -16,7 +16,8 @@ class GeneratedAnswerLength(Metric):
 
     def __init__(self) -> None:
         super().__init__(
-            name="generated_answer_length", description="Average length of the generated answers."
+            name="generated_answer_length",
+            description="Average length of the generated answers.",
         )
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
@@ -172,7 +173,11 @@ class F1(Metric):
         # Use zip to iterate over predictions and references
         for i, r in enumerate(responses):
             formatted_predictions.append(
-                {"id": str(i), "prediction_text": r.response, "no_answer_probability": 0.0}
+                {
+                    "id": str(i),
+                    "prediction_text": r.response,
+                    "no_answer_probability": 0.0,
+                }
             )
             formatted_references.append(
                 {
@@ -211,7 +216,11 @@ class ExactMatch(Metric):
         # Use zip to iterate over predictions and references
         for i, r in enumerate(responses):
             formatted_predictions.append(
-                {"id": str(i), "prediction_text": r.response, "no_answer_probability": 0.0}
+                {
+                    "id": str(i),
+                    "prediction_text": r.response,
+                    "no_answer_probability": 0.0,
+                }
             )
             formatted_references.append(
                 {
@@ -229,16 +238,8 @@ class ExactMatch(Metric):
         return MetricOutput(score=scores, raw=output["exact"], misc={"output": output})
 
 
-class MeanReciprocalRank(Metric):
-    """Computes the Mean Reciprocal Rank (MRR) for the responses."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            name="mrr",
-            description="Mean Reciprocal Rank (MRR) for the responses",
-            required_meta_data=["reference_document"],
-            required_documents=True,
-        )
+class RetrievalMetric(Metric):
+    """Base class for retrieval specific metrics."""
 
     def responses_to_trec(self, responses: ResponseWrapper) -> tuple:
         """Converts responses to TREC format."""
@@ -253,10 +254,69 @@ class MeanReciprocalRank(Metric):
             run[query_id] = retrieved
         return qrels, run
 
+
+class MeanReciprocalRank(RetrievalMetric):
+    """Computes the Mean Reciprocal Rank (MRR) for the responses."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="mrr",
+            description="Mean Reciprocal Rank (MRR) for the responses",
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
         qrels, run = self.responses_to_trec(responses)
         mrr = ir_measures.MRR()
         scores = [score.value for score in mrr.iter_calc(qrels, run)]
+        return MetricOutput(score=np.mean(scores), raw=scores)
+
+
+class RecallAtK(RetrievalMetric):
+    """Computes Recall@k for the responses."""
+
+    def __init__(self, k: int) -> None:
+        super().__init__(
+            name=f"recall@{k}",
+            description=(
+                "Measures the proportion of relevant documents found "
+                "within the top-k retrieved documents."
+            ),
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+        self.k = k
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        qrels, run = self.responses_to_trec(responses)
+        recall = ir_measures.R(cutoff=self.k)
+        scores = [score.value for score in recall.iter_calc(qrels, run)]
+        return MetricOutput(score=np.mean(scores), raw=scores)
+
+
+class HitRateAtK(RetrievalMetric):
+    """Computes HitRate@k for the responses."""
+
+    def __init__(self, k: int) -> None:
+        super().__init__(
+            name=f"hit@{k}",
+            description=(
+                "Checks if at least one relevant document is " "in the top-k retrieved documents."
+            ),
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+        self.k = k
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        qrels, run = self.responses_to_trec(responses)
+        hit_rate = ir_measures.Success(cutoff=self.k)
+        scores = [score.value for score in hit_rate.iter_calc(qrels, run)]
         return MetricOutput(score=np.mean(scores), raw=scores)

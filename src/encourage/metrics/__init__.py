@@ -10,7 +10,9 @@ from encourage.metrics.classic import (
     ContextLength,
     ExactMatch,
     GeneratedAnswerLength,
+    HitRateAtK,
     MeanReciprocalRank,
+    RecallAtK,
     ReferenceAnswerLength,
 )
 from encourage.metrics.context_precision import ContextPrecision
@@ -36,4 +38,6 @@ __all__ = [
     "ContextRecall",
     "NonAnswerCritic",
     "NumberMatch",
+    "RecallAtK",
+    "HitRateAtK",
 ]
