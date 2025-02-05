@@ -40,9 +40,7 @@ class ReferenceAnswerLength(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
-        lengths = [
-            len(word_tokenize(r.meta_data["reference_answer"])) for r in responses
-        ]
+        lengths = [len(word_tokenize(r.meta_data["reference_answer"])) for r in responses]
         score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
 
@@ -61,9 +59,7 @@ class ContextLength(Metric):
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
         lengths = [
-            sum(
-                len(word_tokenize(document.content)) for document in r.context.documents
-            )
+            sum(len(word_tokenize(document.content)) for document in r.context.documents)
             for r in responses
         ]
         score = float(np.mean(lengths))
@@ -74,9 +70,7 @@ class BLEU(Metric):
     """Computes the BLEU score for the generated answers."""
 
     def __init__(self) -> None:
-        super().__init__(
-            name="bleu", description="BLEU score for the generated answers"
-        )
+        super().__init__(name="bleu", description="BLEU score for the generated answers")
         self.metric = evaluate.load("sacrebleu")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
@@ -93,9 +87,7 @@ class GLEU(Metric):
     """Computes the GLEU score for the generated answers."""
 
     def __init__(self) -> None:
-        super().__init__(
-            name="gleu", description="GLEU score for the generated answers"
-        )
+        super().__init__(name="gleu", description="GLEU score for the generated answers")
         self.metric = evaluate.load("google_bleu")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
@@ -190,9 +182,7 @@ class F1(Metric):
             formatted_references.append(
                 {
                     "id": str(i),
-                    "answers": [
-                        {"text": r.meta_data["reference_answer"], "answer_start": 0}
-                    ],
+                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
                 }
             )
 
@@ -235,9 +225,7 @@ class ExactMatch(Metric):
             formatted_references.append(
                 {
                     "id": str(i),
-                    "answers": [
-                        {"text": r.meta_data["reference_answer"], "answer_start": 0}
-                    ],
+                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
                 }
             )
 
@@ -260,8 +248,7 @@ class RetrievalMetric(Metric):
             query_id = response.request_id
             relevant = {str(response.meta_data["reference_document"].id): 1}  # type: ignore
             retrieved = {
-                str(document.id): document.score
-                for document in response.context.documents
+                str(document.id): document.score for document in response.context.documents
             }
             qrels[query_id] = relevant
             run[query_id] = retrieved
@@ -319,8 +306,7 @@ class HitRateAtK(RetrievalMetric):
         super().__init__(
             name=f"hit@{k}",
             description=(
-                "Checks if at least one relevant document is "
-                "in the top-k retrieved documents."
+                "Checks if at least one relevant document is " "in the top-k retrieved documents."
             ),
             required_meta_data=["reference_document"],
             required_documents=True,
