@@ -101,6 +101,7 @@ class ChromaClient(VectorStore):
                 content=result["documents"][0][i],  # type: ignore
                 meta_data=MetaData(tags=result["metadatas"][0][i]),  # type: ignore
                 distance=result["distances"][0][i],  # type: ignore
+                score=1-result["distances"][0][i],  # type: ignore
             )
             for i in range(len(result["ids"][0]))
         ]

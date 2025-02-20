@@ -280,7 +280,7 @@ class RecallAtK(RetrievalMetric):
 
     def __init__(self, k: int) -> None:
         super().__init__(
-            name=f"recall@{k}",
+            name=f"recall{k}",
             description=(
                 "Measures the proportion of relevant documents found "
                 "within the top-k retrieved documents."
@@ -304,7 +304,7 @@ class HitRateAtK(RetrievalMetric):
 
     def __init__(self, k: int) -> None:
         super().__init__(
-            name=f"hit@{k}",
+            name=f"hit{k}",
             description=(
                 "Checks if at least one relevant document is " "in the top-k retrieved documents."
             ),
