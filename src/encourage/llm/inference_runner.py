@@ -33,7 +33,7 @@ class InferenceRunner(ABC):
         self,
         sampling_parameters: SamplingParams,
         model_name: str,
-        base_url: str = "http://localhost:8000/v1/",
+        base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
     ):
         self.sampling_parameters = sampling_parameters
@@ -58,7 +58,7 @@ class ChatInferenceRunner(InferenceRunner):
         self,
         sampling_parameters: SamplingParams,
         model_name: str,
-        base_url: str = "http://localhost:8000/v1/",
+        base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
     ):
         super().__init__(sampling_parameters, model_name, base_url, env_var_name)

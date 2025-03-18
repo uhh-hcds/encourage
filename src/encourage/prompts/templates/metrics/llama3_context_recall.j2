@@ -2,6 +2,8 @@
 
 ## Instruction
 Given a context, and an answer, analyze each sentence in the answer and classify if the sentence can be attributed to the given context or not. 
+If the answer is only a word or a few words, consider the entire answer as one sentence. Do not use context elements as answer sentences.
+ONLY use the answer while classifying and return it as it is. 
 Provide the answer sentence, a rationale for your decision and the final classification label. 
 Use only 1 (Yes) or 0 (No) as a binary classification.
 

@@ -1,9 +1,9 @@
 """Context Recall metric for evaluating the context completeness."""
 
-from typing import Iterator, List, Literal, Optional
+from typing import Iterator, Literal, Optional
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
@@ -25,20 +25,20 @@ class ContextRecall(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how complete the context is for generating the ground-truth."""
         # Step 1: Prompts preparation
-        contexts = [
-            Context.from_prompt_vars(
+        contexts = []
+        for response in responses:
+            context = Context.from_prompt_vars(
                 {
                     "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
                     "task": {
-                        "question": response.user_prompt,
-                        "context": response.context,
-                        "answer": response.response,
+                        "question": response.meta_data["question"],
+                        "answer": response.meta_data["reference_answer"]
                     },
                     "output_model": ClassifiedSentencesList,
                 }
             )
-            for response in responses
-        ]
+            context.add_documents(response.context.documents)
+            contexts.append(context)
 
         # Step 2: Prompt Collection
         prompt_collection = PromptCollection.create_prompts(
@@ -52,8 +52,14 @@ class ContextRecall(Metric):
 
     def _calculate_metric(self) -> MetricOutput:
         sentence_lists: list[ClassifiedSentencesList] = []
-        for response in self.responses:
-            sentence_lists.append(ClassifiedSentencesList.model_validate_json(response.response))
+
+        for idx, response in enumerate(self.responses):
+            try:
+                sentence_list = ClassifiedSentencesList.model_validate_json(response.response)
+                sentence_lists.append(sentence_list)
+            except ValidationError as ve:
+                print(f"Validation error for response {idx + 1}: {ve}")
+
         total = [len(sentence_list) for sentence_list in sentence_lists]
         attributed = [
             sum(sent.label == 1 for sent in sentence_list) for sentence_list in sentence_lists
@@ -80,7 +86,7 @@ class ClassifiedSentence(BaseModel):
 class ClassifiedSentencesList(BaseModel):
     """A list of classified sentences."""
 
-    sentences: List[ClassifiedSentence]
+    sentences: list[ClassifiedSentence]
 
     def __len__(self) -> int:
         return len(self.sentences)

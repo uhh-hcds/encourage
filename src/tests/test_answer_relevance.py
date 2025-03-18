@@ -8,6 +8,7 @@ from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.answer_relevance import AnswerRelevance
 from encourage.metrics.metric import MetricOutput
+from encourage.metrics.non_answer_critic import ClassifiedAnswer  # ## Do we need this?
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 
@@ -112,7 +113,11 @@ class TestMetrics(unittest.TestCase):
 
         # Mock the non_answer_critic output to have at least one committal response
         metric.non_answer_critic = MagicMock()
-        metric.non_answer_critic.return_value.raw = [0, 1, 0]  # Mix of answers and non-answers
+        metric.non_answer_critic.return_value.raw = [
+            ClassifiedAnswer(rationale="First example rationale.", non_answer=0),
+            ClassifiedAnswer(rationale="Second example rationale.", non_answer=1),
+            ClassifiedAnswer(rationale="Third example rationale.", non_answer=0),
+        ]  # Mix of answers and non-answers
 
         # Create non-empty committal responses scenario
         responses = ResponseWrapper(self.responses)

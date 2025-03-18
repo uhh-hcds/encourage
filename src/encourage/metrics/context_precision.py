@@ -1,6 +1,6 @@
 """Context Precision metric for evaluating the relevance of the context to the ground-truth."""
 
-from typing import List, Literal, Optional
+from typing import Literal, Optional
 
 import numpy as np
 from pydantic import BaseModel
@@ -22,7 +22,7 @@ class ContextPrecision(Metric):
             runner=runner,
         )
 
-    def _average_precision(self, labels: List[int]) -> float:
+    def _average_precision(self, labels: list[int]) -> float:
         """Computes average precision over a list of ranked results.
 
         Labels should be a list of binary labels, where 1 is relevant, and 0 is irrelevant.
@@ -35,55 +35,74 @@ class ContextPrecision(Metric):
         return numerator / total_relevant
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
-        """Check how relevant the context is to the ground-truth answer."""
-        self.validate_nested_keys(responses)
-        # Step 1: Prompts preparation
-        contexts = []
-        for response in responses:
-            context = Context.from_prompt_vars(
-                {
-                    "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
-                    "task": {
-                        "question": response.user_prompt,
-                        "answer": response.response,
-                    },
-                    "output_model": Verdict,
-                }
-            )
-            context.add_documents(response.context.documents)
-            contexts.append(context)
+        """Check how relevant each individual context (document) is to the ground-truth answer.
 
-        # Step 2: Prompt Collection
+        For each original response we:
+        - Use the ground truth answer from response.meta_data.tags["reference_answer"].
+        - Iterate over each document in response.context.documents.
+        - Create a separate prompt (with the same question but one document) for evaluation.
+
+        We also store a mapping from each prompt to its original response index.
+        """
+        self.validate_nested_keys(responses)
+        all_contexts = []
+        mapping = []
+        for orig_idx, response in enumerate(responses):
+            for doc in response.context.documents:
+                # TODO We should have only the relevant items here based on their retrieval score
+                context = Context.from_prompt_vars(
+                    {
+                        "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
+                        "task": {
+                            "question": response.meta_data["question"],
+                            "answer": response.meta_data["reference_answer"],
+                            # use ground truth answer, not LLM answer
+                        },
+                        "output_model": Verdict,
+                    }
+                )
+                # Only include the single document in this prompt.
+                context.add_documents([doc])
+                all_contexts.append(context)
+                mapping.append(orig_idx)
+
+        # Create a prompt collection for all individual context prompts.
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts="",
-            user_prompts=["" for _ in responses],
-            contexts=contexts,
+            user_prompts=["" for _ in all_contexts],
+            contexts=all_contexts,
             template_name=MetricTemplates.LLAMA3_CONTEXT_PRECISION.value,
         )
-        self.responses = self._runner.run(prompt_collection, Verdict)
-        return self._calculate_metric(responses)
 
-    # TODO: Fix the calculation of the metric
-    def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
-        # Step 3: Precision computation
+        # Store mapping and count so _calculate_metric can group results by original question.
+        self.context_mapping = mapping
+        self.original_responses_count = len(responses)
+        self.responses = self._runner.run(prompt_collection, Verdict)
+        return self._calculate_metric()
+
+
+    def _calculate_metric(self) -> MetricOutput:
+        grouped_verdicts: dict[int, list[int]] = {i: [] for i in range(self.original_responses_count)} # noqa: E501
+        for idx, response in enumerate(self.responses):
+            try:
+                result = Verdict.model_validate_json(response.response)
+            except Exception:
+                result = Verdict(reason="Error parsing response", verdict=0)
+            orig_idx = self.context_mapping[idx]
+            grouped_verdicts[orig_idx].append(result.verdict)
         precisions_per_questions = []
         all_labels = []
-        current_idx = 0
-        for response in input_responses:
-            contexts_cnt = len(response.context.documents)
-            verdicts = self.responses[current_idx : current_idx + contexts_cnt]  # type: ignore
-            labels = [response.verdict for response in verdicts]  # type: ignore
+        for i in range(self.original_responses_count):
+            labels = grouped_verdicts[i]
             all_labels.append(labels)
             precision = self._average_precision(labels)
             precisions_per_questions.append(precision)
-            current_idx += contexts_cnt
 
-        agg = float(np.mean(precisions_per_questions))
-        agg = agg if not np.isnan(agg) else 0.0
-
-        # Step 4: Detailed Output
+        agg = float(np.mean(precisions_per_questions)) if precisions_per_questions else 0.0
         return MetricOutput(
-            score=agg, raw=precisions_per_questions, misc={"labeled_contexts": all_labels}
+            score=agg,
+            raw=precisions_per_questions,
+            misc={"labeled_contexts": all_labels},
         )
 
 
