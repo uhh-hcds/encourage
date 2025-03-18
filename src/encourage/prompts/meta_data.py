@@ -32,7 +32,14 @@ class MetaData:
 
     def to_dict(self) -> dict[str, str]:
         """Convert the metadata to a JSON-safe dictionary."""
-        return {key: str(value) for key, value in self.tags.items()}
+
+        def convert_value(value: str) -> str:
+            """Convert the value to a JSON-safe format."""
+            if hasattr(value, "to_dict"):
+                return value.to_dict()
+            return value
+
+        return {key: convert_value(value) for key, value in self.tags.items()}
 
     @classmethod
     def from_dict(cls, meta_dict: dict[str, str]) -> None:
