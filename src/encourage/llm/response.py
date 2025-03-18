@@ -97,6 +97,22 @@ class Response:
             "processing_time": self.processing_time,
         }
 
+    @classmethod
+    def from_dict(cls, response_dict: dict[str, Any]) -> "Response":
+        """Create a Response object from a dictionary."""
+        return cls(
+            request_id=response_dict["request_id"],
+            prompt_id=response_dict["prompt_id"],
+            sys_prompt=response_dict["sys_prompt"],
+            user_prompt=response_dict["user_prompt"],
+            response=response_dict["response"],
+            conversation_id=response_dict["conversation_id"],
+            context=Context.from_dict(response_dict["context"]),
+            meta_data=MetaData.from_dict(response_dict["meta_data"]),
+            arrival_time=response_dict["arrival_time"],
+            finished_time=response_dict["finished_time"],
+        )
+
     def print_response(self) -> None:
         """Print or log the response details for a specific response."""
         print(self.to_string())
