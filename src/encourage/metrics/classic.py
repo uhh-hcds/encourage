@@ -69,18 +69,19 @@ class ContextLength(Metric):
 class BLEU(Metric):
     """Computes the BLEU score for the generated answers."""
 
-    def __init__(self) -> None:
+    def __init__(self, n_grams: int = 4) -> None:
         super().__init__(name="bleu", description="BLEU score for the generated answers")
-        self.metric = evaluate.load("sacrebleu")
+        self.metric = evaluate.load("bleu")
+        self.n_grams = n_grams
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         output = self.metric.compute(
             predictions=[r.response for r in responses],
-            references=[r.meta_data["reference_answer"] for r in responses],
+            references=[[r.meta_data["reference_answer"]] for r in responses],
+            max_order=self.n_grams,
         )
-        output["score"] = output["score"] / 100  # Normalize
-        return MetricOutput(score=output["score"], raw=output)
+        return MetricOutput(score=output["bleu"], raw=output)
 
 
 class GLEU(Metric):
