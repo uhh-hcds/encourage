@@ -17,6 +17,7 @@ from encourage.metrics.classic import (
 )
 from encourage.metrics.context_precision import ContextPrecision
 from encourage.metrics.context_recall import ContextRecall
+from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.non_answer_critic import NonAnswerCritic
 from encourage.metrics.number_match import NumberMatch
 
@@ -36,6 +37,8 @@ __all__ = [
     "ReferenceAnswerLength",
     "ContextPrecision",
     "ContextRecall",
+    "Metric",
+    "MetricOutput",
     "NonAnswerCritic",
     "NumberMatch",
     "RecallAtK",

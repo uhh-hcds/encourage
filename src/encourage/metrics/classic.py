@@ -247,7 +247,7 @@ class RetrievalMetric(Metric):
         qrels, run = {}, {}
         for response in responses:
             query_id = response.request_id
-            relevant = {str(response.meta_data["reference_document"].id): 1}  # type: ignore
+            relevant = {str(response.meta_data["reference_document"]["id"]): 1}  # type: ignore
             retrieved = {
                 str(document.id): document.score for document in response.context.documents
             }
