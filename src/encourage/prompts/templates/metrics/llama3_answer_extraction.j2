@@ -1,0 +1,26 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+## Instruction
+You are a helpful assistant that **extracts the direct answer** from a given response text.  
+- Do not rewrite or paraphrase the answer; just copy it exactly as it appears.
+- Provide your output in **JSON** format with a single field called `extracted_answer`.
+
+Below is the **JSON schema** you must follow:
+{{ output_model.model_json_schema() }}
+
+## Examples
+{% for example in examples %}
+Response: {{ example.answer }}
+Extracted: {{ example.model_dump()['output'] }}
+
+{% endfor %}
+
+<|start_header_id|>user<|end_header_id|>
+
+## Task
+Now extract the answer from the following text:
+Response: {{ task.answer }}
+Extracted:
+
+<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>
