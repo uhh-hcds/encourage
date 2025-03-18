@@ -1,7 +1,7 @@
 """Module contains the MetaData class."""
 
 from dataclasses import dataclass, field
-from typing import Iterable, Optional
+from typing import Any, Iterable, Optional
 
 
 @dataclass
@@ -33,7 +33,7 @@ class MetaData:
     def to_dict(self) -> dict[str, str]:
         """Convert the metadata to a JSON-safe dictionary."""
 
-        def convert_value(value: str) -> str:
+        def convert_value(value: str) -> str | Any:
             """Convert the value to a JSON-safe format."""
             if hasattr(value, "to_dict"):
                 return value.to_dict()
@@ -42,6 +42,6 @@ class MetaData:
         return {key: convert_value(value) for key, value in self.tags.items()}
 
     @classmethod
-    def from_dict(cls, meta_dict: dict[str, str]) -> None:
+    def from_dict(cls, meta_dict: dict[str, str]) -> "MetaData":
         """Update the metadata from a dictionary."""
         return cls(tags=meta_dict)
