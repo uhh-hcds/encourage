@@ -18,6 +18,7 @@ class MetricTemplates(Enum):
     LLAMA3_CONTEXT_PRECISION = "llama3_context_precision.j2"
     LLAMA3_CONTEXT_RECALL = "llama3_context_recall.j2"
     LLAMA3_NON_ANSWER_CRITIQUE = "llama3_non_answer_critic.j2"
+    LLAMA3_ANSWER_EXTRACTION = "llama3_answer_extraction.j2"
 
 
 @dataclass

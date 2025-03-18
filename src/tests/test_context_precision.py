@@ -128,9 +128,10 @@ class TestContextPrecision(unittest.TestCase):
         # Instantiate metric
         metric = ContextPrecision(runner=self.runner)
         metric.responses = self.runner.run.return_value  # Set mock responses
-
+        metric.context_mapping = [0, 0, 1, 1]
+        metric.original_responses_count = 2
         # Run _calculate_metric directly
-        result = metric._calculate_metric(self.responses)
+        result = metric._calculate_metric()
 
         # Assertions for calculated metric
         self.assertIn("labeled_contexts", result.misc)

@@ -46,38 +46,67 @@ class AnswerRelevance(Metric):
         # 0 = answer
         # 1 = non-answer
         committal_responses = [
-            response for response, label in zip(responses, self.non_answer_result.raw) if label == 0
+            response for response, output in zip(responses, self.non_answer_result.raw) if output.non_answer == 0 # noqa: E501
         ]
 
         if not committal_responses:
             print("No committal responses found.")
             return MetricOutput(score=0.0, raw=[], misc=self.non_answer_result.misc)
 
-        # Step 2: generate questions (only for valid answers)
-        contexts = [
-            Context.from_prompt_vars(
+        # Step 2: Extract only the answers from the responses
+        # We need this step because most of the time full answers contains questions too
+        contexts_extract = []
+        for response in committal_responses:
+            context = Context.from_prompt_vars(
+                {
+                    "examples": [EXAMPLE_EXTRACT_1, EXAMPLE_EXTRACT_2, EXAMPLE_EXTRACT_3],
+                    "task": {
+                        #"context": response.context,
+                        "answer": response.response,
+                    },
+                    "output_model": ExtractedAnswer,
+                }
+            )
+            context.add_documents(response.context.documents)
+            contexts_extract.append(context)
+
+        prompt_collection_extract = PromptCollection.create_prompts(
+            sys_prompts="",
+            user_prompts=["" for _ in committal_responses],
+            contexts=contexts_extract,
+            template_name=MetricTemplates.LLAMA3_ANSWER_EXTRACTION.value,
+        )
+
+        extracted_answers = self._runner.run(prompt_collection_extract, ExtractedAnswer)
+
+        # Step 3: Build contexts with extracted answers (only for valid answers)
+        contexts = []
+        for response in extracted_answers:
+            context = Context.from_prompt_vars(
                 {
                     "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
                     "task": {
-                        "context": response.context,
                         "answer": response.response,
                     },
                     "output_model": GeneratedQuestion,
                 }
             )
-            for response in committal_responses
-        ]
+            context.add_documents(response.context.documents)
+            contexts.append(context)
 
-        # Step 2: Prompt Collection
+        # Step 4: Prompts for Answer Relevance metric calculation using the extracted answers
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts="",
-            user_prompts=["" for _ in committal_responses],
+            user_prompts=["" for _ in extracted_answers],
             contexts=contexts,
             template_name=MetricTemplates.LLAMA3_ANSWER_RELEVANCE.value,
         )
 
         self.responses: ResponseWrapper = self._runner.run(prompt_collection, GeneratedQuestion)
+        # self.responses are the generated questions for the metric in the metric call
+
         return self._calculate_metric(input_responses=responses)
+        # input_responses are the generated answers from the model that are passed to the metric
 
     def _calculate_metric(self, input_responses: ResponseWrapper) -> MetricOutput:
         # Step 3: Relevance calculation
@@ -85,7 +114,7 @@ class AnswerRelevance(Metric):
         for response in self.responses:
             question_list.append(GeneratedQuestion.model_validate_json(response.response))
         scores = [
-            self._question_similarity(response.user_prompt, generated.question)  # type: ignore
+            self._question_similarity(response.meta_data["question"], generated.question)  # type: ignore
             for response, generated in zip(input_responses, question_list)
         ]
 
@@ -140,4 +169,36 @@ EXAMPLE_3 = Example(
     answer="The tallest mountain on earth is Mt. Everest.",
     context="The tallest mountain on Earth, measured from sea level, is a renowned peak located in the Himalayas.",  # noqa: E501
     output=GeneratedQuestion(question="What is the tallest mountain on Earth?"),
+)
+
+
+
+class ExtractedAnswer(BaseModel):
+    """An extracted answer for the answer extraction prompt."""
+
+    extracted_answer: str
+
+
+class ExampleExtract(BaseModel):
+    """An example for demonstrating answer extraction."""
+
+    answer: str
+    output: Optional[ExtractedAnswer] = None
+
+
+EXAMPLE_EXTRACT_1 = ExampleExtract(
+    answer="I see you asked 'Where was Albert Einstein from?' In the provided text, Albert Einstein is described as a German-born theoretical physicist. So, to answer the question directly: he was from Germany. Additionally, there's a note about his time in Switzerland, but that doesn't change his birthplace.",  # noqa: E501
+    output=ExtractedAnswer(extracted_answer="He was from Germany.")
+)
+
+
+EXAMPLE_EXTRACT_2 = ExampleExtract(
+    answer="Here's the entire conversation: The user asked, 'Who discovered penicillin?', and we found that Alexander Fleming made the discovery in 1928. The rest of the text talks about its impact on modern medicine. Therefore, the short answer is: Alexander Fleming.", # noqa: E501
+    output=ExtractedAnswer(extracted_answer="Alexander Fleming.")
+)
+
+
+EXAMPLE_EXTRACT_3 = ExampleExtract(
+    answer="Answering the question 'Which planet is known as the Red Planet?' from the context: The Red Planet refers to Mars, which is often called the Red Planet due to its reddish appearance. They also mention Jupiter and Saturn, but those are gas giants, not 'red.'. So the best direct answer is: Mars.", # noqa: E501
+    output=ExtractedAnswer(extracted_answer="Mars.")
 )

@@ -1,10 +1,11 @@
 """Check how faithful the answer is to the question."""
 
+import re
 from typing import Iterator, Optional
 
 import nltk
 import numpy as np
-from pydantic import BaseModel, conint
+from pydantic import BaseModel, ValidationError, conint
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
@@ -25,21 +26,26 @@ class AnswerFaithfulness(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how faithful the answer is to the question."""
         # Step 1: Split records into claims
+        sents = []
         claim_prompts, response_indices = [], []
         for response_idx, response in enumerate(responses):
-            sentences = nltk.sent_tokenize(response.response)
+            text = re.sub(r'(\d+)\.', r'\1<NUM>', response.response)
+
+            sentences = nltk.sent_tokenize(text)
             for sent in sentences:
                 tmp = {
                     "examples": [EXAMPLE_1_SPLIT, EXAMPLE_2_SPLIT],
                     "task": {
-                        "question": response.user_prompt,
+                        "question": response.meta_data["question"],
                         "answer": response.response,
                         "sentence": sent,
                     },
                     "output_model": OutputSplit,
                 }
                 claim_prompts.append(Context.from_prompt_vars(tmp))
-                response_indices += [response_idx] * len(sentences)
+                response_indices.append(response_idx)
+            sents.append(sentences)
+
 
         # Step 2: Prompt Collection
         prompt_collection = PromptCollection.create_prompts(
@@ -48,17 +54,21 @@ class AnswerFaithfulness(Metric):
             contexts=claim_prompts,
             template_name=MetricTemplates.LLAMA3_ANSWER_FAITHFULNESS_SPLIT.value,
         )
-
-        # Step 2: Generate claims
+        # Step 3: Generate claims
         responses_claims: ResponseWrapper = self._runner.run(prompt_collection, OutputSplit)
-
-        # Step 3: Gather claims per record
+        # Step 4: Gather claims per record
         # TODO Understand what happens here
         response_to_claims: list[list] = [[] for _ in range(len(responses))]
         for response, response_idx in zip(responses_claims, response_indices):
-            response_to_claims[response_idx] += response.response[1]
+            try:
+                parsed_output = OutputSplit.model_validate_json(response.response) # manual parsing required here # noqa: E501
+                response_to_claims[response_idx] += parsed_output.simpler_statements
+            except ValidationError as ve:
+                print(f"Validation error for response {ve}")
 
-        # Step 4: Prepare NLI prompts using PromptCollection
+        assert len(responses_claims) == len(response_indices)
+
+        # Step 5: Prepare NLI prompts using PromptCollection
         nli_contexts = [
             Context.from_prompt_vars(
                 {
@@ -72,6 +82,7 @@ class AnswerFaithfulness(Metric):
             )
             for response, claims in zip(responses, response_to_claims)
         ]
+
         nli_prompt_collection = PromptCollection.create_prompts(
             sys_prompts="",
             user_prompts=["" for _ in nli_contexts],
@@ -79,16 +90,19 @@ class AnswerFaithfulness(Metric):
             template_name=MetricTemplates.LLAMA3_ANSWER_FAITHFULNESS_NLI.value,
         )
 
-        # Step 4: Generate NLI responses
+        # Step 6: Generate NLI responses
         nli_responses: ResponseWrapper = self._runner.run(nli_prompt_collection, OutputNLI)
         return self._calculate_metric(nli_responses)
 
     def _calculate_metric(self, nli_responses: ResponseWrapper) -> MetricOutput:
-        # Step 6: Process results
+        # Step 7: Process results
         # TODO Sometimes the response does not stop generating
         verdicts_lists: list[OutputNLI] = []
         for response in nli_responses:
-            verdicts_lists.append(OutputNLI.model_validate_json(response.response))
+            try:
+                verdicts_lists.append(OutputNLI.model_validate_json(response.response))
+            except ValidationError as ve:
+                print(f"Validation error for response {ve}")
 
         total = [len(verdict_list) for verdict_list in verdicts_lists]
         supported = [
