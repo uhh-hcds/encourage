@@ -2,23 +2,25 @@
 
 from enum import Enum
 
-from encourage.metrics import (
+from encourage.metrics.answer_faithfulness import AnswerFaithfulness
+from encourage.metrics.answer_relevance import AnswerRelevance
+from encourage.metrics.answer_similarity import AnswerSimilarity
+from encourage.metrics.classic import (
     BLEU,
     F1,
     GLEU,
     ROUGE,
-    AnswerFaithfulness,
     ContextLength,
-    ContextPrecision,
-    ContextRecall,
     ExactMatch,
     GeneratedAnswerLength,
     MeanReciprocalRank,
-    NonAnswerCritic,
-    NumberMatch,
     RecallAtK,
     ReferenceAnswerLength,
 )
+from encourage.metrics.context_precision import ContextPrecision
+from encourage.metrics.context_recall import ContextRecall
+from encourage.metrics.non_answer_critic import NonAnswerCritic
+from encourage.metrics.number_match import NumberMatch
 
 
 class MetricType(Enum):
@@ -36,6 +38,8 @@ class MetricType(Enum):
     GLEU = "GLEU"
     ExactMatch = "ExactMatch"
     AnswerFaithfulness = "AnswerFaithfulness"
+    AnswerRelevance = "AnswerRelevance"
+    AnswerSimilarity = "AnswerSimilarity"
     ContextPrecision = "ContextPrecision"
     ContextRecall = "ContextRecall"
     NonAnswerCritic = "NonAnswerCritic"
@@ -55,6 +59,8 @@ class MetricType(Enum):
             MetricType.GLEU: GLEU,
             MetricType.ExactMatch: ExactMatch,
             MetricType.AnswerFaithfulness: AnswerFaithfulness,
+            MetricType.AnswerRelevance: AnswerRelevance,
+            MetricType.AnswerSimilarity: AnswerSimilarity,
             MetricType.ContextPrecision: ContextPrecision,
             MetricType.ContextRecall: ContextRecall,
             MetricType.NonAnswerCritic: NonAnswerCritic,
