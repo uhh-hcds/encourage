@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Type
+from typing import Any
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
@@ -100,28 +100,3 @@ class Metric(ABC):
     @abstractmethod
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Abstract method to be implemented by subclasses."""
-
-
-class MetricType(Enum):
-    """Enum class for metric types."""
-
-    F1 = "F1"
-    BLEU = "BLEU"
-    NumberMatch = "NumberMatch"
-    MeanReciprocalRank = "MeanReciprocalRank"
-    RecallAtK = "RecallAtK"
-    ROUGE = "ROUGE"
-    GeneratedAnswerLength = "GeneratedAnswerLength"
-    ReferenceAnswerLength = "ReferenceAnswerLength"
-    ContextLength = "ContextLength"
-    GLEU = "GLEU"
-    ExactMatch = "ExactMatch"
-    AnswerFaithfulness = "AnswerFaithfulness"
-    ContextPrecision = "ContextPrecision"
-    ContextRecall = "ContextRecall"
-    NonAnswerCritic = "NonAnswerCritic"
-
-    @classmethod
-    def get_metric_class(cls, metric_name: str) -> Type[Metric] | None:
-        """Returns the corresponding Metric class from its name."""
-        return globals().get(metric_name)
