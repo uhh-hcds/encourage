@@ -30,6 +30,7 @@ class TestNaiveRAGIntegration(unittest.TestCase):
             top_k=1,
             embedding_function="all-MiniLM-L6-v2",
             meta_data_keys=["id"],
+            device="cpu",
         )
 
     def tearDown(self):

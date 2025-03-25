@@ -32,6 +32,7 @@ class NaiveRAG:
         context_key: str = "context",
         question_key: str = "question",
         answer_key: str = "program_answer",
+        device: str = "cuda",
         *args: Any,
         **kwargs: Any,
     ) -> None:

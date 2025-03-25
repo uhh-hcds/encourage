@@ -32,14 +32,14 @@ class SummarizationRAG(NaiveRAG):
         self.context_key = context_key
         qa_dataset = self.create_summaries(runner, additional_prompt, qa_dataset)
         super().__init__(
-            qa_dataset,
-            template_name,
-            collection_name,
-            top_k,
-            embedding_function,
-            meta_data_keys,
-            "summary",
-            answer_key,
+            qa_dataset=qa_dataset,
+            template_name=template_name,
+            collection_name=collection_name,
+            top_k=top_k,
+            embedding_function=embedding_function,
+            meta_data_keys=meta_data_keys,
+            context_key="summary",
+            answer_key=answer_key,
         )
 
     def create_summaries(
