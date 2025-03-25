@@ -42,7 +42,7 @@ class NaiveRAG:
         self.collection_name = collection_name
         self.top_k = top_k
         self.embedding_function = SentenceTransformerEmbeddingFunction(
-            embedding_function, device="cuda"
+            embedding_function, device=device
         )
         self.context_key = context_key
 
