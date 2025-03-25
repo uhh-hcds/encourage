@@ -77,10 +77,10 @@ class TestChromaClient(unittest.TestCase):
         )
 
         # Verify results
-        self.assertEqual(len(query_result), 1)  # Ensure only one document is returned
+        self.assertEqual(len(query_result[0]), 1)  # Ensure only one document is returned
 
         # Check that the first result is a valid Document
-        doc = query_result[0]
+        doc = query_result[0][0]
         self.assertIsInstance(doc, Document)
         self.assertIsInstance(doc.id, uuid.UUID)
         self.assertIsInstance(doc.content, str)
@@ -103,10 +103,10 @@ class TestChromaClient(unittest.TestCase):
         )
 
         # Verify results
-        self.assertEqual(len(query_result), 3)
+        self.assertEqual(len(query_result[0]), 3)
 
         # Check that the first three results are valid Documents
-        for doc in query_result:
+        for doc in query_result[0]:
             self.assertIsInstance(doc, Document)
             self.assertIsInstance(doc.id, uuid.UUID)
             self.assertIsInstance(doc.content, str)
@@ -115,15 +115,15 @@ class TestChromaClient(unittest.TestCase):
 
         # Verify the content of the documents
         self.assertIn(
-            query_result[0].content,
+            query_result[0][0].content,
             ["This is document 1", "This is document 2", "This is document 3"],
         )
         self.assertIn(
-            query_result[1].content,
+            query_result[0][1].content,
             ["This is document 1", "This is document 2", "This is document 3"],
         )
         self.assertIn(
-            query_result[2].content,
+            query_result[0][2].content,
             ["This is document 1", "This is document 2", "This is document 3"],
         )
 
