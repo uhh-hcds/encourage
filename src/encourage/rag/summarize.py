@@ -24,6 +24,7 @@ class SummarizationRAG(NaiveRAG):
         meta_data_keys: list[str],
         runner: BatchInferenceRunner,
         context_key: str = "context",
+        answer_key: str = "answer",
         additional_prompt: str = "",
     ):
         """Initialize RAG method with configuration."""
@@ -38,6 +39,7 @@ class SummarizationRAG(NaiveRAG):
             embedding_function,
             meta_data_keys,
             "summary",
+            answer_key,
         )
 
     def create_summaries(

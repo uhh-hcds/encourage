@@ -20,6 +20,7 @@ class KnownContext(NaiveRAG):
         embedding_function: Any,
         meta_data_keys: list[str],
         context_key: str = "context",
+        answer_key: str = "answer",
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -32,6 +33,7 @@ class KnownContext(NaiveRAG):
             embedding_function,
             meta_data_keys,
             context_key,
+            answer_key,
         )
 
     def get_ground_truth_context(self, context_key: str = "context") -> list[Context]:
