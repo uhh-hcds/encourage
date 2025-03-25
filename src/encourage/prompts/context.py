@@ -1,5 +1,7 @@
 """Module for defining the Context class, which represents the context for a prompt."""
 
+from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Iterator
@@ -21,7 +23,7 @@ class Document:
     score: float = 0.0
     distance: float | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    meta_data: MetaData = field(default_factory=MetaData)
+    meta_data: "MetaData" = field(default_factory=MetaData)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the Document instance to a dictionary."""

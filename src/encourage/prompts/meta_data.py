@@ -42,6 +42,16 @@ class MetaData:
         return {key: convert_value(value) for key, value in self.tags.items()}
 
     @classmethod
-    def from_dict(cls, meta_dict: dict[str, str]) -> "MetaData":
+    def from_dict(cls, meta_dict: dict[str, Any]) -> "MetaData":
         """Update the metadata from a dictionary."""
-        return cls(tags=meta_dict)
+
+        def convert_value(value: Any) -> Any:
+            """Convert the value to the appropriate type."""
+            from encourage.prompts.context import Document
+
+            if isinstance(value, dict) and "content" in value:
+                return Document(**value)
+            return value
+
+        converted_dict = {key: convert_value(value) for key, value in meta_dict.items()}
+        return cls(tags=converted_dict)
