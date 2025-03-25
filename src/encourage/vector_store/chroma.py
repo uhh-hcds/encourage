@@ -3,7 +3,7 @@
 import logging
 import uuid
 from contextlib import suppress
-from typing import Any, Sequence
+from typing import Any, Sequence, cast
 
 import chromadb
 from chromadb import EmbeddingFunction
@@ -84,26 +84,37 @@ class ChromaClient(VectorStore):
     def query(
         self,
         collection_name: str,
-        query: list,
+        query: str | list[str],
         top_k: int,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
         **kwargs: Any,
-    ) -> list[Document]:
-        """Query the collection."""
+    ) -> list[list[Document]]:
+        """Query the collection with a list of queries."""
         collection = self.client.get_collection(
             name=collection_name,
             embedding_function=embedding_function,
         )
+        if isinstance(query, str):
+            query = [query]
         result = collection.query(query_texts=query, n_results=top_k, **kwargs)
+
+        ids = cast(list[list[str]], result.get("ids"))
+        docs = cast(list[list[str]], result.get("documents"))
+        metadatas = cast(list[list[dict[str, str]]], result.get("metadatas"))
+        distances = cast(list[list[float]], result.get("distances"))
+
         return [
-            Document(
-                id=uuid.UUID(result["ids"][0][i]),
-                content=result["documents"][0][i],  # type: ignore
-                meta_data=MetaData(tags=result["metadatas"][0][i]),  # type: ignore
-                distance=result["distances"][0][i],  # type: ignore
-                score=1-result["distances"][0][i],  # type: ignore
-            )
-            for i in range(len(result["ids"][0]))
+            [
+                Document(
+                    id=uuid.UUID(ids[i][j]),
+                    content=docs[i][j],
+                    meta_data=MetaData(tags=metadatas[i][j]),
+                    distance=distances[i][j],
+                    score=1 - distances[i][j],
+                )
+                for j in range(len(ids[i]))
+            ]
+            for i in range(len(query))
         ]
 
     def get_llama_index_class(
