@@ -209,8 +209,7 @@ def model_response_to_chat_completion(model_response: ModelResponse) -> ChatComp
             choices=[],
             created=0,
             model="",
-            object="",
-            service_tier="",
+            object="chat.completion",
             system_fingerprint="",
             usage=CompletionUsage(
                 completion_tokens=0,
