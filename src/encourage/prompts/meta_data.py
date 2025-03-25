@@ -8,7 +8,7 @@ from typing import Any, Iterable, Optional
 class MetaData:
     """Represents additional metadata associated with the context or documents."""
 
-    tags: dict[str, str] = field(default_factory=dict)
+    tags: dict[str, Any] = field(default_factory=dict)
 
     def __getitem__(self, key: str) -> Optional[str]:
         """Retrieve the value of a tag safely, returning None if the key does not exist."""
