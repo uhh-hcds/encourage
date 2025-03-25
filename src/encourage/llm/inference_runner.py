@@ -203,6 +203,24 @@ class OpenAIChatInferenceRunner(InferenceRunner):
 
 def model_response_to_chat_completion(model_response: ModelResponse) -> ChatCompletion:
     """Convert a ModelResponse object to a ChatCompletion object."""
+    if not isinstance(model_response, ModelResponse):
+        raise ChatCompletion(
+            id="",
+            choices=[],
+            created=0,
+            model="",
+            object="",
+            service_tier="",
+            system_fingerprint="",
+            usage=CompletionUsage(
+                completion_tokens=0,
+                prompt_tokens=0,
+                total_tokens=0,
+                completion_tokens_details={},
+                prompt_tokens_details={},
+            ),
+            prompt_logprobs={},
+        )
     return ChatCompletion(
         id=model_response.id,
         choices=[
