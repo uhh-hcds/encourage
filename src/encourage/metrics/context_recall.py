@@ -13,7 +13,7 @@ from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-@register_metric("context-recall")
+@register_metric("ContextRecall")
 class ContextRecall(Metric):
     """How complete the context is for generating the ground-truth."""
 

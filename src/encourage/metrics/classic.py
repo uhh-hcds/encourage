@@ -12,7 +12,7 @@ from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.registry import register_metric
 
 
-@register_metric("generated_answer_length")
+@register_metric("GeneratedAnswerLength")
 class GeneratedAnswerLength(Metric):
     """Computes the average length of the generated answers."""
 
@@ -29,7 +29,7 @@ class GeneratedAnswerLength(Metric):
         return MetricOutput(score=score, raw=lengths)
 
 
-@register_metric("reference_answer_length")
+@register_metric("ReferenceAnswerLength")
 class ReferenceAnswerLength(Metric):
     """Computes the average length of the reference answers."""
 
@@ -48,7 +48,7 @@ class ReferenceAnswerLength(Metric):
         return MetricOutput(score=score, raw=lengths)
 
 
-@register_metric("context_length")
+@register_metric("ContextLength")
 class ContextLength(Metric):
     """Computes the average length of the context."""
 
@@ -70,7 +70,7 @@ class ContextLength(Metric):
         return MetricOutput(score=score, raw=lengths)
 
 
-@register_metric("bleu")
+@register_metric("BLEU")
 class BLEU(Metric):
     """Computes the BLEU score for the generated answers."""
 
@@ -106,7 +106,7 @@ class GLEU(Metric):
         return MetricOutput(score=output["google_bleu"], raw=[])
 
 
-@register_metric("rouge")
+@register_metric("ROUGE")
 class ROUGE(Metric):
     """Computes the ROUGE score for the generated answers."""
 
@@ -133,7 +133,7 @@ class ROUGE(Metric):
         return MetricOutput(score=scores, raw=output)
 
 
-@register_metric("bertscore")
+@register_metric("BERTScore")
 class BERTScore(Metric):
     """Computes the BERTScore for the generated answers."""
 
@@ -161,7 +161,7 @@ class BERTScore(Metric):
         )
 
 
-@register_metric("f1")
+@register_metric("F1")
 class F1(Metric):
     """Computes the F1 score for the generated answers."""
 
@@ -205,7 +205,7 @@ class F1(Metric):
         return MetricOutput(score=scores, raw=output)
 
 
-@register_metric("exact_match")
+@register_metric("ExactMatch")
 class ExactMatch(Metric):
     """Computes the exact match for the generated answers."""
 
@@ -266,7 +266,7 @@ class RetrievalMetric(Metric):
         return qrels, run
 
 
-@register_metric("mrr")
+@register_metric("MeanReciprocalRank")
 class MeanReciprocalRank(RetrievalMetric):
     """Computes the Mean Reciprocal Rank (MRR) for the responses."""
 
@@ -287,7 +287,7 @@ class MeanReciprocalRank(RetrievalMetric):
         return MetricOutput(score=np.mean(scores), raw=scores)
 
 
-@register_metric("recall_atk")
+@register_metric("RecallAtK")
 class RecallAtK(RetrievalMetric):
     """Computes Recall@k for the responses."""
 
@@ -312,7 +312,7 @@ class RecallAtK(RetrievalMetric):
         return MetricOutput(score=np.mean(scores), raw=scores)
 
 
-@register_metric("hit_rate_atk")
+@register_metric("HitRateAtK")
 class HitRateAtK(RetrievalMetric):
     """Computes HitRate@k for the responses."""
 

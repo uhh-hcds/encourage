@@ -9,7 +9,7 @@ from encourage.metrics.registry import register_metric
 EPSILON = 1e-10
 
 
-@register_metric("number_match")
+@register_metric("NumberMatch")
 class NumberMatch(Metric):
     """Computes the exact match for the generated answers."""
 

@@ -14,7 +14,7 @@ from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
 
 
-@register_metric("answer-relevance")
+@register_metric("AnswerRelevance")
 class AnswerRelevance(Metric):
     """How relevant the answer is to the question."""
 

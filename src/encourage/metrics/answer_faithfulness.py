@@ -14,7 +14,7 @@ from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
 
 
-@register_metric("answer-faithfulness")
+@register_metric("AnswerFaithfulness")
 class AnswerFaithfulness(Metric):
     """Check how faithful the answer is to the question."""
 

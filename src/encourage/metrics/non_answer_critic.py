@@ -12,7 +12,7 @@ from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-@register_metric("non-answer-critic")
+@register_metric("NonAnswerCritic")
 class NonAnswerCritic(Metric):
     """Check if generated_answer is a non-answer."""
 

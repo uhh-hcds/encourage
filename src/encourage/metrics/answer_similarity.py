@@ -10,7 +10,7 @@ from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.registry import register_metric
 
 
-@register_metric("answer-similarity")
+@register_metric("AnswerSimilarity")
 class AnswerSimilarity(Metric):
     """Estimate the similarity between answer and reference embeddings."""
 

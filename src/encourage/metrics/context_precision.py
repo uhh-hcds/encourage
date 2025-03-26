@@ -13,7 +13,7 @@ from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-@register_metric("context-precision")
+@register_metric("ContextPrecision")
 class ContextPrecision(Metric):
     """How relevant the context is to the ground-truth answer."""
 
