@@ -43,8 +43,12 @@ class NumberMatch(Metric):
             return ground_truth == prediction
         if prediction in ["yes", "no", "None"]:
             return False
-        ground_truth_num = float(ground_truth)
-        prediction_num = float(prediction)
+        try:
+            ground_truth_num = float(ground_truth)
+            prediction_num = float(prediction)
+        except ValueError:
+            return False
+
         ground_truth_abs = abs(ground_truth_num)
         prediction_abs = abs(prediction_num)
         if ground_truth_abs < EPSILON:
