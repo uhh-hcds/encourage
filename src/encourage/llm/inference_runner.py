@@ -201,9 +201,10 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         )
 
 
-def model_response_to_chat_completion(model_response: ModelResponse) -> ChatCompletion:
+def model_response_to_chat_completion(model_response: ModelResponse | Any) -> ChatCompletion:
     """Convert a ModelResponse object to a ChatCompletion object."""
     if not isinstance(model_response, ModelResponse):
+        # Handle case where response is not a ModelResponse
         return ChatCompletion(
             id="",
             choices=[],
@@ -215,40 +216,40 @@ def model_response_to_chat_completion(model_response: ModelResponse) -> ChatComp
                 completion_tokens=0,
                 prompt_tokens=0,
                 total_tokens=0,
-                completion_tokens_details={},
-                prompt_tokens_details={},
+                completion_tokens_details=None,
+                prompt_tokens_details=None,
             ),
-            prompt_logprobs={},
         )
-    return ChatCompletion(
-        id=model_response.id,
-        choices=[
-            Choice(
-                finish_reason=choice.finish_reason,
-                index=choice.index,
-                logprobs=None,
-                message=ChatCompletionMessage(
-                    content=choice.message.content,  # type: ignore
-                    refusal=None,
-                    role=choice.message.role,  # type: ignore
-                    audio=None,
-                    function_call=choice.message.function_call,  # type: ignore
-                    tool_calls=choice.message.tool_calls or [],  # type: ignore
-                ),
-            )
-            for choice in model_response.choices
-        ],
-        created=model_response.created,
-        model=model_response.model,  # type: ignore
-        object=model_response.object,  # type: ignore
-        service_tier=model_response.service_tier,  # type: ignore
-        system_fingerprint=model_response.system_fingerprint,
-        usage=CompletionUsage(
-            completion_tokens=model_response.usage.completion_tokens,  # type: ignore
-            prompt_tokens=model_response.usage.prompt_tokens,  # type: ignore
-            total_tokens=model_response.usage.total_tokens,  # type: ignore
-            completion_tokens_details=model_response.usage.completion_tokens_details,  # type: ignore
-            prompt_tokens_details=model_response.usage.prompt_tokens_details,  # type: ignore
-        ),
-        prompt_logprobs=model_response.prompt_logprobs,  # type: ignore
-    )
+    else:
+        # For valid ModelResponse objects
+        return ChatCompletion(
+            id=model_response.id,
+            choices=[
+                Choice(
+                    finish_reason=choice.finish_reason,
+                    index=choice.index,
+                    logprobs=None,
+                    message=ChatCompletionMessage(
+                        content=choice.message.content,  # type: ignore
+                        refusal=None,
+                        role=choice.message.role,  # type: ignore
+                        audio=None,
+                        function_call=choice.message.function_call,  # type: ignore
+                        tool_calls=choice.message.tool_calls or [],  # type: ignore
+                    ),
+                )
+                for choice in model_response.choices
+            ],
+            created=model_response.created,
+            model=model_response.model,  # type: ignore
+            object=model_response.object,  # type: ignore
+            service_tier=model_response.service_tier,  # type: ignore
+            system_fingerprint=model_response.system_fingerprint,
+            usage=CompletionUsage(
+                completion_tokens=model_response.usage.completion_tokens,  # type: ignore
+                prompt_tokens=model_response.usage.prompt_tokens,  # type: ignore
+                total_tokens=model_response.usage.total_tokens,  # type: ignore
+                completion_tokens_details=model_response.usage.completion_tokens_details,  # type: ignore
+                prompt_tokens_details=model_response.usage.prompt_tokens_details,  # type: ignore
+            ),
+        )
