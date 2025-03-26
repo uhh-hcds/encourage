@@ -132,18 +132,9 @@ class ContextPreservingSummarizationRAG(NaiveRAG):
         query_list: list[str],
         meta_datas: Optional[list[MetaData]] = None,
     ) -> list[Context]:
-        """Override to retrieve contexts but replace summaries with original contexts.
-
-        Args:
-            query_list: List of queries to search for
-            meta_datas: Optional list of metadata to filter by
-
-        Returns:
-            List of Context objects with summary content replaced by original context
-
-        """
+        """Override to retrieve contexts but replace summaries with original contexts."""
         # Get contexts (summaries) using the parent implementation
-        contexts = super()._get_contexts_from_db(query_list, meta_datas or [])
+        contexts = super()._get_contexts_from_db(query_list)
 
         # Replace summary content with original context content
         for context in contexts:
