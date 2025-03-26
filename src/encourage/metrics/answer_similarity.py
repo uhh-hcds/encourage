@@ -9,6 +9,7 @@ from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
 
 
+@Metric.register("answer-similarity")
 class AnswerSimilarity(Metric):
     """Estimate the similarity between answer and reference embeddings."""
 

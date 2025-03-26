@@ -12,8 +12,14 @@ from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
+@Metric.register("context-recall")
 class ContextRecall(Metric):
     """How complete the context is for generating the ground-truth."""
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Return True if the metric requires an LLM runner."""
+        return True
 
     def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
@@ -32,7 +38,7 @@ class ContextRecall(Metric):
                     "examples": [EXAMPLE_1, EXAMPLE_2, EXAMPLE_3],
                     "task": {
                         "question": response.meta_data["question"],
-                        "answer": response.meta_data["reference_answer"]
+                        "answer": response.meta_data["reference_answer"],
                     },
                     "output_model": ClassifiedSentencesList,
                 }

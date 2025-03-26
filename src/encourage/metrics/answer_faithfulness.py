@@ -13,8 +13,14 @@ from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
 
 
+@Metric.register("answer-faithfulness")
 class AnswerFaithfulness(Metric):
     """Check how faithful the answer is to the question."""
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Return True if the metric requires an LLM runner."""
+        return True
 
     def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
@@ -29,7 +35,7 @@ class AnswerFaithfulness(Metric):
         sents = []
         claim_prompts, response_indices = [], []
         for response_idx, response in enumerate(responses):
-            text = re.sub(r'(\d+)\.', r'\1<NUM>', response.response)
+            text = re.sub(r"(\d+)\.", r"\1<NUM>", response.response)
 
             sentences = nltk.sent_tokenize(text)
             for sent in sentences:
@@ -46,7 +52,6 @@ class AnswerFaithfulness(Metric):
                 response_indices.append(response_idx)
             sents.append(sentences)
 
-
         # Step 2: Prompt Collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts="",
@@ -61,7 +66,9 @@ class AnswerFaithfulness(Metric):
         response_to_claims: list[list] = [[] for _ in range(len(responses))]
         for response, response_idx in zip(responses_claims, response_indices):
             try:
-                parsed_output = OutputSplit.model_validate_json(response.response) # manual parsing required here # noqa: E501
+                parsed_output = OutputSplit.model_validate_json(
+                    response.response
+                )  # manual parsing required here # noqa: E501
                 response_to_claims[response_idx] += parsed_output.simpler_statements
             except ValidationError as ve:
                 print(f"Validation error for response {ve}")

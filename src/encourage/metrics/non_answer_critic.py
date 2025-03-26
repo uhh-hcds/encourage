@@ -11,8 +11,14 @@ from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
+@Metric.register("non-answer-critic")
 class NonAnswerCritic(Metric):
     """Check if generated_answer is a non-answer."""
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Return True if the metric requires an LLM runner."""
+        return True
 
     def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(

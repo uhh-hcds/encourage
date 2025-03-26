@@ -8,6 +8,7 @@ from encourage.metrics.metric import Metric, MetricOutput
 EPSILON = 1e-10
 
 
+@Metric.register("number_match")
 class NumberMatch(Metric):
     """Computes the exact match for the generated answers."""
 

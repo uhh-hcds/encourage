@@ -76,6 +76,11 @@ class Metric(ABC):
         """Returns a brief description of the metric."""
         return self._description
 
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Override in subclasses if runner is required."""
+        return False
+
     def validate_nested_keys(self, responses: ResponseWrapper) -> None:
         """Validates that each response contains required fields in meta_data and context."""
         for response in responses:
