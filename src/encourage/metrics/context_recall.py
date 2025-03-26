@@ -8,11 +8,12 @@ from pydantic import BaseModel, ValidationError
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.metrics.registry import register_metric
 from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-@Metric.register("context-recall")
+@register_metric("context-recall")
 class ContextRecall(Metric):
     """How complete the context is for generating the ground-truth."""
 

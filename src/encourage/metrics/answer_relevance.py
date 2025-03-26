@@ -9,11 +9,12 @@ from sentence_transformers import SentenceTransformer
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.metrics.non_answer_critic import NonAnswerCritic
+from encourage.metrics.registry import register_metric
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
 
 
-@Metric.register("answer-relevance")
+@register_metric("answer-relevance")
 class AnswerRelevance(Metric):
     """How relevant the answer is to the question."""
 

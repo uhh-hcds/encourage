@@ -4,11 +4,12 @@ import math
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
+from encourage.metrics.registry import register_metric
 
 EPSILON = 1e-10
 
 
-@Metric.register("number_match")
+@register_metric("number_match")
 class NumberMatch(Metric):
     """Computes the exact match for the generated answers."""
 

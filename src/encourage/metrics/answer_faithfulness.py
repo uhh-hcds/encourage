@@ -9,11 +9,12 @@ from pydantic import BaseModel, ValidationError, conint
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.metrics.registry import register_metric
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
 
 
-@Metric.register("answer-faithfulness")
+@register_metric("answer-faithfulness")
 class AnswerFaithfulness(Metric):
     """Check how faithful the answer is to the question."""
 

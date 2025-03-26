@@ -8,11 +8,12 @@ from pydantic import BaseModel
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.metrics.registry import register_metric
 from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
-@Metric.register("context-precision")
+@register_metric("context-precision")
 class ContextPrecision(Metric):
     """How relevant the context is to the ground-truth answer."""
 
