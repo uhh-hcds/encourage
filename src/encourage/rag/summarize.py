@@ -6,7 +6,7 @@ import pandas as pd
 
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
-from encourage.rag.rag import NaiveRAG
+from encourage.rag.base.rag_enum import NaiveRAG
 
 logger = logging.getLogger(__name__)
 

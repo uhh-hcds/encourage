@@ -3,6 +3,7 @@
 import logging
 from enum import Enum
 
+from encourage.rag.base.rag_interface import RAGMethodInterface
 from encourage.rag.known_context import KnownContext
 from encourage.rag.naive import NaiveRAG
 from encourage.rag.summarize import SummarizationRAG
@@ -17,7 +18,7 @@ class RAGMethod(Enum):
     KnownContext = "KnownContext"
     Summarization = "Summarization"
 
-    def get_class(self) -> type:
+    def get_class(self) -> type[RAGMethodInterface]:
         """Get the implementation class for this RAG method."""
         method_classes = {
             RAGMethod.Naive: NaiveRAG,
