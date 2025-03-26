@@ -21,6 +21,11 @@ from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.metric_type import MetricType
 from encourage.metrics.non_answer_critic import NonAnswerCritic
 from encourage.metrics.number_match import NumberMatch
+from encourage.metrics.registry import (
+    METRIC_REGISTRY,
+    get_metric_from_registry,
+    register_metric,
+)
 
 __all__ = [
     "AnswerFaithfulness",
@@ -45,4 +50,7 @@ __all__ = [
     "NumberMatch",
     "RecallAtK",
     "HitRateAtK",
+    "METRIC_REGISTRY",
+    "get_metric_from_registry",
+    "register_metric",
 ]
