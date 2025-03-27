@@ -133,7 +133,7 @@ class NaiveRAG:
         # Generate queries and retrieve contexts
         if retrieval_instruction:
             logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            self.contexts = self._get_contexts_from_db(retrieval_instruction, self.metadata)
+            self.contexts = self._get_contexts_from_db(retrieval_instruction)
         else:
             logger.info("No context retrieval queries provided. Using no context.")
             self.contexts = []
