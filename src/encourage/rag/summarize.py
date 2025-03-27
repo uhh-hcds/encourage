@@ -89,6 +89,7 @@ class SummarizationContextRAG(NaiveRAG):
         """Initialize RAG method with configuration."""
         self.template_name = template_name
         self.context_key = context_key
+        self.qa_dataset = self.create_context_id(qa_dataset, context_key)
         qa_dataset = self.create_summaries(runner, additional_prompt, qa_dataset)
         super().__init__(
             qa_dataset=qa_dataset,
