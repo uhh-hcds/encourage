@@ -156,6 +156,8 @@ class HydeRAG(NaiveRAG):
             ResponseWrapper containing the responses from the LLM
 
         """
+        user_prompts = user_prompts if user_prompts else self.user_prompts
+
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
