@@ -13,6 +13,7 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
+from encourage.utils.llm_mock import create_mock_response_wrapper
 from encourage.vector_store import ChromaClient
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,8 @@ class NaiveRAG:
         question_key: str = "question",
         answer_key: str = "program_answer",
         device: str = "cuda",
-        *args: Any,
+        where: dict[str, str] = None,
+        retrieval_only: bool = False,
         **kwargs: Any,
     ) -> None:
         """Initialize RAG method with configuration."""
@@ -45,6 +47,8 @@ class NaiveRAG:
             embedding_function, device=device
         )
         self.context_key = context_key
+        self.where = where
+        self.retrieval_only = retrieval_only
 
         self.metadata = self.create_metadata(answer_key)
         self.user_prompts = qa_dataset[question_key]
@@ -105,14 +109,17 @@ class NaiveRAG:
     def _get_contexts_from_db(
         self,
         query_list: list[str],
-        meta_datas: list[MetaData] = [MetaData()],
     ) -> list[Context]:
         """Get the contexts from the database."""
-        if meta_datas != [MetaData()]:
-            raise NotImplementedError("Handling of meta_datas is not implemented yet.")
+        # Query the database with or without where filter
         results = self.client.query(
-            self.collection_name, query_list, self.top_k, self.embedding_function
+            self.collection_name,
+            query_list,
+            self.top_k,
+            self.embedding_function,
+            where=self.where if self.where else None,
         )
+
         return [Context.from_documents(document_list) for document_list in results]
 
     def run(
@@ -126,13 +133,13 @@ class NaiveRAG:
         # Generate queries and retrieve contexts
         if retrieval_instruction:
             logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            self.contexts = self._get_contexts_from_db(retrieval_instruction)
+            self.contexts = self._get_contexts_from_db(retrieval_instruction, self.metadata)
         else:
             logger.info("No context retrieval queries provided. Using no context.")
             self.contexts = []
         user_prompts = user_prompts if user_prompts else self.user_prompts
 
-        # Run inference
+        # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
@@ -140,4 +147,10 @@ class NaiveRAG:
             meta_datas=self.metadata,
             template_name=self.template_name,
         )
-        return runner.run(prompt_collection)
+
+        if self.retrieval_only:
+            logger.info("Retrieval-only mode: Skipping LLM inference.")
+            return create_mock_response_wrapper(prompt_collection)
+        else:
+            # Run inference with the LLM
+            return runner.run(prompt_collection)

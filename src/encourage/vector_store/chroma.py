@@ -87,16 +87,31 @@ class ChromaClient(VectorStore):
         query: str | list[str],
         top_k: int,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
+        where: dict[str, str] = None,
         **kwargs: Any,
     ) -> list[list[Document]]:
-        """Query the collection with a list of queries."""
+        """Query the collection with a list of queries.
+
+        Args:
+            collection_name: The name of the collection to query
+            query: The query or list of queries to search for
+            top_k: The number of results to return per query
+            embedding_function: The embedding function to use
+            where: Optional metadata filtering condition in the form {"key": "value"}
+            **kwargs: Additional parameters to pass to the query
+
+        Returns:
+            A list of lists of Documents, one list per query
+
+        """
         collection = self.client.get_collection(
             name=collection_name,
             embedding_function=embedding_function,
         )
         if isinstance(query, str):
             query = [query]
-        result = collection.query(query_texts=query, n_results=top_k, **kwargs)
+
+        result = collection.query(query_texts=query, n_results=top_k, where=where, **kwargs)
 
         ids = cast(list[list[str]], result.get("ids"))
         docs = cast(list[list[str]], result.get("documents"))

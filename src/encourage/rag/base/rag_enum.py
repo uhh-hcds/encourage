@@ -6,8 +6,7 @@ from enum import Enum
 from encourage.rag.base.rag_interface import RAGMethodInterface
 from encourage.rag.known_context import KnownContext
 from encourage.rag.naive import NaiveRAG
-from encourage.rag.retrieval_only import RetrievalOnlyRAG
-from encourage.rag.summarize import ContextPreservingSummarizationRAG, SummarizationRAG
+from encourage.rag.summarize import SummarizationContextRAG, SummarizationRAG
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class RAGMethod(Enum):
     Naive = "Naive"
     KnownContext = "KnownContext"
     Summarization = "Summarization"
-    ContextPreservingSummarization = "ContextPreservingSummarization"
+    SummarizationContextRAG = "SummarizationContextRAG"
     RetrievalOnly = "RetrievalOnly"
 
     def get_class(self) -> type[RAGMethodInterface]:
@@ -27,7 +26,6 @@ class RAGMethod(Enum):
             RAGMethod.Naive: NaiveRAG,
             RAGMethod.KnownContext: KnownContext,
             RAGMethod.Summarization: SummarizationRAG,
-            RAGMethod.ContextPreservingSummarization: ContextPreservingSummarizationRAG,
-            RAGMethod.RetrievalOnly: RetrievalOnlyRAG,
+            RAGMethod.SummarizationContextRAG: SummarizationContextRAG,
         }
         return method_classes[self]
