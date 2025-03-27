@@ -18,7 +18,6 @@ class RAGMethod(Enum):
     KnownContext = "KnownContext"
     Summarization = "Summarization"
     SummarizationContextRAG = "SummarizationContextRAG"
-    RetrievalOnly = "RetrievalOnly"
 
     def get_class(self) -> type[RAGMethodInterface]:
         """Get the implementation class for this RAG method."""
