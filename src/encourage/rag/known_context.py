@@ -25,6 +25,8 @@ class KnownContext(NaiveRAG):
         device: str = "cuda",
         where: dict[str, str] = None,
         retrieval_only: bool = False,
+        runner: BatchInferenceRunner = None,
+        additional_prompt: str = "",
         **kwargs: Any,
     ) -> None:
         """Initialize known context with context and metadata."""
@@ -40,6 +42,8 @@ class KnownContext(NaiveRAG):
             device=device,
             where=where,
             retrieval_only=retrieval_only,
+            runner=runner,
+            additional_prompt=additional_prompt,
             **kwargs,
         )
 

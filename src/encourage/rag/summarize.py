@@ -1,6 +1,7 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
+from typing import Any
 
 import pandas as pd
 
@@ -45,6 +46,8 @@ class SummarizationRAG(NaiveRAG):
             answer_key=answer_key,
             where=where,
             retrieval_only=retrieval_only,
+            runner=runner,
+            additional_prompt=additional_prompt,
         )
 
     def create_summaries(
@@ -102,6 +105,8 @@ class SummarizationContextRAG(NaiveRAG):
             answer_key=answer_key,
             where=where,
             retrieval_only=retrieval_only,
+            runner=runner,
+            additional_prompt=additional_prompt,
         )
 
     def create_summaries(
@@ -118,7 +123,6 @@ class SummarizationContextRAG(NaiveRAG):
             template_name=self.template_name,
         )
         responses = runner.run(prompt_collection)
-
         sum_mapping = {
             context: response.response for response, context in zip(responses, unique_contexts)
         }
@@ -129,17 +133,26 @@ class SummarizationContextRAG(NaiveRAG):
 
         return qa_dataset
 
-    def _get_contexts_from_db(
+    def retrieve_contexts(
         self,
         query_list: list[str],
+        **kwargs: Any,
     ) -> list[Context]:
-        """Get contexts from the database with context preservation.
+        """Retrieve contexts from the database with context preservation.
 
         This overrides the parent method to replace the summaries with
         the original contexts after retrieval.
+
+        Args:
+            query_list: List of queries to retrieve contexts for
+            kwargs: Additional parameters
+
+        Returns:
+            List of contexts with original document content
+
         """
         # Get contexts using the parent implementation
-        contexts = super()._get_contexts_from_db(query_list)
+        contexts = super().retrieve_contexts(query_list, **kwargs)
 
         # Replace each summary with its original context
         for _, context in enumerate(contexts):

@@ -119,6 +119,10 @@ class ResponseWrapper:
             finished_time=0.0,
         )
 
+    def get_responses(self) -> list[str]:
+        """Return the list of actually text responses from the model."""
+        return [response.response for response in self.response_data]
+
     def print_response_summary(self) -> None:
         """Prints a summary of all responses."""
         for response in self.response_data:

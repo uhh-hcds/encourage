@@ -13,13 +13,14 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
+from encourage.rag.base.rag_interface import RAGMethodInterface
 from encourage.utils.llm_mock import create_mock_response_wrapper
-from encourage.vector_store import ChromaClient
+from encourage.vector_store import ChromaClient, VectorStore
 
 logger = logging.getLogger(__name__)
 
 
-class NaiveRAG:
+class NaiveRAG(RAGMethodInterface):
     """Base implementation of RAG."""
 
     def __init__(
@@ -36,6 +37,8 @@ class NaiveRAG:
         device: str = "cuda",
         where: dict[str, str] = None,
         retrieval_only: bool = False,
+        runner: BatchInferenceRunner = None,
+        additional_prompt: str = "",
         **kwargs: Any,
     ) -> None:
         """Initialize RAG method with configuration."""
@@ -49,13 +52,16 @@ class NaiveRAG:
         self.context_key = context_key
         self.where = where
         self.retrieval_only = retrieval_only
-
+        self.runner = runner
+        self.additional_prompt = additional_prompt
         self.metadata = self.create_metadata(answer_key)
         self.user_prompts = qa_dataset[question_key]
         context_collection = self.prepare_contexts_for_db(meta_data_keys)
         self.client = self.init_db(context_collection)
 
-    def create_context_id(self, qa_dataset: pd.DataFrame, context_key: str = "context") -> Any:
+    def create_context_id(
+        self, qa_dataset: pd.DataFrame, context_key: str = "context"
+    ) -> pd.DataFrame:
         """Create context id from dataset."""
         unique_values = list(qa_dataset[context_key].unique())
         uuid_mapping = {val: str(uuid.uuid4()) for val in unique_values}
@@ -79,18 +85,18 @@ class NaiveRAG:
             meta_datas.append(meta_data)
         return meta_datas
 
-    def prepare_contexts_for_db(self, meta_datas_keys: list[str]) -> Context:
+    def prepare_contexts_for_db(self, meta_data_keys: list[str]) -> Context:
         """Prepare contexts for the QA dataset."""
-        df = self.qa_dataset[[*meta_datas_keys, self.context_key, "context_id"]]
+        df = self.qa_dataset[[*meta_data_keys, self.context_key, "context_id"]]
         df = df.drop_duplicates(subset=[self.context_key])
         meta_datas = [
-            MetaData(tags={key: row[key] for key in meta_datas_keys}) for _, row in df.iterrows()
+            MetaData(tags={key: row[key] for key in meta_data_keys}) for _, row in df.iterrows()
         ]
         return Context.from_documents(
             df[self.context_key].tolist(), meta_datas, df["context_id"].tolist()
         )
 
-    def init_db(self, context_collection: Context) -> ChromaClient:
+    def init_db(self, context_collection: Context) -> VectorStore:
         """Initialize the database with the contexts."""
         chroma_client = ChromaClient()
         print(f"Creating collection {self.collection_name}.")
@@ -106,12 +112,12 @@ class NaiveRAG:
         print("Database initialized.")
         return chroma_client
 
-    def _get_contexts_from_db(
+    def retrieve_contexts(
         self,
         query_list: list[str],
+        **kwargs: Any,
     ) -> list[Context]:
-        """Get the contexts from the database."""
-        # Query the database with or without where filter
+        """Retrieve relevant contexts from the database."""
         results = self.client.query(
             self.collection_name,
             query_list,
@@ -119,7 +125,6 @@ class NaiveRAG:
             self.embedding_function,
             where=self.where if self.where else None,
         )
-
         return [Context.from_documents(document_list) for document_list in results]
 
     def run(
@@ -133,12 +138,12 @@ class NaiveRAG:
         # Generate queries and retrieve contexts
         if retrieval_instruction:
             logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            self.contexts = self._get_contexts_from_db(retrieval_instruction)
+            self.contexts = self.retrieve_contexts(retrieval_instruction)
         else:
             logger.info("No context retrieval queries provided. Using no context.")
             self.contexts = []
-        user_prompts = user_prompts if user_prompts else self.user_prompts
 
+        user_prompts = user_prompts if user_prompts else self.user_prompts
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
