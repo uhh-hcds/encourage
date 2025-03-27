@@ -139,6 +139,7 @@ class HydeRAG(NaiveRAG):
 
     def run(
         self,
+        runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: list[str] = [],
         retrieval_instruction: list[str] = [],
@@ -146,6 +147,7 @@ class HydeRAG(NaiveRAG):
         """Execute the HYDE RAG pipeline and return responses.
 
         Args:
+            runner: LLM runner to use for final answer generation
             sys_prompt: System prompt for the final answer generation
             user_prompts: Optional list of user prompts (questions)
             retrieval_instruction: Optional retrieval instructions
@@ -168,4 +170,4 @@ class HydeRAG(NaiveRAG):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM using the class runner
-            return self.runner.run(prompt_collection)
+            return runner.run(prompt_collection)
