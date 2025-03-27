@@ -35,9 +35,9 @@ class NaiveRAG(RAGMethodInterface):
         question_key: str = "question",
         answer_key: str = "program_answer",
         device: str = "cuda",
-        where: dict[str, str] = None,
+        where: dict[str, str] | None = None,
         retrieval_only: bool = False,
-        runner: BatchInferenceRunner = None,
+        runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
         **kwargs: Any,
     ) -> None:
@@ -119,10 +119,10 @@ class NaiveRAG(RAGMethodInterface):
     ) -> list[Context]:
         """Retrieve relevant contexts from the database."""
         results = self.client.query(
-            self.collection_name,
-            query_list,
-            self.top_k,
-            self.embedding_function,
+            collection_name=self.collection_name,
+            query=query_list,
+            top_k=self.top_k,
+            embedding_function=self.embedding_function,
             where=self.where if self.where else None,
         )
         return [Context.from_documents(document_list) for document_list in results]

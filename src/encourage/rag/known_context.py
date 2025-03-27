@@ -23,9 +23,9 @@ class KnownContext(NaiveRAG):
         context_key: str = "context",
         answer_key: str = "answer",
         device: str = "cuda",
-        where: dict[str, str] = None,
+        where: dict[str, str] | None = None,
         retrieval_only: bool = False,
-        runner: BatchInferenceRunner = None,
+        runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
         **kwargs: Any,
     ) -> None:

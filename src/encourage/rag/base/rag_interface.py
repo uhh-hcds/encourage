@@ -26,9 +26,9 @@ class RAGMethodInterface(ABC):
         question_key: str = "question",
         answer_key: str = "program_answer",
         device: str = "cuda",
-        where: Dict[str, str] = None,
+        where: Dict[str, str] | None = None,
         retrieval_only: bool = False,
-        runner: BatchInferenceRunner = None,
+        runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
         **kwargs: Any,
     ) -> None:

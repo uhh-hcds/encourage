@@ -40,9 +40,9 @@ class HydeRAG(NaiveRAG):
         question_key: str = "question",
         answer_key: str = "program_answer",
         device: str = "cuda",
-        where: dict[str, str] = None,
+        where: dict[str, str] | None = None,
         retrieval_only: bool = False,
-        runner: BatchInferenceRunner = None,
+        runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
         cache_hypothetical_answers: bool = True,
         **kwargs: Any,
@@ -64,7 +64,7 @@ class HydeRAG(NaiveRAG):
             retrieval_only: If True, only perform retrieval without LLM inference
             runner: LLM runner to use for final answer generation and hypothetical answers
             additional_prompt: Additional prompt text to include in hypothetical answers
-            cache_hypothetical_answers: Whether to cache hypothetical answers
+            cache_hypothetical_answers: Whe ofther to cache hypothetical answers
             **kwargs: Additional parameters
 
         """
@@ -104,6 +104,9 @@ class HydeRAG(NaiveRAG):
             template_name=self.template_name,
         )
 
+        if not self.runner:
+            raise ValueError("No LLM runner provided for generating hypothetical answers.")
+
         # Get the response from the LLM using the main runner
         return self.runner.run(prompt_collection)
 
@@ -128,10 +131,10 @@ class HydeRAG(NaiveRAG):
 
         # Use hypothetical answers as search vectors instead of original queries
         results = self.client.query(
-            self.collection_name,
-            responses,
-            self.top_k,
-            self.embedding_function,
+            collection_name=self.collection_name,
+            query=responses,
+            top_k=self.top_k,
+            embedding_function=self.embedding_function,
             where=self.where if self.where else None,
         )
 

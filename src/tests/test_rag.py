@@ -53,7 +53,7 @@ class TestNaiveRAGIntegration(unittest.TestCase):
 
     def test_get_contexts_from_db(self):
         query = ["What is AI?"]
-        contexts = self.rag._get_contexts_from_db(query)
+        contexts = self.rag.retrieve_contexts(query)
         self.assertEqual(len(contexts), 1)
         self.assertIsInstance(contexts[0], Context)
         self.assertGreaterEqual(len(contexts[0].documents), 1)

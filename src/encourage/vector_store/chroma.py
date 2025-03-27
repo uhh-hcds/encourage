@@ -6,7 +6,7 @@ from contextlib import suppress
 from typing import Any, Sequence, cast
 
 import chromadb
-from chromadb import EmbeddingFunction
+from chromadb import EmbeddingFunction, Where
 from chromadb.config import Settings
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
@@ -87,7 +87,7 @@ class ChromaClient(VectorStore):
         query: str | list[str],
         top_k: int,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
-        where: dict[str, str] = None,
+        where: dict[str, str] | None = None,
         **kwargs: Any,
     ) -> list[list[Document]]:
         """Query the collection with a list of queries.
@@ -111,7 +111,10 @@ class ChromaClient(VectorStore):
         if isinstance(query, str):
             query = [query]
 
-        result = collection.query(query_texts=query, n_results=top_k, where=where, **kwargs)
+        where_chromadb = cast(Where, where)
+        result = collection.query(
+            query_texts=query, n_results=top_k, where=where_chromadb, **kwargs
+        )
 
         ids = cast(list[list[str]], result.get("ids"))
         docs = cast(list[list[str]], result.get("documents"))

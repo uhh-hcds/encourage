@@ -28,7 +28,7 @@ class SummarizationRAG(NaiveRAG):
         context_key: str = "context",
         answer_key: str = "answer",
         additional_prompt: str = "",
-        where: dict[str, str] = None,
+        where: dict[str, str] | None = None,
         retrieval_only: bool = False,
     ):
         """Initialize RAG method with configuration."""
@@ -86,7 +86,7 @@ class SummarizationContextRAG(NaiveRAG):
         context_key: str = "context",
         answer_key: str = "answer",
         additional_prompt: str = "",
-        where: dict[str, str] = None,
+        where: dict[str, str] | None = None,
         retrieval_only: bool = False,
     ):
         """Initialize RAG method with configuration."""

@@ -30,4 +30,4 @@ class RAGMethod(Enum):
             RAGMethod.Summarization: SummarizationRAG,
             RAGMethod.SummarizationContextRAG: SummarizationContextRAG,
         }
-        return method_classes[self]
+        return method_classes[self]  # type: ignore
