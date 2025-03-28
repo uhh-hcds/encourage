@@ -21,7 +21,52 @@ logger = logging.getLogger(__name__)
 
 
 class BaseRAG(RAGMethodInterface):
-    """Base implementation of RAG."""
+    """Base implementation of RAG.
+
+    BaseRAG is a foundational implementation of a Retrieval-Augmented Generation (RAG) method.
+    It integrates retrieval-based context generation with language model inference to provide
+    answers based on a given dataset and context.
+    The class also modifies the `qa_dataset` by adding additional columns such as `context_id`.
+
+    Attributes:
+        qa_dataset (pd.DataFrame): The QA dataset with questions, answers, and contexts.
+        template_name (str): The name of the prompt template to use.
+        collection_name (str): The name of the collection in the vector database.
+        top_k (int): The number of top results to retrieve from the database.
+        embedding_function (Any): The embedding function used for vectorization.
+        meta_data_keys (list[str]): Keys for metadata extraction from the dataset.
+        context_key (str): The column name for context in the dataset. Defaults to "context".
+        question_key (str): The column name for questions in the dataset. Defaults to "question".
+        answer_key (str): The column name for answers in the dataset. Defaults to "program_answer".
+        device (str): The device to use for computation (e.g., "cuda" or "cpu"). Defaults to "cuda".
+        where (dict[str, str] | None): Optional filtering conditions for retrieval.
+        retrieval_only (bool): If True, skips LLM inference and only retrieves contexts.
+        runner (BatchInferenceRunner | None): The inference runner for batch processing.
+        additional_prompt (str): Additional prompt text to append to the generated prompts.
+        metadata (list[MetaData]): Metadata extracted from the dataset.
+        user_prompts (pd.Series): User prompts extracted from the dataset.
+        client (VectorStore): The vector database client for context retrieval.
+
+    Methods:
+        __init__(qa_dataset, template_name, collection_name, top_k, embedding_function,
+                 meta_data_keys, context_key, question_key, answer_key, device, where,
+                 retrieval_only, runner, additional_prompt, **kwargs):
+            Initializes the BaseRAG instance with the provided configuration.
+        create_context_id(qa_dataset, context_key="context") -> pd.DataFrame:
+            Adds a unique `context_id` column to the dataset based on the context values.
+        create_metadata(answer_key="program_answer") -> list[MetaData]:
+            Generates metadata objects from the dataset for use in context retrieval.
+        prepare_contexts_for_db(meta_data_keys) -> Context:
+            Prepares the contexts and metadata for insertion into the vector database.
+        init_db(context_collection) -> VectorStore:
+            Initializes the vector database with the provided context collection.
+        retrieve_contexts(query_list, **kwargs) -> list[Context]:
+            Retrieves relevant contexts from the database based on the provided queries.
+        run(runner, sys_prompt, user_prompts=[], retrieval_instruction=[]) -> ResponseWrapper:
+            Executes the RAG pipeline, including context retrieval and LLM inference,
+            and returns the generated responses.
+
+    """
 
     def __init__(
         self,
