@@ -54,8 +54,9 @@ class BaseRAG(RAGMethodInterface):
             Initializes the BaseRAG instance with the provided configuration.
         create_context_id(qa_dataset, context_key="context") -> pd.DataFrame:
             Adds a unique `context_id` column to the dataset based on the context values.
-        create_metadata(answer_key="program_answer") -> list[MetaData]:
-            Generates metadata objects from the dataset for use in context retrieval.
+        prompt_meta_data(answer_key="program_answer") -> list[MetaData]:
+            Generates metadata objects from the dataset that are used in the metrics for
+            reference matching.
         prepare_contexts_for_db(meta_data_keys) -> Context:
             Prepares the contexts and metadata for insertion into the vector database.
         init_db(context_collection) -> VectorStore:
@@ -99,7 +100,7 @@ class BaseRAG(RAGMethodInterface):
         self.retrieval_only = retrieval_only
         self.runner = runner
         self.additional_prompt = additional_prompt
-        self.metadata = self.create_metadata(answer_key)
+        self.prompt_meta_data = self.create_prompt_meta_data(answer_key)
         self.user_prompts = qa_dataset[question_key]
         context_collection = self.prepare_contexts_for_db(meta_data_keys)
         self.client = self.init_db(context_collection)
@@ -113,17 +114,21 @@ class BaseRAG(RAGMethodInterface):
         qa_dataset["context_id"] = qa_dataset[context_key].map(uuid_mapping)
         return qa_dataset
 
-    def create_metadata(self, answer_key: str = "program_answer") -> list[MetaData]:
+    def create_prompt_meta_data(self, answer_key: str = "program_answer") -> list[MetaData]:
         """Create metadata from dataset."""
+        if "id" not in self.qa_dataset.columns:
+            logger.info("The dataset should contain an 'id' column. Created dummy id column.")
+            self.qa_dataset["id"] = self.qa_dataset.index.astype(str)
+
         meta_datas = []
-        for i in range(len(self.qa_dataset)):
+        for _, row in self.qa_dataset.iterrows():
             meta_data = MetaData(
                 {
-                    "reference_answer": self.qa_dataset[answer_key][i],
-                    "id": self.qa_dataset["id"][i],
+                    "reference_answer": row[answer_key],
+                    "id": row["id"],
                     "reference_document": Document(
-                        id=uuid.UUID(self.qa_dataset["context_id"][i]),
-                        content=self.qa_dataset["context"][i],
+                        id=uuid.UUID(row["context_id"]),
+                        content=row[self.context_key],
                     ),
                 }
             )
@@ -194,7 +199,7 @@ class BaseRAG(RAGMethodInterface):
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
-            meta_datas=self.metadata,
+            meta_datas=self.prompt_meta_data,
             template_name=self.template_name,
         )
 

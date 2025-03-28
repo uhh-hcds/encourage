@@ -43,8 +43,8 @@ class RAGMethodInterface(ABC):
         pass
 
     @abstractmethod
-    def create_metadata(self, answer_key: str = "program_answer") -> List[MetaData]:
-        """Create metadata from dataset."""
+    def prompt_meta_data(self, answer_key: str = "program_answer") -> List[MetaData]:
+        """Create prompt meta data that is used for reference matching for the metrics."""
         pass
 
     @abstractmethod
