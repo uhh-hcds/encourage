@@ -5,11 +5,11 @@ from typing import Any
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
-from encourage.rag.naive import NaiveRAG
+from encourage.rag.naive import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
 
-class KnownContext(NaiveRAG):
+class KnownContext(BaseRAG):
     """Class for known context."""
 
     def __init__(

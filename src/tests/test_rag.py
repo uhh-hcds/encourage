@@ -8,10 +8,10 @@ from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.context import Context
 from encourage.prompts.meta_data import MetaData
-from encourage.rag.naive import NaiveRAG
+from encourage.rag.naive import BaseRAG
 
 
-class TestNaiveRAGIntegration(unittest.TestCase):
+class TestBaseRAGIntegration(unittest.TestCase):
     def setUp(self):
         self.collection_name = f"test_collection_{uuid.uuid4()}"
         self.df = pd.DataFrame(
@@ -23,7 +23,7 @@ class TestNaiveRAGIntegration(unittest.TestCase):
             }
         )
 
-        self.rag = NaiveRAG(
+        self.rag = BaseRAG(
             qa_dataset=self.df,
             template_name="llama3_conv.j2",
             collection_name=self.collection_name,

@@ -20,7 +20,7 @@ from encourage.vector_store import ChromaClient, VectorStore
 logger = logging.getLogger(__name__)
 
 
-class NaiveRAG(RAGMethodInterface):
+class BaseRAG(RAGMethodInterface):
     """Base implementation of RAG."""
 
     def __init__(

@@ -8,12 +8,12 @@ import pandas as pd
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
-from encourage.rag.base.rag_enum import NaiveRAG
+from encourage.rag.base.rag_enum import BaseRAG
 
 logger = logging.getLogger(__name__)
 
 
-class SummarizationRAG(NaiveRAG):
+class SummarizationRAG(BaseRAG):
     """Implementation of RAG for summarization."""
 
     def __init__(
@@ -71,7 +71,7 @@ class SummarizationRAG(NaiveRAG):
         return qa_dataset
 
 
-class SummarizationContextRAG(NaiveRAG):
+class SummarizationContextRAG(BaseRAG):
     """Implementation of RAG with context preserving summarization."""
 
     def __init__(

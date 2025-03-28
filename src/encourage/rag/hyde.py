@@ -15,13 +15,13 @@ import pandas as pd
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
-from encourage.rag.naive import NaiveRAG
+from encourage.rag.naive import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
 logger = logging.getLogger(__name__)
 
 
-class HydeRAG(NaiveRAG):
+class HydeRAG(BaseRAG):
     """HYDE (Hypothetical Document Embeddings) implementation of RAG.
 
     HYDE generates hypothetical answers to queries and uses those answers as the search vector
@@ -86,6 +86,8 @@ class HydeRAG(NaiveRAG):
             additional_prompt=additional_prompt,
             **kwargs,
         )
+        # Store hypothetical answers
+        self.hypothetical_answers = None
 
     def generate_hypothetical_answer(self, query_list: list[str]) -> ResponseWrapper:
         """Generate a hypothetical answer to the query using the LLM.
@@ -127,6 +129,8 @@ class HydeRAG(NaiveRAG):
         """
         # Generate hypothetical answers for all queries
         hypothetical_answers = self.generate_hypothetical_answer(query_list)
+        # Store the hypothetical answers for later use in metadata
+        self.hypothetical_answers = hypothetical_answers
         responses = hypothetical_answers.get_responses()
 
         # Use hypothetical answers as search vectors instead of original queries
@@ -161,12 +165,23 @@ class HydeRAG(NaiveRAG):
         """
         user_prompts = user_prompts if user_prompts else self.user_prompts
 
+        # Retrieve contexts using HYDE approach (hypothetical answers)
+        contexts = self.retrieve_contexts(user_prompts)
+
+        # Add hypothetical answers to metadata
+        meta_datas = self.metadata.copy()
+        if self.hypothetical_answers:
+            hypothetical_responses = self.hypothetical_answers.get_responses()
+            for i, meta_data in enumerate(meta_datas):
+                if i < len(hypothetical_responses):
+                    meta_data["hypothetical_answer"] = hypothetical_responses[i]
+
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
-            contexts=self.retrieve_contexts(user_prompts),
-            meta_datas=self.metadata,
+            contexts=contexts,
+            meta_datas=meta_datas,
             template_name=self.template_name,
         )
 
