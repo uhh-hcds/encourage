@@ -8,7 +8,7 @@ import pandas as pd
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
-from encourage.rag.base.rag_enum import BaseRAG
+from encourage.rag.base_impl import BaseRAG
 
 logger = logging.getLogger(__name__)
 

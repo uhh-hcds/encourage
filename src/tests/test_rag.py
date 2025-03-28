@@ -8,7 +8,7 @@ from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.context import Context
 from encourage.prompts.meta_data import MetaData
-from encourage.rag.naive import BaseRAG
+from encourage.rag.base_impl import BaseRAG
 
 
 class TestBaseRAGIntegration(unittest.TestCase):

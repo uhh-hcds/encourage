@@ -15,7 +15,7 @@ import pandas as pd
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
-from encourage.rag.naive import BaseRAG
+from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
 logger = logging.getLogger(__name__)
