@@ -42,7 +42,7 @@ class TestBaseRAGIntegration(unittest.TestCase):
         self.assertEqual(len(df["context_id"].unique()), 2)
 
     def test_create_prompt_meta_data(self):
-        metadata = self.rag.prompt_meta_data()
+        metadata = self.rag.create_prompt_meta_data()
         self.assertEqual(len(metadata), 2)
         self.assertIsInstance(metadata[0], MetaData)
 
