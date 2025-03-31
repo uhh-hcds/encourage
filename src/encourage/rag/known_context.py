@@ -73,7 +73,7 @@ class KnownContext(BaseRAG):
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
-            meta_datas=self.metadata,
+            meta_datas=self.prompt_meta_data,
             template_name=self.template_name,
         )
 

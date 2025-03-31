@@ -86,8 +86,6 @@ class HydeRAG(BaseRAG):
             additional_prompt=additional_prompt,
             **kwargs,
         )
-        # Store hypothetical answers
-        self.hypothetical_answers = None
 
     def generate_hypothetical_answer(self, query_list: list[str]) -> ResponseWrapper:
         """Generate a hypothetical answer to the query using the LLM.
@@ -128,10 +126,9 @@ class HydeRAG(BaseRAG):
 
         """
         # Generate hypothetical answers for all queries
-        hypothetical_answers = self.generate_hypothetical_answer(query_list)
+        self.hypothetical_answers = self.generate_hypothetical_answer(query_list)
         # Store the hypothetical answers for later use in metadata
-        self.hypothetical_answers = hypothetical_answers
-        responses = hypothetical_answers.get_responses()
+        responses = self.hypothetical_answers.get_responses()
 
         # Use hypothetical answers as search vectors instead of original queries
         results = self.client.query(
@@ -169,7 +166,7 @@ class HydeRAG(BaseRAG):
         contexts = self.retrieve_contexts(user_prompts)
 
         # Add hypothetical answers to metadata
-        meta_datas = self.metadata.copy()
+        meta_datas = self.prompt_meta_data.copy()
         if self.hypothetical_answers:
             hypothetical_responses = self.hypothetical_answers.get_responses()
             for i, meta_data in enumerate(meta_datas):
