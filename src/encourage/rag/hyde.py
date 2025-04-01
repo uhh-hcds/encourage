@@ -14,7 +14,7 @@ import pandas as pd
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
-from encourage.prompts.context import Context
+from encourage.prompts.context import Context, Document
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
@@ -114,7 +114,7 @@ class HydeRAG(BaseRAG):
         self,
         query_list: list[str],
         **kwargs: Any,
-    ) -> list[Context]:
+    ) -> list[list[Document]]:
         """Retrieve contexts from the database using hypothetical answers as search vectors.
 
         Args:
@@ -131,15 +131,13 @@ class HydeRAG(BaseRAG):
         responses = self.hypothetical_answers.get_responses()
 
         # Use hypothetical answers as search vectors instead of original queries
-        results = self.client.query(
+        return self.client.query(
             collection_name=self.collection_name,
             query=responses,
             top_k=self.top_k,
             embedding_function=self.embedding_function,
             where=self.where if self.where else None,
         )
-
-        return [Context.from_documents(document_list) for document_list in results]
 
     def run(
         self,
@@ -163,7 +161,8 @@ class HydeRAG(BaseRAG):
         user_prompts = user_prompts if user_prompts else self.user_prompts
 
         # Retrieve contexts using HYDE approach (hypothetical answers)
-        contexts = self.retrieve_contexts(user_prompts)
+        retrieved_documents = self.retrieve_contexts(user_prompts)
+        contexts = [Context.from_documents(documents) for documents in retrieved_documents]
 
         # Add hypothetical answers to metadata
         meta_datas = self.prompt_meta_data.copy()

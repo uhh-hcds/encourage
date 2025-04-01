@@ -135,28 +135,37 @@ class BaseRAG(RAGMethodInterface):
             meta_datas.append(meta_data)
         return meta_datas
 
-    def prepare_contexts_for_db(self, meta_data_keys: list[str]) -> Context:
+    def prepare_contexts_for_db(self, meta_data_keys: list[str]) -> list[Document]:
         """Prepare contexts for the QA dataset."""
         df = self.qa_dataset[[*meta_data_keys, self.context_key, "context_id"]]
         df = df.drop_duplicates(subset=[self.context_key])
         meta_datas = [
             MetaData(tags={key: row[key] for key in meta_data_keys}) for _, row in df.iterrows()
         ]
-        return Context.from_documents(
-            df[self.context_key].tolist(), meta_datas, df["context_id"].tolist()
-        )
+        document_list = []
+        for document, meta_data, context_id in zip(
+            df[self.context_key], meta_datas, df["context_id"]
+        ):
+            document_list.append(
+                Document(
+                    content=document,
+                    meta_data=meta_data,
+                    id=uuid.UUID(context_id),
+                )
+            )
+        return document_list
 
-    def init_db(self, context_collection: Context) -> VectorStore:
+    def init_db(self, context_collection: list[Document]) -> VectorStore:
         """Initialize the database with the contexts."""
         chroma_client = ChromaClient()
         print(f"Creating collection {self.collection_name}.")
         chroma_client.create_collection(
             self.collection_name, overwrite=True, embedding_function=self.embedding_function
         )
-        print(f"Inserting {len(context_collection.documents)} documents into the database.")
+        print(f"Inserting {len(context_collection)} documents into the database.")
         chroma_client.insert_documents(
-            self.collection_name,
-            vector_store_document=context_collection,  # type: ignore
+            collection_name=self.collection_name,
+            documents=context_collection,
             embedding_function=self.embedding_function,
         )
         print("Database initialized.")
@@ -166,16 +175,15 @@ class BaseRAG(RAGMethodInterface):
         self,
         query_list: list[str],
         **kwargs: Any,
-    ) -> list[Context]:
+    ) -> list[list[Document]]:
         """Retrieve relevant contexts from the database."""
-        results = self.client.query(
+        return self.client.query(
             collection_name=self.collection_name,
             query=query_list,
             top_k=self.top_k,
             embedding_function=self.embedding_function,
             where=self.where if self.where else None,
         )
-        return [Context.from_documents(document_list) for document_list in results]
 
     def run(
         self,
@@ -188,7 +196,8 @@ class BaseRAG(RAGMethodInterface):
         # Generate queries and retrieve contexts
         if retrieval_instruction:
             logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            self.contexts = self.retrieve_contexts(retrieval_instruction)
+            retrieved_documents = self.retrieve_contexts(retrieval_instruction)
+            self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
             logger.info("No context retrieval queries provided. Using no context.")
             self.contexts = []

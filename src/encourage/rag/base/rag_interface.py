@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import pandas as pd
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
-from encourage.prompts.context import Context
+from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
 from encourage.vector_store import VectorStore
 
@@ -48,12 +48,12 @@ class RAGMethodInterface(ABC):
         pass
 
     @abstractmethod
-    def prepare_contexts_for_db(self, meta_data_keys: List[str]) -> Context:
+    def prepare_contexts_for_db(self, meta_data_keys: List[str]) -> list[Document]:
         """Prepare contexts for the vector database."""
         pass
 
     @abstractmethod
-    def init_db(self, context_collection: Context) -> VectorStore:
+    def init_db(self, context_collection: list[Document]) -> VectorStore:
         """Initialize the database with contexts."""
         pass
 
@@ -62,7 +62,7 @@ class RAGMethodInterface(ABC):
         self,
         query_list: List[str],
         **kwargs: Any,
-    ) -> List[Context]:
+    ) -> list[list[Document]]:
         """Retrieve relevant contexts from the database."""
         pass
 

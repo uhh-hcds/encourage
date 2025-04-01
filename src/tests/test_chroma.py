@@ -7,7 +7,6 @@ from chromadb.errors import InvalidCollectionException
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
 from encourage.vector_store.chroma import ChromaClient
-from encourage.vector_store.vector_store import VectorStoreBatch
 
 
 class TestChromaClient(unittest.TestCase):
@@ -38,10 +37,9 @@ class TestChromaClient(unittest.TestCase):
 
     def test_insert_documents(self):
         """Test inserting documents into a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
 
         # Insert documents
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Verify insertion
         collection = self.chroma_client.client.get_collection("test_collection")
@@ -53,10 +51,9 @@ class TestChromaClient(unittest.TestCase):
 
     def test_meta_data(self):
         """Test inserting documents with metadata into a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
 
         # Insert documents
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Verify insertion
         collection = self.chroma_client.client.get_collection("test_collection")
@@ -68,8 +65,7 @@ class TestChromaClient(unittest.TestCase):
 
     def test_query(self):
         """Test querying documents in a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Perform a query
         query_result = self.chroma_client.query(
@@ -94,8 +90,7 @@ class TestChromaClient(unittest.TestCase):
 
     def test_query_multiple_documents(self):
         """Test querying multiple documents in a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Perform a query
         query_result = self.chroma_client.query(

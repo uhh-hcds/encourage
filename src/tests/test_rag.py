@@ -6,7 +6,7 @@ import pandas as pd
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.prompts.context import Context
+from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
 
@@ -47,16 +47,17 @@ class TestBaseRAGIntegration(unittest.TestCase):
         self.assertIsInstance(metadata[0], MetaData)
 
     def test_prepare_contexts_for_db(self):
-        context = self.rag.prepare_contexts_for_db(["id"])
-        self.assertIsInstance(context, Context)
-        self.assertEqual(len(context.documents), 2)
+        documents = self.rag.prepare_contexts_for_db(["id"])
+        self.assertIsInstance(documents[0], Document)
+        self.assertEqual(len(documents), 2)
 
     def test_get_contexts_from_db(self):
         query = ["What is AI?"]
-        contexts = self.rag.retrieve_contexts(query)
-        self.assertEqual(len(contexts), 1)
-        self.assertIsInstance(contexts[0], Context)
-        self.assertGreaterEqual(len(contexts[0].documents), 1)
+        documents = self.rag.retrieve_contexts(query)
+        self.assertEqual(len(documents), 1)
+        self.assertIsInstance(documents[0], list)
+        self.assertIsInstance(documents[0][0], Document)
+        self.assertGreaterEqual(len(documents[0]), 1)
 
     def test_init_db_document_count(self):
         count = self.rag.client.count_documents(self.collection_name)

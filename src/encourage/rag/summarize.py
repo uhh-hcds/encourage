@@ -7,7 +7,7 @@ import pandas as pd
 
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
-from encourage.prompts.context import Context
+from encourage.prompts.context import Document
 from encourage.rag.base_impl import BaseRAG
 
 logger = logging.getLogger(__name__)
@@ -137,29 +137,30 @@ class SummarizationContextRAG(BaseRAG):
         self,
         query_list: list[str],
         **kwargs: Any,
-    ) -> list[Context]:
+    ) -> list[list[Document]]:
         """Retrieve contexts from the database with context preservation.
 
-        This overrides the parent method to replace the summaries with
-        the original contexts after retrieval.
+        This method overrides the parent implementation to ensure that
+        the retrieved summaries are replaced with their original contexts.
 
         Args:
-            query_list: List of queries to retrieve contexts for
-            kwargs: Additional parameters
+            query_list (list[str]): List of queries to retrieve contexts for.
+            **kwargs (Any): Additional parameters for retrieval.
 
         Returns:
-            List of contexts with original document content
+            list[list[Document]]: A list of lists containing documents with
+            their original contexts restored.
 
         """
         # Get contexts using the parent implementation
-        contexts = super().retrieve_contexts(query_list, **kwargs)
+        document_lists = super().retrieve_contexts(query_list, **kwargs)
 
-        # Replace each summary with its original context
-        for _, context in enumerate(contexts):
-            if hasattr(self, "original_contexts") and context.documents:
-                for j, doc in enumerate(context.documents):
-                    if str(doc.id) in self.original_contexts:
-                        # Replace the summary content with the original context
-                        context.documents[j].content = self.original_contexts[str(doc.id)]
-
-        return contexts
+        # Replace each summary with its original context for all retrieved documents
+        for document_list in document_lists:
+            if not document_list or not hasattr(self, "original_contexts"):
+                continue
+            for doc in document_list:
+                original = self.original_contexts.get(str(doc.id))
+                if original:
+                    doc.content = original
+        return document_lists

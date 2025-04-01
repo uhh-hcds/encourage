@@ -14,7 +14,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
-from encourage.vector_store.vector_store import VectorStore, VectorStoreBatch
+from encourage.vector_store.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class ChromaClient(VectorStore):
     def insert_documents(
         self,
         collection_name: str,
-        vector_store_document: VectorStoreBatch,
+        documents: list[Document],
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),  # type: ignore
     ) -> None:
         """Insert documents."""
@@ -59,11 +59,11 @@ class ChromaClient(VectorStore):
             embedding_function=embedding_function,
         )
 
-        documents = [document.content for document in vector_store_document.documents]
-        meta_data = [document.meta_data.to_dict() for document in vector_store_document.documents]
-        ids = [str(document.id) for document in vector_store_document.documents]
+        document_content = [document.content for document in documents]
+        meta_data = [document.meta_data.to_dict() for document in documents]
+        ids = [str(document.id) for document in documents]
 
-        collection.add(documents=documents, metadatas=meta_data, ids=ids)  # type: ignore
+        collection.add(documents=document_content, metadatas=meta_data, ids=ids)  # type: ignore
 
     def count_documents(
         self,
