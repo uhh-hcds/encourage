@@ -100,7 +100,7 @@ class PromptCollection:
             raise ValueError("The number of image paths must match the number of user prompts.")
 
         image_prompts = []
-        for image_path, user_prompt in (image_paths, user_prompts):
+        for image_path, user_prompt in zip(image_paths, user_prompts):
             image_content = []
             for path in image_path:
                 content = {"type": "image_url", "image_url": {"url": f"file://{path}"}}
