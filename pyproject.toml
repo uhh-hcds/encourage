@@ -36,6 +36,7 @@ dependencies = [
     "mlflow>=2.18.0",
     "chromadb==0.5.23",
     "litellm>=1.53.3",
+    "outlines>=0.2.1",
 ]
 
 [project.optional-dependencies]

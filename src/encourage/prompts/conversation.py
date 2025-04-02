@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterator
 
+from gguf import Any
+
 
 class Role(Enum):
     """Enum class to represent the role of a message in a conversation."""
@@ -19,16 +21,16 @@ class Role(Enum):
 class Conversation:
     """Conversation dataclass to store conversation information."""
 
-    dialog: list[dict[str, str]] = field(default_factory=list)
+    dialog: list[dict[str, Any]] = field(default_factory=list)
 
-    def __init__(self, sys_prompt: str = "", user_prompt: str = "") -> None:
+    def __init__(self, sys_prompt: str = "", user_prompt: str | dict = "") -> None:
         self.sys_prompt = sys_prompt
         self.dialog = [
             {"role": Role.SYSTEM.value, "content": self.sys_prompt},
         ]
         self.add_message(Role.USER.value, user_prompt)
 
-    def add_message(self, role: str, content: str) -> None:
+    def add_message(self, role: str, content: str | dict) -> None:
         """Add a new message to the conversation."""
         if role not in {role.value for role in Role}:
             raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")

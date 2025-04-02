@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Type
 
 import mlflow
+import outlines.models.transformers_vision
+import torch
 from litellm import batch_completion
 from litellm.types.utils import ModelResponse
 from mlflow.entities import SpanType
@@ -22,8 +24,6 @@ from vllm import SamplingParams
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
-
-os.environ["LITELLM_LOG"] = "ERROR"
 
 
 class InferenceRunner(ABC):
@@ -198,6 +198,47 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         )
         return ResponseWrapper.from_prompt_collection(
             [response], PromptCollection.from_prompts([prompt])
+        )
+
+
+class ImageInferenceRunner(InferenceRunner):
+    """Class for image inference."""
+
+    def run(
+        self,
+        prompt_collection: PromptCollection,
+        transformer_model_class: type,
+        response_format: Type[BaseModel] | str | None = None,
+    ) -> ResponseWrapper:
+        """Run the model with the given query."""
+        model = outlines.models.transformers_vision(
+            self.model_name,
+            model_class=transformer_model_class,
+            model_kwargs={
+                "device_map": {"": "cuda"},
+                "torch_dtype": torch.float16,
+                "attn_implementation": "flash_attention_2",
+                "use_cache": False,
+            },
+            processor_kwargs={
+                "device": "cuda",
+            },
+        )
+        messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
+        responses = []
+        for message in messages:
+            response = model.beta.chat.completions.parse(
+                model=self.model_name,
+                messages=message,
+                max_tokens=self.sampling_parameters.max_tokens,
+                temperature=self.sampling_parameters.temperature,
+                top_p=self.sampling_parameters.top_p,
+                response_format=response_format,
+                extra_body={"guided_decoding_backend": "outlines"},
+            )
+        responses.append(response)
+        return ResponseWrapper.from_prompt_collection(
+            [response], PromptCollection.from_prompts(prompt_collection.prompts)
         )
 
 
