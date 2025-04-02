@@ -105,13 +105,13 @@ class PromptCollection:
             for path in image_path:
                 content = {"type": "image_url", "image_url": {"url": f"file://{path}"}}
                 image_content.append(content)
-            image_content.append(
-                {
-                    "type": "text",
-                    "text": f"\n{user_prompt}",
-                }
-            )
-        image_prompts.append(image_content)
+                image_content.append(
+                    {
+                        "type": "text",
+                        "text": f"\n{user_prompt}",
+                    }
+                )
+            image_prompts.append(image_content)
 
         return cls.create_prompts(sys_prompts, image_prompts, contexts, meta_datas, template_name)
 
