@@ -7,7 +7,6 @@ from chromadb.errors import InvalidCollectionException
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
 from encourage.vector_store.chroma import ChromaClient
-from encourage.vector_store.vector_store import VectorStoreBatch
 
 
 class TestChromaClient(unittest.TestCase):
@@ -38,10 +37,9 @@ class TestChromaClient(unittest.TestCase):
 
     def test_insert_documents(self):
         """Test inserting documents into a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
 
         # Insert documents
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Verify insertion
         collection = self.chroma_client.client.get_collection("test_collection")
@@ -53,10 +51,9 @@ class TestChromaClient(unittest.TestCase):
 
     def test_meta_data(self):
         """Test inserting documents with metadata into a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
 
         # Insert documents
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Verify insertion
         collection = self.chroma_client.client.get_collection("test_collection")
@@ -68,8 +65,7 @@ class TestChromaClient(unittest.TestCase):
 
     def test_query(self):
         """Test querying documents in a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Perform a query
         query_result = self.chroma_client.query(
@@ -77,10 +73,10 @@ class TestChromaClient(unittest.TestCase):
         )
 
         # Verify results
-        self.assertEqual(len(query_result), 1)  # Ensure only one document is returned
+        self.assertEqual(len(query_result[0]), 1)  # Ensure only one document is returned
 
         # Check that the first result is a valid Document
-        doc = query_result[0]
+        doc = query_result[0][0]
         self.assertIsInstance(doc, Document)
         self.assertIsInstance(doc.id, uuid.UUID)
         self.assertIsInstance(doc.content, str)
@@ -94,8 +90,7 @@ class TestChromaClient(unittest.TestCase):
 
     def test_query_multiple_documents(self):
         """Test querying multiple documents in a collection."""
-        batch = VectorStoreBatch(documents=self.documents)
-        self.chroma_client.insert_documents("test_collection", batch)
+        self.chroma_client.insert_documents("test_collection", self.documents)
 
         # Perform a query
         query_result = self.chroma_client.query(
@@ -103,10 +98,10 @@ class TestChromaClient(unittest.TestCase):
         )
 
         # Verify results
-        self.assertEqual(len(query_result), 3)
+        self.assertEqual(len(query_result[0]), 3)
 
         # Check that the first three results are valid Documents
-        for doc in query_result:
+        for doc in query_result[0]:
             self.assertIsInstance(doc, Document)
             self.assertIsInstance(doc.id, uuid.UUID)
             self.assertIsInstance(doc.content, str)
@@ -115,15 +110,15 @@ class TestChromaClient(unittest.TestCase):
 
         # Verify the content of the documents
         self.assertIn(
-            query_result[0].content,
+            query_result[0][0].content,
             ["This is document 1", "This is document 2", "This is document 3"],
         )
         self.assertIn(
-            query_result[1].content,
+            query_result[0][1].content,
             ["This is document 1", "This is document 2", "This is document 3"],
         )
         self.assertIn(
-            query_result[2].content,
+            query_result[0][2].content,
             ["This is document 1", "This is document 2", "This is document 3"],
         )
 

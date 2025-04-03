@@ -1,5 +1,7 @@
 """Module for defining the Context class, which represents the context for a prompt."""
 
+from __future__ import annotations
+
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Iterator
@@ -21,7 +23,7 @@ class Document:
     score: float = 0.0
     distance: float | None = None
     id: uuid.UUID = field(default_factory=uuid.uuid4)
-    meta_data: MetaData = field(default_factory=MetaData)
+    meta_data: "MetaData" = field(default_factory=MetaData)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the Document instance to a dictionary."""
@@ -32,6 +34,17 @@ class Document:
             "id": str(self.id),
             "meta_data": self.meta_data.to_dict(),
         }
+
+    @classmethod
+    def from_dict(cls, doc_dict: dict[str, Any]) -> "Document":
+        """Create a Document object from a dictionary."""
+        return cls(
+            content=doc_dict["content"],
+            score=doc_dict["score"],
+            distance=doc_dict["distance"],
+            id=uuid.UUID(doc_dict["id"]),
+            meta_data=MetaData.from_dict(doc_dict["meta_data"]),
+        )
 
 
 @dataclass
@@ -192,6 +205,13 @@ class Context:
             "documents": [doc.to_dict() for doc in self.documents],
             "prompt_vars": self.prompt_vars,
         }
+
+    @classmethod
+    def from_dict(cls, context_dict: dict[str, Any]) -> "Context":
+        """Create a Context object from a dictionary."""
+        documents = [Document.from_dict(doc_dict) for doc_dict in context_dict["documents"]]
+        prompt_vars = context_dict["prompt_vars"]
+        return cls(documents=documents, prompt_vars=prompt_vars)
 
     def __getitem__(self, key: int) -> Document:
         return self.documents[key]

@@ -7,12 +7,19 @@ from pydantic import BaseModel
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.metrics.registry import register_metric
 from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
+@register_metric("NonAnswerCritic")
 class NonAnswerCritic(Metric):
     """Check if generated_answer is a non-answer."""
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Return True if the metric requires an LLM runner."""
+        return True
 
     def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(

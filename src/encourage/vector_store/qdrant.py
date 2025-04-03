@@ -8,7 +8,8 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from qdrant_client import AsyncQdrantClient, QdrantClient, models
 from qdrant_client.conversions import common_types
 
-from encourage.vector_store.vector_store import VectorStore, VectorStoreBatch
+from encourage.prompts.context import Document
+from encourage.vector_store.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ class QdrantCustomClient(VectorStore):
     def insert_documents(
         self,
         collection_name: str,
-        vector_store_batch: VectorStoreBatch,
+        documents: list[Document],
         overwrite: bool = False,
     ) -> None:
         """Insert documents from a JSON file."""
@@ -61,18 +62,16 @@ class QdrantCustomClient(VectorStore):
             logger.info(f"Collection {collection_name} deleted")
             self.create_collection(collection_name)
 
-        ids = [str(doc.id) for doc in vector_store_batch.documents]
-        content = [doc.content for doc in vector_store_batch.documents]
-        meta_datas = [doc.meta_data for doc in vector_store_batch.documents]
+        ids = [str(doc.id) for doc in documents]
+        content = [doc.content for doc in documents]
+        meta_datas = [doc.meta_data for doc in documents]
         self.client.add(
             collection_name,
             documents=content,
             metadata=meta_datas,  # type: ignore
             ids=ids,
         )
-        logger.info(
-            f"{len(vector_store_batch)} documents inserted into collection {collection_name}."
-        )
+        logger.info(f"{len(documents)} documents inserted into collection {collection_name}.")
 
     def get_or_create_collection(self, collection_name: str) -> common_types.CollectionInfo:
         """Get or create a Qdrant collection."""

@@ -9,8 +9,10 @@ from nltk import word_tokenize
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
+from encourage.metrics.registry import register_metric
 
 
+@register_metric("GeneratedAnswerLength")
 class GeneratedAnswerLength(Metric):
     """Computes the average length of the generated answers."""
 
@@ -27,6 +29,7 @@ class GeneratedAnswerLength(Metric):
         return MetricOutput(score=score, raw=lengths)
 
 
+@register_metric("ReferenceAnswerLength")
 class ReferenceAnswerLength(Metric):
     """Computes the average length of the reference answers."""
 
@@ -45,6 +48,7 @@ class ReferenceAnswerLength(Metric):
         return MetricOutput(score=score, raw=lengths)
 
 
+@register_metric("ContextLength")
 class ContextLength(Metric):
     """Computes the average length of the context."""
 
@@ -66,23 +70,26 @@ class ContextLength(Metric):
         return MetricOutput(score=score, raw=lengths)
 
 
+@register_metric("BLEU")
 class BLEU(Metric):
     """Computes the BLEU score for the generated answers."""
 
-    def __init__(self) -> None:
+    def __init__(self, n_grams: int = 4) -> None:
         super().__init__(name="bleu", description="BLEU score for the generated answers")
-        self.metric = evaluate.load("sacrebleu")
+        self.metric = evaluate.load("bleu")
+        self.n_grams = n_grams
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         output = self.metric.compute(
             predictions=[r.response for r in responses],
-            references=[r.meta_data["reference_answer"] for r in responses],
+            references=[[r.meta_data["reference_answer"]] for r in responses],
+            max_order=self.n_grams,
         )
-        output["score"] = output["score"] / 100  # Normalize
-        return MetricOutput(score=output["score"], raw=output)
+        return MetricOutput(score=output["bleu"], raw=output)
 
 
+@register_metric("gleu")
 class GLEU(Metric):
     """Computes the GLEU score for the generated answers."""
 
@@ -99,6 +106,7 @@ class GLEU(Metric):
         return MetricOutput(score=output["google_bleu"], raw=[])
 
 
+@register_metric("ROUGE")
 class ROUGE(Metric):
     """Computes the ROUGE score for the generated answers."""
 
@@ -125,6 +133,7 @@ class ROUGE(Metric):
         return MetricOutput(score=scores, raw=output)
 
 
+@register_metric("BERTScore")
 class BERTScore(Metric):
     """Computes the BERTScore for the generated answers."""
 
@@ -152,6 +161,7 @@ class BERTScore(Metric):
         )
 
 
+@register_metric("F1")
 class F1(Metric):
     """Computes the F1 score for the generated answers."""
 
@@ -195,6 +205,7 @@ class F1(Metric):
         return MetricOutput(score=scores, raw=output)
 
 
+@register_metric("ExactMatch")
 class ExactMatch(Metric):
     """Computes the exact match for the generated answers."""
 
@@ -255,6 +266,7 @@ class RetrievalMetric(Metric):
         return qrels, run
 
 
+@register_metric("MeanReciprocalRank")
 class MeanReciprocalRank(RetrievalMetric):
     """Computes the Mean Reciprocal Rank (MRR) for the responses."""
 
@@ -275,6 +287,7 @@ class MeanReciprocalRank(RetrievalMetric):
         return MetricOutput(score=np.mean(scores), raw=scores)
 
 
+@register_metric("RecallAtK")
 class RecallAtK(RetrievalMetric):
     """Computes Recall@k for the responses."""
 
@@ -299,6 +312,7 @@ class RecallAtK(RetrievalMetric):
         return MetricOutput(score=np.mean(scores), raw=scores)
 
 
+@register_metric("HitRateAtK")
 class HitRateAtK(RetrievalMetric):
     """Computes HitRate@k for the responses."""
 

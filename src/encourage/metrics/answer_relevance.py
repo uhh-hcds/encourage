@@ -9,12 +9,19 @@ from sentence_transformers import SentenceTransformer
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
 from encourage.metrics.non_answer_critic import NonAnswerCritic
+from encourage.metrics.registry import register_metric
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context
 
 
+@register_metric("AnswerRelevance")
 class AnswerRelevance(Metric):
     """How relevant the answer is to the question."""
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Return True if the metric requires an LLM runner."""
+        return True
 
     def __init__(
         self,
@@ -46,7 +53,9 @@ class AnswerRelevance(Metric):
         # 0 = answer
         # 1 = non-answer
         committal_responses = [
-            response for response, output in zip(responses, self.non_answer_result.raw) if output.non_answer == 0 # noqa: E501
+            response
+            for response, output in zip(responses, self.non_answer_result.raw)
+            if output.non_answer == 0  # noqa: E501
         ]
 
         if not committal_responses:
@@ -61,7 +70,7 @@ class AnswerRelevance(Metric):
                 {
                     "examples": [EXAMPLE_EXTRACT_1, EXAMPLE_EXTRACT_2, EXAMPLE_EXTRACT_3],
                     "task": {
-                        #"context": response.context,
+                        # "context": response.context,
                         "answer": response.response,
                     },
                     "output_model": ExtractedAnswer,
@@ -172,7 +181,6 @@ EXAMPLE_3 = Example(
 )
 
 
-
 class ExtractedAnswer(BaseModel):
     """An extracted answer for the answer extraction prompt."""
 
@@ -188,17 +196,17 @@ class ExampleExtract(BaseModel):
 
 EXAMPLE_EXTRACT_1 = ExampleExtract(
     answer="I see you asked 'Where was Albert Einstein from?' In the provided text, Albert Einstein is described as a German-born theoretical physicist. So, to answer the question directly: he was from Germany. Additionally, there's a note about his time in Switzerland, but that doesn't change his birthplace.",  # noqa: E501
-    output=ExtractedAnswer(extracted_answer="He was from Germany.")
+    output=ExtractedAnswer(extracted_answer="He was from Germany."),
 )
 
 
 EXAMPLE_EXTRACT_2 = ExampleExtract(
-    answer="Here's the entire conversation: The user asked, 'Who discovered penicillin?', and we found that Alexander Fleming made the discovery in 1928. The rest of the text talks about its impact on modern medicine. Therefore, the short answer is: Alexander Fleming.", # noqa: E501
-    output=ExtractedAnswer(extracted_answer="Alexander Fleming.")
+    answer="Here's the entire conversation: The user asked, 'Who discovered penicillin?', and we found that Alexander Fleming made the discovery in 1928. The rest of the text talks about its impact on modern medicine. Therefore, the short answer is: Alexander Fleming.",  # noqa: E501
+    output=ExtractedAnswer(extracted_answer="Alexander Fleming."),
 )
 
 
 EXAMPLE_EXTRACT_3 = ExampleExtract(
-    answer="Answering the question 'Which planet is known as the Red Planet?' from the context: The Red Planet refers to Mars, which is often called the Red Planet due to its reddish appearance. They also mention Jupiter and Saturn, but those are gas giants, not 'red.'. So the best direct answer is: Mars.", # noqa: E501
-    output=ExtractedAnswer(extracted_answer="Mars.")
+    answer="Answering the question 'Which planet is known as the Red Planet?' from the context: The Red Planet refers to Mars, which is often called the Red Planet due to its reddish appearance. They also mention Jupiter and Saturn, but those are gas giants, not 'red.'. So the best direct answer is: Mars.",  # noqa: E501
+    output=ExtractedAnswer(extracted_answer="Mars."),
 )

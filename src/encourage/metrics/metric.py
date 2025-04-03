@@ -29,6 +29,23 @@ class MetricOutput:
     raw: list[float] | list[int] | list[float | None] | list[Any]
     misc: dict[str, Any] = field(default_factory=dict)
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the MetricOutput instance to a dictionary."""
+        return {
+            "score": self.score,
+            "raw": self.raw,
+            "misc": self.misc,
+        }
+
+    @classmethod
+    def from_dict(cls, metric_dict: dict[str, Any]) -> "MetricOutput":
+        """Create a MetricOutput object from a dictionary."""
+        return cls(
+            score=metric_dict["score"],
+            raw=metric_dict["raw"],
+            misc=metric_dict["misc"],
+        )
+
 
 class Metric(ABC):
     """Base class for metric calculations with optional LLM support."""
@@ -58,6 +75,11 @@ class Metric(ABC):
     def description(self) -> str:
         """Returns a brief description of the metric."""
         return self._description
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Override in subclasses if runner is required."""
+        return False
 
     def validate_nested_keys(self, responses: ResponseWrapper) -> None:
         """Validates that each response contains required fields in meta_data and context."""

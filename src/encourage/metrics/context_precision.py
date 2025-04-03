@@ -8,12 +8,19 @@ from pydantic import BaseModel
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
+from encourage.metrics.registry import register_metric
 from encourage.prompts.context import Context
 from encourage.prompts.prompt_collection import PromptCollection
 
 
+@register_metric("ContextPrecision")
 class ContextPrecision(Metric):
     """How relevant the context is to the ground-truth answer."""
+
+    @classmethod
+    def requires_runner(cls) -> bool:
+        """Return True if the metric requires an LLM runner."""
+        return True
 
     def __init__(self, runner: BatchInferenceRunner) -> None:
         super().__init__(
@@ -80,9 +87,10 @@ class ContextPrecision(Metric):
         self.responses = self._runner.run(prompt_collection, Verdict)
         return self._calculate_metric()
 
-
     def _calculate_metric(self) -> MetricOutput:
-        grouped_verdicts: dict[int, list[int]] = {i: [] for i in range(self.original_responses_count)} # noqa: E501
+        grouped_verdicts: dict[int, list[int]] = {
+            i: [] for i in range(self.original_responses_count)
+        }  # noqa: E501
         for idx, response in enumerate(self.responses):
             try:
                 result = Verdict.model_validate_json(response.response)

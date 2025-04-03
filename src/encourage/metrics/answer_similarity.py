@@ -7,8 +7,10 @@ from sentence_transformers import SentenceTransformer
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
+from encourage.metrics.registry import register_metric
 
 
+@register_metric("AnswerSimilarity")
 class AnswerSimilarity(Metric):
     """Estimate the similarity between answer and reference embeddings."""
 

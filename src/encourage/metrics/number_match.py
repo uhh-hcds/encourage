@@ -4,10 +4,12 @@ import math
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
+from encourage.metrics.registry import register_metric
 
 EPSILON = 1e-10
 
 
+@register_metric("NumberMatch")
 class NumberMatch(Metric):
     """Computes the exact match for the generated answers."""
 
@@ -41,8 +43,12 @@ class NumberMatch(Metric):
             return ground_truth == prediction
         if prediction in ["yes", "no", "None"]:
             return False
-        ground_truth_num = float(ground_truth)
-        prediction_num = float(prediction)
+        try:
+            ground_truth_num = float(ground_truth)
+            prediction_num = float(prediction)
+        except ValueError:
+            return False
+
         ground_truth_abs = abs(ground_truth_num)
         prediction_abs = abs(prediction_num)
         if ground_truth_abs < EPSILON:
