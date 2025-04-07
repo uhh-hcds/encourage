@@ -57,7 +57,7 @@ class KnownContext(BaseRAG):
         """Run inference on known context."""
         # For KnownContext, we always use the predefined context collection
         # instead of retrieving based on instructions
-        self.contexts = [Context.from_documents(self.context_collection)]
+        self.contexts = [Context.from_documents([doc]) for doc in self.context_collection]
 
         # Use provided template_name or fall back to self.template_name
         template_name = template_name if template_name else self.template_name
