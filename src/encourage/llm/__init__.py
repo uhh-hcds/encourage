@@ -1,7 +1,6 @@
 from encourage.llm.inference_runner import (
     BatchInferenceRunner,
     ChatInferenceRunner,
-    ImageInferenceRunner,
     OpenAIChatInferenceRunner,
     ToolInferenceRunner,
 )
@@ -15,5 +14,4 @@ __all__ = [
     "ResponseWrapper",
     "Response",
     "ToolInferenceRunner",
-    "ImageInferenceRunner",
 ]

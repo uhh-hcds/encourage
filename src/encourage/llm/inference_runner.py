@@ -199,42 +199,6 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         )
 
 
-class ImageInferenceRunner(InferenceRunner):
-    """Class for image inference."""
-
-    def __init__(
-        self,
-        sampling_parameters: SamplingParams,
-        model_name: str,
-    ):
-        env_var_name = "OPENAI_API_KEY"
-        super().__init__(sampling_parameters, model_name, env_var_name=env_var_name)
-        self.client = OpenAI()
-
-    def run(
-        self,
-        prompt_collection: PromptCollection,
-        response_format: Type[BaseModel] | str | None = None,
-    ) -> ResponseWrapper:
-        """Run the model with the given query."""
-        messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
-        responses = []
-        for message in messages:
-            response = self.client.beta.chat.completions.parse(
-                model=self.model_name,
-                messages=message,
-                max_tokens=self.sampling_parameters.max_tokens,
-                temperature=self.sampling_parameters.temperature,
-                top_p=self.sampling_parameters.top_p,
-                response_format=response_format,
-                extra_body={"guided_decoding_backend": "outlines"},
-            )
-        responses.append(response)
-        return ResponseWrapper.from_prompt_collection(
-            [response], PromptCollection.from_prompts(prompt_collection.prompts)
-        )
-
-
 def model_response_to_chat_completion(model_response: ModelResponse | Any) -> ChatCompletion:
     """Convert a ModelResponse object to a ChatCompletion object."""
     if not isinstance(model_response, ModelResponse):
