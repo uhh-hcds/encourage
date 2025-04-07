@@ -1,10 +1,11 @@
 """Module containing various RAG method implementations as classes."""
 
-from typing import Any
+from typing import Any, override
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
+from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
@@ -14,31 +15,27 @@ class KnownContext(BaseRAG):
 
     def __init__(
         self,
-        qa_dataset: Any,
+        context_collection: list[Document],
         template_name: str,
         collection_name: str,
-        top_k: int,
         embedding_function: Any,
-        meta_data_keys: list[str],
-        context_key: str = "context",
-        answer_key: str = "answer",
+        top_k: int,
         device: str = "cuda",
+        runner: BatchInferenceRunner | None = None,
         where: dict[str, str] | None = None,
         retrieval_only: bool = False,
-        runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
         **kwargs: Any,
     ) -> None:
         """Initialize known context with context and metadata."""
+        # Call parent's init with interface parameters
+        self.context_collection = context_collection
         super().__init__(
-            qa_dataset=qa_dataset,
+            context_collection=context_collection,
             template_name=template_name,
             collection_name=collection_name,
-            top_k=top_k,
             embedding_function=embedding_function,
-            meta_data_keys=meta_data_keys,
-            context_key=context_key,
-            answer_key=answer_key,
+            top_k=top_k,
             device=device,
             where=where,
             retrieval_only=retrieval_only,
@@ -47,34 +44,31 @@ class KnownContext(BaseRAG):
             **kwargs,
         )
 
-    def get_ground_truth_context(self, context_key: str = "context") -> list[Context]:
-        """Create contexts from dataset."""
-        documents = [
-            Context.from_documents([Document(content=row[context_key], id=row["context_id"])])
-            for (_, row) in self.qa_dataset.iterrows()
-        ]
-        return documents
-
+    @override
     def run(
         self,
         runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: list[str] = [],
+        meta_data: list[MetaData] = [],
         retrieval_instruction: list[str] = [],
-        *args: Any,
-        **kwargs: Any,
+        template_name: str = "",
     ) -> ResponseWrapper:
         """Run inference on known context."""
-        # Create prompt collection
-        self.contexts = self.get_ground_truth_context(self.context_key)
-        user_prompts = user_prompts if user_prompts else self.user_prompts
+        # For KnownContext, we always use the predefined context collection
+        # instead of retrieving based on instructions
+        self.contexts = [Context.from_documents(self.context_collection)]
 
+        # Use provided template_name or fall back to self.template_name
+        template_name = template_name if template_name else self.template_name
+
+        # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
-            meta_datas=self.prompt_meta_data,
-            template_name=self.template_name,
+            meta_datas=meta_data,
+            template_name=template_name,
         )
 
         if self.retrieval_only:

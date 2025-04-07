@@ -1,9 +1,7 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
-from typing import Any
-
-import pandas as pd
+from typing import Any, override
 
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
@@ -18,32 +16,24 @@ class SummarizationRAG(BaseRAG):
 
     def __init__(
         self,
-        qa_dataset: pd.DataFrame,
-        template_name: str,
+        context_collection: list[Document],
         collection_name: str,
-        top_k: int,
         embedding_function: str,
-        meta_data_keys: list[str],
+        top_k: int,
         runner: BatchInferenceRunner,
-        context_key: str = "context",
-        answer_key: str = "answer",
-        additional_prompt: str = "",
-        where: dict[str, str] | None = None,
         retrieval_only: bool = False,
+        where: dict[str, str] | None = None,
+        additional_prompt: str = "",
+        template_name: str = "",
+        **kwargs: Any,
     ):
         """Initialize RAG method with configuration."""
-        self.template_name = template_name
-        self.context_key = context_key
-        qa_dataset = self.create_summaries(runner, additional_prompt, qa_dataset)
+        summaries = self.create_summaries(runner, additional_prompt, context_collection)
         super().__init__(
-            qa_dataset=qa_dataset,
-            template_name=template_name,
+            context_collection=summaries,
             collection_name=collection_name,
             top_k=top_k,
             embedding_function=embedding_function,
-            meta_data_keys=meta_data_keys,
-            context_key="summary",
-            answer_key=answer_key,
             where=where,
             retrieval_only=retrieval_only,
             runner=runner,
@@ -54,21 +44,30 @@ class SummarizationRAG(BaseRAG):
         self,
         runner: BatchInferenceRunner,
         additional_prompt: str,
-        qa_dataset: pd.DataFrame,
-    ) -> pd.DataFrame:
+        context_collection: list[Document],
+    ) -> list[Document]:
         """Create summary from the QA dataset."""
-        unique_contexts = list(qa_dataset[self.context_key].unique())
+        user_prompts = [context.content for context in context_collection]
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=additional_prompt,
-            user_prompts=unique_contexts,
+            user_prompts=user_prompts,
             template_name=self.template_name,
         )
         responses = runner.run(prompt_collection)
         sum_mapping = {
-            context: response.response for response, context in zip(responses, unique_contexts)
+            context.content: response.response
+            for response, context in zip(responses, context_collection)
         }
-        qa_dataset["summary"] = qa_dataset[self.context_key].map(sum_mapping)
-        return qa_dataset
+        summarized_documents = []
+        for doc in context_collection:
+            summarized_documents.append(
+                Document(
+                    content=sum_mapping[doc.content],
+                    meta_data=doc.meta_data,
+                    id=doc.id,
+                )
+            )
+        return summarized_documents
 
 
 class SummarizationContextRAG(BaseRAG):
@@ -76,33 +75,26 @@ class SummarizationContextRAG(BaseRAG):
 
     def __init__(
         self,
-        qa_dataset: pd.DataFrame,
+        context_collection: list[Document],
         template_name: str,
         collection_name: str,
-        top_k: int,
         embedding_function: str,
-        meta_data_keys: list[str],
+        top_k: int,
         runner: BatchInferenceRunner,
-        context_key: str = "context",
-        answer_key: str = "answer",
-        additional_prompt: str = "",
         where: dict[str, str] | None = None,
         retrieval_only: bool = False,
+        additional_prompt: str = "",
     ):
         """Initialize RAG method with configuration."""
         self.template_name = template_name
-        self.context_key = context_key
-        self.qa_dataset = self.create_context_id(qa_dataset, context_key)
-        qa_dataset = self.create_summaries(runner, additional_prompt, qa_dataset)
+        self.original_context = context_collection
+        summaries = self.create_summaries(runner, additional_prompt, context_collection)
         super().__init__(
-            qa_dataset=qa_dataset,
+            context_collection=summaries,
             template_name=template_name,
             collection_name=collection_name,
             top_k=top_k,
             embedding_function=embedding_function,
-            meta_data_keys=meta_data_keys,
-            context_key="summary",
-            answer_key=answer_key,
             where=where,
             retrieval_only=retrieval_only,
             runner=runner,
@@ -113,26 +105,32 @@ class SummarizationContextRAG(BaseRAG):
         self,
         runner: BatchInferenceRunner,
         additional_prompt: str,
-        qa_dataset: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """Create summary from the QA dataset while preserving original contexts."""
-        unique_contexts = list(qa_dataset[self.context_key].unique())
+        context_collection: list[Document],
+    ) -> list[Document]:
+        """Create summary from the QA dataset."""
+        user_prompts = [context.content for context in context_collection]
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=additional_prompt,
-            user_prompts=unique_contexts,
+            user_prompts=user_prompts,
             template_name=self.template_name,
         )
         responses = runner.run(prompt_collection)
         sum_mapping = {
-            context: response.response for response, context in zip(responses, unique_contexts)
+            context.content: response.response
+            for response, context in zip(responses, context_collection)
         }
-        qa_dataset["summary"] = qa_dataset[self.context_key].map(sum_mapping)
+        summarized_documents = []
+        for doc in context_collection:
+            summarized_documents.append(
+                Document(
+                    content=sum_mapping[doc.content],
+                    meta_data=doc.meta_data,
+                    id=doc.id,
+                )
+            )
+        return summarized_documents
 
-        # Preserve original contexts for later use
-        self.original_contexts = dict(zip(qa_dataset["context_id"], qa_dataset[self.context_key]))
-
-        return qa_dataset
-
+    @override
     def retrieve_contexts(
         self,
         query_list: list[str],
@@ -140,27 +138,32 @@ class SummarizationContextRAG(BaseRAG):
     ) -> list[list[Document]]:
         """Retrieve contexts from the database with context preservation.
 
-        This method overrides the parent implementation to ensure that
-        the retrieved summaries are replaced with their original contexts.
-
-        Args:
-            query_list (list[str]): List of queries to retrieve contexts for.
-            **kwargs (Any): Additional parameters for retrieval.
-
-        Returns:
-            list[list[Document]]: A list of lists containing documents with
-            their original contexts restored.
-
+        This method overrides the parent implementation to ensure that the
+        original context is preserved in the returned documents.
         """
         # Get contexts using the parent implementation
         document_lists = super().retrieve_contexts(query_list, **kwargs)
 
-        # Replace each summary with its original context for all retrieved documents
+        # Create a new list of documents with original contexts
+        updated_document_lists = []
         for document_list in document_lists:
-            if not document_list or not hasattr(self, "original_contexts"):
-                continue
+            updated_list = []
             for doc in document_list:
-                original = self.original_contexts.get(str(doc.id))
+                original = next(
+                    (
+                        orig_doc
+                        for orig_doc in self.original_context
+                        if str(orig_doc.id) == str(doc.id)
+                    ),
+                    None,
+                )
                 if original:
-                    doc.content = original
-        return document_lists
+                    updated_list.append(
+                        Document(
+                            content=original.content,
+                            meta_data=original.meta_data,
+                            id=original.id,
+                        )
+                    )
+            updated_document_lists.append(updated_list)
+        return updated_document_lists
