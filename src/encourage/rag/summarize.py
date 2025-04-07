@@ -28,6 +28,7 @@ class SummarizationRAG(BaseRAG):
         **kwargs: Any,
     ):
         """Initialize RAG method with configuration."""
+        self.template_name = template_name
         summaries = self.create_summaries(runner, additional_prompt, context_collection)
         super().__init__(
             context_collection=summaries,
@@ -76,7 +77,6 @@ class SummarizationContextRAG(BaseRAG):
     def __init__(
         self,
         context_collection: list[Document],
-        template_name: str,
         collection_name: str,
         embedding_function: str,
         top_k: int,
@@ -84,6 +84,7 @@ class SummarizationContextRAG(BaseRAG):
         where: dict[str, str] | None = None,
         retrieval_only: bool = False,
         additional_prompt: str = "",
+        template_name: str = "",
     ):
         """Initialize RAG method with configuration."""
         self.template_name = template_name
