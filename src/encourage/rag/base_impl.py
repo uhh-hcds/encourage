@@ -77,7 +77,13 @@ class BaseRAG(RAGMethodInterface):
         self.additional_prompt = additional_prompt
         self.where = where
         self.template_name = template_name
+        self.context_collection = self.filter_unique_contexts(context_collection)
         self.client = self.init_db(context_collection)
+
+    def filter_unique_contexts(self, context_collection: list[Document]) -> list[Document]:
+        """Filter unique contexts by context_id and return them."""
+        unique_contexts = {document.id: document for document in context_collection}
+        return list(unique_contexts.values())
 
     def init_db(self, context_collection: list[Document]) -> VectorStore:
         """Initialize the database with the contexts."""

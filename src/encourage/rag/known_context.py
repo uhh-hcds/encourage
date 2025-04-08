@@ -29,7 +29,6 @@ class KnownContext(BaseRAG):
     ) -> None:
         """Initialize known context with context and metadata."""
         # Call parent's init with interface parameters
-        self.context_collection = context_collection
         super().__init__(
             context_collection=context_collection,
             template_name=template_name,
@@ -43,6 +42,7 @@ class KnownContext(BaseRAG):
             additional_prompt=additional_prompt,
             **kwargs,
         )
+        self.context_collection = context_collection
 
     @override
     def run(
