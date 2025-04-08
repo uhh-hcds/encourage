@@ -78,27 +78,27 @@ class BaseRAG(RAGMethodInterface):
         self.where = where
         self.template_name = template_name
         self.context_collection = self.filter_unique_contexts(context_collection)
-        self.client = self.init_db(context_collection)
+        self.client = self.init_db()
 
     def filter_unique_contexts(self, context_collection: list[Document]) -> list[Document]:
         """Filter unique contexts by context_id and return them."""
         unique_contexts = {document.id: document for document in context_collection}
         return list(unique_contexts.values())
 
-    def init_db(self, context_collection: list[Document]) -> VectorStore:
+    def init_db(self) -> VectorStore:
         """Initialize the database with the contexts."""
         chroma_client = ChromaClient()
-        print(f"Creating collection {self.collection_name}.")
+        logger.info(f"Creating collection {self.collection_name}.")
         chroma_client.create_collection(
             self.collection_name, overwrite=True, embedding_function=self.embedding_function
         )
-        print(f"Inserting {len(context_collection)} documents into the database.")
+        logger.info(f"Inserting {len(self.context_collection)} documents into the database.")
         chroma_client.insert_documents(
             collection_name=self.collection_name,
-            documents=context_collection,
+            documents=self.context_collection,
             embedding_function=self.embedding_function,
         )
-        print("Database initialized.")
+        logger.info("Database initialized.")
         return chroma_client
 
     def retrieve_contexts(
