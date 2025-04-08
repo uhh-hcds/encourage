@@ -1,7 +1,7 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
-from typing import Any
+from typing import Any, override
 
 from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
     SentenceTransformerEmbeddingFunction,
@@ -109,6 +109,7 @@ class BaseRAG(RAGMethodInterface):
             where=self.where if self.where else None,
         )
 
+    @override
     def run(
         self,
         runner: BatchInferenceRunner,

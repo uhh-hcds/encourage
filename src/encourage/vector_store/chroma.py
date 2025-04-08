@@ -60,7 +60,10 @@ class ChromaClient(VectorStore):
         )
 
         document_content = [document.content for document in documents]
-        meta_data = [document.meta_data.to_dict() for document in documents]
+        meta_data = [
+            doc_meta if doc_meta else {"__dummy__": "placeholder"}
+            for doc_meta in (document.meta_data.to_dict() for document in documents)
+        ]
         ids = [str(document.id) for document in documents]
 
         collection.add(documents=document_content, metadatas=meta_data, ids=ids)  # type: ignore
