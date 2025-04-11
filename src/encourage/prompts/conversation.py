@@ -3,9 +3,7 @@
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Collection, Iterator, Sequence
-
-from gguf import Any
+from typing import Any, Collection, Iterator, Sequence
 
 
 class Role(Enum):
