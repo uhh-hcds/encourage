@@ -21,7 +21,7 @@ class PromptCollection:
     def create_prompts(
         cls,
         sys_prompts: list[str] | str,
-        user_prompts: list[str],
+        user_prompts: Union[list[str], list[list[dict]]],
         contexts: list[Context] = [],
         meta_datas: list[MetaData] = [],
         template_name: str = "default.j2",
@@ -30,7 +30,7 @@ class PromptCollection:
 
         Args:
             sys_prompts (List[str]): List of system prompts.
-            user_prompts (List[str]): List of user prompts.
+            user_prompts (list[str] | list[dict]): List of user prompts.
             contexts (List[Context], optional): List of contexts. Defaults to [].
             meta_datas (List[MetaData], optional): List of meta data. Defaults to [].
             template_name (str, optional): Name of the template. Defaults to "".
@@ -68,6 +68,52 @@ class PromptCollection:
             prompts.append(prompt)
 
         return cls(prompts=prompts)
+
+    @classmethod
+    def create_image_prompts(
+        cls,
+        sys_prompts: list[str] | str,
+        user_prompts: list[str],
+        image_paths: list[list[str]],
+        contexts: list[Context] = [],
+        meta_datas: list[MetaData] = [],
+        template_name: str = "default.j2",
+    ) -> "PromptCollection":
+        """Create a PromptCollection for working with images.
+
+        Args:
+            sys_prompts (List[str]): List of system prompts.
+            user_prompts (List[str]): List of user prompts.
+            image_paths (List[List[str]]): List of image paths.
+            contexts (List[Context], optional): List of contexts. Defaults to [].
+            meta_datas (List[MetaData], optional): List of meta data. Defaults to [].
+            template_name (str, optional): Name of the template. Defaults to "".
+
+        Returns:
+            PromptCollection: A new instance of PromptCollection.
+
+        Raises:
+            ValueError: If the lengths of sys_prompts and user_prompts do not match.
+
+        """
+        if len(image_paths) != len(user_prompts):
+            raise ValueError("The number of image paths must match the number of user prompts.")
+
+        image_prompts = []
+        for image_path, user_prompt in zip(image_paths, user_prompts):
+            image_content = []
+            for path in image_path:
+                content = {"type": "image_url", "image_url": {"url": f"file://{path}"}}
+                image_content.append(content)
+            image_content.append(
+                {
+                    "type": "text",
+                    "text": f"\n{user_prompt}",
+                }
+            )
+            image_prompts.append(image_content)
+
+        return cls.create_prompts(sys_prompts, image_prompts, contexts, meta_datas, template_name)
 
     @classmethod
     def from_json(cls, json_data: str) -> "PromptCollection":
