@@ -2,7 +2,7 @@ import unittest
 import uuid
 from contextlib import suppress
 
-from chromadb.errors import InvalidCollectionException
+from chromadb.errors import NotFoundError
 
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
@@ -25,7 +25,7 @@ class TestChromaClient(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after tests."""
-        with suppress(ValueError):
+        with suppress(NotFoundError):
             self.chroma_client.delete_collection("test_collection")
 
     def test_create_collection(self):
@@ -130,7 +130,7 @@ class TestChromaClient(unittest.TestCase):
         # Delete collection
         self.chroma_client.delete_collection("test_collection")
 
-        with self.assertRaises(InvalidCollectionException):
+        with self.assertRaises(NotFoundError):
             self.chroma_client.client.get_collection("test_collection")
         print("Collection deleted successfully.")
 

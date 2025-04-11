@@ -23,8 +23,6 @@ from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
-os.environ["LITELLM_LOG"] = "ERROR"
-
 
 class InferenceRunner(ABC):
     """Abstract base class for model inference."""

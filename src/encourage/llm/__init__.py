@@ -2,6 +2,7 @@ from encourage.llm.inference_runner import (
     BatchInferenceRunner,
     ChatInferenceRunner,
     OpenAIChatInferenceRunner,
+    ToolInferenceRunner,
 )
 from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
@@ -12,4 +13,5 @@ __all__ = [
     "OpenAIChatInferenceRunner",
     "ResponseWrapper",
     "Response",
+    "ToolInferenceRunner",
 ]

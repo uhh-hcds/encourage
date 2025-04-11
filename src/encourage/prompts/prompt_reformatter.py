@@ -40,7 +40,15 @@ class PromptReformatter:
             }
         )
         if prompt.conversation.get_messages_by_role(Role.USER):
-            prompt.conversation.get_messages_by_role(Role.USER)[-1]["content"] = rendered_prompt
+            user_messages = prompt.conversation.get_messages_by_role(Role.USER)
+            last_message = user_messages[-1]
+            if isinstance(last_message["content"], list):
+                for item in last_message["content"]:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        item["text"] = rendered_prompt
+                        break
+            else:
+                last_message["content"] = rendered_prompt
         return prompt
 
     @classmethod
