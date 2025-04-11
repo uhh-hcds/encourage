@@ -3,7 +3,7 @@
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Iterator
+from typing import Any, Collection, Iterator, Sequence
 
 
 class Role(Enum):
@@ -19,22 +19,24 @@ class Role(Enum):
 class Conversation:
     """Conversation dataclass to store conversation information."""
 
-    dialog: list[dict[str, str]] = field(default_factory=list)
+    dialog: list[dict[str, Any]] = field(default_factory=list)
 
-    def __init__(self, sys_prompt: str = "", user_prompt: str = "") -> None:
+    def __init__(
+        self, sys_prompt: str = "", user_prompt: str | Sequence[Collection[Any]] = ""
+    ) -> None:
         self.sys_prompt = sys_prompt
         self.dialog = [
             {"role": Role.SYSTEM.value, "content": self.sys_prompt},
         ]
         self.add_message(Role.USER.value, user_prompt)
 
-    def add_message(self, role: str, content: str) -> None:
+    def add_message(self, role: str, content: str | Sequence[Collection[Any]]) -> None:
         """Add a new message to the conversation."""
         if role not in {role.value for role in Role}:
             raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
         self.dialog.append({"role": role, "content": content})
 
-    def get_messages_by_role(self, role: Role) -> list[dict[str, str]]:
+    def get_messages_by_role(self, role: Role) -> list[dict[str, Any]]:
         """Retrieve all messages with a specific role."""
         if role not in Role:
             raise ValueError(f"Role must be one of {', '.join([role.value for role in Role])}.")
