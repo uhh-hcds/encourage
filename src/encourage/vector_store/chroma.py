@@ -80,7 +80,7 @@ class ChromaClient(VectorStore):
         )
         return collection.count()
 
-    def list_collections(self) -> Sequence[chromadb.Collection]:
+    def list_collections(self) -> Sequence[str]:
         """Get the list of collections."""
         return self.client.list_collections()
 
