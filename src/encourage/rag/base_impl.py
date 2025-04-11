@@ -1,7 +1,7 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
-from typing import Any, override
+from typing import Any
 
 from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
     SentenceTransformerEmbeddingFunction,
@@ -77,15 +77,9 @@ class BaseRAG(RAGMethodInterface):
         self.additional_prompt = additional_prompt
         self.where = where
         self.template_name = template_name
-        self.context_collection = self.filter_unique_contexts(context_collection)
-        self.client = self.init_db()
+        self.client = self.init_db(context_collection)
 
-    def filter_unique_contexts(self, context_collection: list[Document]) -> list[Document]:
-        """Filter unique contexts by context_id and return them."""
-        unique_contexts = {document.id: document for document in context_collection}
-        return list(unique_contexts.values())
-
-    def init_db(self) -> VectorStore:
+    def init_db(self, context_collection: list[Document]) -> VectorStore:
         """Initialize the database with the contexts."""
         chroma_client = ChromaClient()
         logger.info(f"Creating collection {self.collection_name}.")
