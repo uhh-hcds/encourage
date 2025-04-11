@@ -8,13 +8,12 @@ Reference: https://arxiv.org/abs/2212.10496
 """
 
 import logging
-from typing import Any
-
-import pandas as pd
+from typing import Any, override
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
+from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
@@ -30,73 +29,50 @@ class HydeRAG(BaseRAG):
 
     def __init__(
         self,
-        qa_dataset: pd.DataFrame,
-        template_name: str,
+        context_collection: list[Document],
         collection_name: str,
-        top_k: int,
         embedding_function: Any,
-        meta_data_keys: list[str],
-        context_key: str = "context",
-        question_key: str = "question",
-        answer_key: str = "program_answer",
+        top_k: int,
+        retrieval_only: bool = False,
         device: str = "cuda",
         where: dict[str, str] | None = None,
-        retrieval_only: bool = False,
         runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
-        cache_hypothetical_answers: bool = True,
+        template_name: str = "",
         **kwargs: Any,
     ) -> None:
         """Initialize HYDE RAG method with configuration.
 
         Args:
-            qa_dataset: DataFrame containing questions and contexts
+            context_collection: List of Document objects representing the context collection
             template_name: Name of the template to use for prompt formatting
             collection_name: Name of the vector store collection
-            top_k: Number of documents to retrieve
-            embedding_function: Embedding function to use
-            meta_data_keys: list of metadata keys to include
-            context_key: Key in the dataset containing the context
-            question_key: Key in the dataset containing the question
-            answer_key: Key in the dataset containing the reference answer
-            device: Device to use for embedding ("cuda" or "cpu")
-            where: Optional filter for document retrieval
+            embedding_function: Function to compute embeddings for queries and documents
+            top_k: Number of top documents to retrieve
+            device: Device to use for embedding computations ("cuda" or "cpu")
+            where: Optional filter criteria for document retrieval
             retrieval_only: If True, only perform retrieval without LLM inference
-            runner: LLM runner to use for final answer generation and hypothetical answers
+            runner: Optional BatchInferenceRunner for generating hypothetical answers
             additional_prompt: Additional prompt text to include in hypothetical answers
-            cache_hypothetical_answers: Whe ofther to cache hypothetical answers
-            **kwargs: Additional parameters
+            **kwargs: Additional parameters for customization
 
         """
         # Initialize the parent class first
         super().__init__(
-            qa_dataset=qa_dataset,
-            template_name=template_name,
+            context_collection=context_collection,
             collection_name=collection_name,
-            top_k=top_k,
             embedding_function=embedding_function,
-            meta_data_keys=meta_data_keys,
-            context_key=context_key,
-            question_key=question_key,
-            answer_key=answer_key,
+            top_k=top_k,
+            retrieval_only=retrieval_only,
             device=device,
             where=where,
-            retrieval_only=retrieval_only,
             runner=runner,
             additional_prompt=additional_prompt,
-            **kwargs,
+            template_name=template_name,
         )
 
     def generate_hypothetical_answer(self, query_list: list[str]) -> ResponseWrapper:
-        """Generate a hypothetical answer to the query using the LLM.
-
-        Args:
-            query_list: list of queries to generate hypothetical answers for
-
-        Returns:
-            A hypothetical answer to the query
-
-        """
+        """Generate a hypothetical answer to the query using the LLM."""
         # Create prompt collection using the additional_prompt as system prompt
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=self.additional_prompt,
@@ -110,21 +86,13 @@ class HydeRAG(BaseRAG):
         # Get the response from the LLM using the main runner
         return self.runner.run(prompt_collection)
 
+    @override
     def retrieve_contexts(
         self,
         query_list: list[str],
         **kwargs: Any,
     ) -> list[list[Document]]:
-        """Retrieve contexts from the database using hypothetical answers as search vectors.
-
-        Args:
-            query_list: list of queries to retrieve contexts for
-            kwargs: Additional parameters
-
-        Returns:
-            list of contexts retrieved from the database
-
-        """
+        """Retrieve contexts from the database using hypothetical answers as search vectors."""
         # Generate hypothetical answers for all queries
         self.hypothetical_answers = self.generate_hypothetical_answer(query_list)
         # Store the hypothetical answers for later use in metadata
@@ -139,12 +107,15 @@ class HydeRAG(BaseRAG):
             where=self.where if self.where else None,
         )
 
+    @override
     def run(
         self,
         runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: list[str] = [],
+        meta_datas: list[MetaData] = [],
         retrieval_instruction: list[str] = [],
+        template_name: str = "",
     ) -> ResponseWrapper:
         """Execute the HYDE RAG pipeline and return responses.
 
@@ -152,25 +123,27 @@ class HydeRAG(BaseRAG):
             runner: LLM runner to use for final answer generation
             sys_prompt: System prompt for the final answer generation
             user_prompts: Optional list of user prompts (questions)
+            meta_datas: Optional list of metadata for the prompts
             retrieval_instruction: Optional retrieval instructions
+            template_name: Optional template name for prompt formatting
 
         Returns:
             ResponseWrapper containing the responses from the LLM
 
         """
-        user_prompts = user_prompts if user_prompts else self.user_prompts
-
         # Retrieve contexts using HYDE approach (hypothetical answers)
         retrieved_documents = self.retrieve_contexts(user_prompts)
         contexts = [Context.from_documents(documents) for documents in retrieved_documents]
 
         # Add hypothetical answers to metadata
-        meta_datas = self.prompt_meta_data.copy()
         if self.hypothetical_answers:
             hypothetical_responses = self.hypothetical_answers.get_responses()
             for i, meta_data in enumerate(meta_datas):
                 if i < len(hypothetical_responses):
                     meta_data["hypothetical_answer"] = hypothetical_responses[i]
+
+        # Use provided template_name or fall back to self.template_name
+        template_name = template_name if template_name else self.template_name
 
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
