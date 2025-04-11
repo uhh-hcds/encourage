@@ -79,7 +79,7 @@ class PromptCollection:
         meta_datas: list[MetaData] = [],
         template_name: str = "default.j2",
     ) -> "PromptCollection":
-        """Create a PromptCollection for image generation.
+        """Create a PromptCollection for working with images.
 
         Args:
             sys_prompts (List[str]): List of system prompts.

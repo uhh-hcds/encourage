@@ -38,6 +38,7 @@ dependencies = [
     "litellm>=1.53.3",
     "outlines>=0.1.11",
     "accelerate",
+    "datasets>=3.5.0",
 ]
 
 [project.optional-dependencies]

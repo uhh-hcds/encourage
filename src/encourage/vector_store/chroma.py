@@ -6,7 +6,7 @@ from contextlib import suppress
 from typing import Any, Sequence, cast
 
 import chromadb
-from chromadb import EmbeddingFunction, Where
+from chromadb import Collection, EmbeddingFunction, Where
 from chromadb.config import Settings
 from chromadb.errors import NotFoundError
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
@@ -78,7 +78,7 @@ class ChromaClient(VectorStore):
         )
         return collection.count()
 
-    def list_collections(self) -> Sequence[chromadb.Collection]:
+    def list_collections(self) -> Sequence[Collection]:
         """Get the list of collections."""
         return self.client.list_collections()
 
