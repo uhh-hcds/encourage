@@ -86,10 +86,10 @@ class BaseRAG(RAGMethodInterface):
         chroma_client.create_collection(
             self.collection_name, overwrite=True, embedding_function=self.embedding_function
         )
-        logger.info(f"Inserting {len(self.context_collection)} documents into the database.")
+        logger.info(f"Inserting {len(context_collection)} documents into the database.")
         chroma_client.insert_documents(
             collection_name=self.collection_name,
-            documents=self.context_collection,
+            documents=context_collection,
             embedding_function=self.embedding_function,
         )
         logger.info("Database initialized.")
