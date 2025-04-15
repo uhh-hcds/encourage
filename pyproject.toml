@@ -34,7 +34,7 @@ dependencies = [
     "rouge-score>=0.1.2",
     "nltk>=3.9.1",
     "mlflow>=2.18.0",
-    "chromadb>=0.5.23",
+    "chromadb>=1.0.4",
     "litellm>=1.53.3",
     "outlines>=0.1.11",
     "accelerate",
