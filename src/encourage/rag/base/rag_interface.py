@@ -31,7 +31,7 @@ class RAGMethodInterface(ABC):
         pass
 
     @abstractmethod
-    def init_db(self, context_collection: list[Document]) -> VectorStore:
+    def init_db(self) -> VectorStore:
         """Initialize the database with contexts."""
         pass
 

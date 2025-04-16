@@ -32,6 +32,8 @@ class MetaData:
 
     def to_dict(self) -> dict[str, str]:
         """Convert the metadata to a JSON-safe dictionary."""
+        if not self.tags:
+            return {}
 
         def convert_value(value: str) -> str | Any:
             """Convert the value to a JSON-safe format."""

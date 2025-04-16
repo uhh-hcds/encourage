@@ -1,7 +1,7 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
-from typing import Any
+from typing import Any, override
 
 from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
     SentenceTransformerEmbeddingFunction,
@@ -77,22 +77,33 @@ class BaseRAG(RAGMethodInterface):
         self.additional_prompt = additional_prompt
         self.where = where
         self.template_name = template_name
-        self.client = self.init_db(context_collection)
+        self.context_collection = self.filter_duplicates(context_collection)
+        self.client = self.init_db()
 
-    def init_db(self, context_collection: list[Document]) -> VectorStore:
+    def filter_duplicates(self, context_collection: list[Document]) -> list[Document]:
+        """Filter out duplicate documents from the context collection."""
+        unique_documents = {}
+        for document in context_collection:
+            if document.id not in unique_documents:
+                unique_documents[document.id] = document
+        return list(unique_documents.values())
+
+    def init_db(
+        self,
+    ) -> VectorStore:
         """Initialize the database with the contexts."""
         chroma_client = ChromaClient()
-        print(f"Creating collection {self.collection_name}.")
+        logger.info(f"Creating collection {self.collection_name}.")
         chroma_client.create_collection(
             self.collection_name, overwrite=True, embedding_function=self.embedding_function
         )
-        print(f"Inserting {len(context_collection)} documents into the database.")
+        logger.info(f"Inserting {len(self.context_collection)} documents into the database.")
         chroma_client.insert_documents(
             collection_name=self.collection_name,
-            documents=context_collection,
+            documents=self.context_collection,
             embedding_function=self.embedding_function,
         )
-        print("Database initialized.")
+        logger.info("Database initialized.")
         return chroma_client
 
     def retrieve_contexts(
@@ -109,6 +120,7 @@ class BaseRAG(RAGMethodInterface):
             where=self.where if self.where else None,
         )
 
+    @override
     def run(
         self,
         runner: BatchInferenceRunner,
