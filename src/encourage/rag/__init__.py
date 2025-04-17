@@ -2,7 +2,9 @@ from encourage.rag.base.rag_enum import RAGMethod
 from encourage.rag.base.rag_interface import RAGMethodInterface
 from encourage.rag.base_impl import BaseRAG
 from encourage.rag.hyde import HydeRAG
+from encourage.rag.hyde_reranker import HydeRerankerRAG
 from encourage.rag.known_context import KnownContext
+from encourage.rag.reranker import RerankerRAG
 from encourage.rag.summarize import SummarizationContextRAG, SummarizationRAG
 
 __all__ = [
@@ -14,4 +16,6 @@ __all__ = [
     "RAGMethodInterface",
     "ContextPreservingSummarizationRAG",
     "SummarizationContextRAG",
+    "RerankerRAG",
+    "HydeRerankerRAG",
 ]

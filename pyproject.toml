@@ -1,6 +1,6 @@
 [project]
 name = "encourage"
-version = "0.2.4"
+version = "0.2.5"
 description = "ENCOURAGE"
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -39,6 +39,7 @@ dependencies = [
     "outlines>=0.1.11",
     "accelerate",
     "datasets>=3.5.0",
+    "rank-bm25>=0.2.2",
 ]
 
 [project.optional-dependencies]
