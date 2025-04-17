@@ -1,11 +1,13 @@
 """InferenceRunner class for running models."""
 
 import json
+import math
 import os
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Type
 
 import mlflow
+import tqdm
 from litellm import batch_completion
 from litellm.types.utils import ModelResponse
 from mlflow.entities import SpanType
@@ -149,6 +151,7 @@ class BatchInferenceRunner(InferenceRunner):
         self,
         prompt_collection: PromptCollection,
         response_format: Type[BaseModel] | str | None = None,
+        batch_size: int = 50,  # Default batch size
     ) -> ResponseWrapper:
         """Run the model with the given queries."""
         extra_body = {}
@@ -158,19 +161,43 @@ class BatchInferenceRunner(InferenceRunner):
             if isinstance(response_format, str):
                 extra_body = {"guided_json": response_format}  # type: ignore
 
-        messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
-        responses = batch_completion(
-            model=f"hosted_vllm/{self.model_name}",
-            messages=messages,
-            max_tokens=self.sampling_parameters.max_tokens,
-            base_url=self.base_url,
-            api_key=self.api_key,
-            temperature=self.sampling_parameters.temperature,
-            top_p=self.sampling_parameters.top_p,
-            extra_body=extra_body,
-        )
+        all_messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
+        total_samples = len(all_messages)
+
+        # Calculate the number of batches
+        num_batches = math.ceil(total_samples / batch_size)
+        all_responses = []
+
+        # Process in batches with progress tracking
+        with tqdm(total=total_samples, desc="Processing prompts") as bar:
+            for batch_idx in range(num_batches):
+                start_idx = batch_idx * batch_size
+                end_idx = min((batch_idx + 1) * batch_size, total_samples)
+                current_batch_size = end_idx - start_idx
+
+                # Get current batch of messages
+                batch_messages = all_messages[start_idx:end_idx]
+                bar.set_description(
+                    f"Batch {batch_idx + 1}/{num_batches} ({current_batch_size} prompts)"
+                )
+
+                # Process the batch
+                batch_responses = batch_completion(
+                    model=f"hosted_vllm/{self.model_name}",
+                    messages=batch_messages,
+                    max_tokens=self.sampling_parameters.max_tokens,
+                    base_url=self.base_url,
+                    api_key=self.api_key,
+                    temperature=self.sampling_parameters.temperature,
+                    top_p=self.sampling_parameters.top_p,
+                    extra_body=extra_body,
+                )
+
+                all_responses.extend(batch_responses)
+                bar.update(current_batch_size)
+
         return ResponseWrapper.from_prompt_collection(
-            list(map(model_response_to_chat_completion, responses)), prompt_collection
+            list(map(model_response_to_chat_completion, all_responses)), prompt_collection
         )
 
 
