@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Type
 
 import mlflow
-import tqdm
 from litellm import batch_completion
 from litellm.types.utils import ModelResponse
 from mlflow.entities import SpanType
@@ -19,6 +18,7 @@ from openai.types.chat.chat_completion import (
 )
 from openai.types.completion_usage import CompletionUsage
 from pydantic import BaseModel
+from tqdm import tqdm
 from vllm import SamplingParams
 
 from encourage.llm.response_wrapper import ResponseWrapper
