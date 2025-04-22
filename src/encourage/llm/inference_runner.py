@@ -1,7 +1,6 @@
 """InferenceRunner class for running models."""
 
 import json
-import math
 import os
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Type
@@ -165,7 +164,7 @@ class BatchInferenceRunner(InferenceRunner):
         total_samples = len(all_messages)
 
         # Calculate the number of batches
-        num_batches = math.ceil(total_samples / batch_size)
+        num_batches = (total_samples + batch_size - 1) // batch_size
         all_responses = []
 
         # Process in batches with progress tracking
