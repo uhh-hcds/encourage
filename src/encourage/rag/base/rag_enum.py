@@ -5,6 +5,7 @@ from enum import Enum
 
 from encourage.rag.base.rag_interface import RAGMethodInterface
 from encourage.rag.base_impl import BaseRAG
+from encourage.rag.hybrid_bm25 import HybridBM25RAG
 from encourage.rag.hyde import HydeRAG
 from encourage.rag.hyde_reranker import HydeRerankerRAG
 from encourage.rag.known_context import KnownContext
@@ -24,6 +25,7 @@ class RAGMethod(Enum):
     SummarizationContextRAG = "SummarizationContextRAG"
     Reranker = "Reranker"
     HydeReranker = "HydeReranker"
+    HybridBM25 = "HybridBM25"
 
     def get_class(self) -> type[RAGMethodInterface]:
         """Get the implementation class for this RAG method."""
@@ -35,5 +37,6 @@ class RAGMethod(Enum):
             RAGMethod.SummarizationContextRAG: SummarizationContextRAG,
             RAGMethod.Reranker: RerankerRAG,
             RAGMethod.HydeReranker: HydeRerankerRAG,
+            RAGMethod.HybridBM25: HybridBM25RAG,
         }
         return method_classes[self]  # type: ignore
