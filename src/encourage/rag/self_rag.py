@@ -10,7 +10,7 @@ Reference: https://arxiv.org/abs/2310.11511
 import logging
 from typing import Any, List, Optional, Tuple, override
 
-from encourage.llm import BatchInferenceRunner, ResponseWrapper
+from encourage.llm import BatchInferenceRunner, Response, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
@@ -177,7 +177,7 @@ class SelfRAG(BaseRAG):
         meta_data: MetaData,
         sys_prompt: str,
         template_name: str,
-    ) -> Tuple[str, List[str]]:
+    ) -> Tuple[ResponseWrapper, List[str]]:
         """Process a single query through the Self-RAG pipeline.
 
         Args:
@@ -189,7 +189,7 @@ class SelfRAG(BaseRAG):
             template_name: Template name
 
         Returns:
-            Tuple of (final response, list of reflection texts)
+            Tuple of (final response wrapper, list of reflection texts)
 
         """
         # Initial response generation
@@ -201,8 +201,8 @@ class SelfRAG(BaseRAG):
             template_name=template_name if template_name else self.template_name,
         )
 
-        current_response = runner.run(initial_prompt_collection)
-        response_text = current_response.get_responses()[0]
+        response_wrapper = runner.run(initial_prompt_collection)
+        response_text = response_wrapper.get_responses()[0]
 
         # Store reflections for this query
         query_reflections = []
@@ -231,7 +231,22 @@ class SelfRAG(BaseRAG):
                 context=context,
             )
 
-        return response_text, query_reflections
+        # When we finish reflection rounds, create a fresh response with the final text
+        # Rather than modifying the original response_wrapper which we don't have direct access to
+        final_response = Response(
+            request_id=f"self-rag-{query[:10]}",
+            prompt_id="",  # We're not tracking the original prompt ID
+            conversation_id=0,
+            sys_prompt=sys_prompt,
+            user_prompt=query,
+            response=response_text,
+            context=context,
+            meta_data=meta_data,
+            arrival_time=0.0,
+            finished_time=0.0,
+        )
+
+        return ResponseWrapper([final_response]), query_reflections
 
     def _retrieve_and_setup_contexts(
         self,
@@ -257,46 +272,6 @@ class SelfRAG(BaseRAG):
         # Retrieve contexts
         retrieved_documents = self.retrieve_contexts(query_list)
         return [Context.from_documents(docs) for docs in retrieved_documents]
-
-    def _create_response_wrapper(
-        self,
-        all_responses: List[str],
-        all_reflections: List[List[str]],
-        sys_prompt: str,
-        user_prompts: List[str],
-        contexts: List[Context],
-        meta_data: List[MetaData],
-        template_name: str,
-    ) -> ResponseWrapper:
-        """Create the final response wrapper with all results.
-
-        Args:
-            all_responses: List of final responses
-            all_reflections: List of reflection lists for each query
-            sys_prompt: System prompt
-            user_prompts: User queries
-            contexts: Retrieved contexts
-            meta_data: Metadata
-            template_name: Template name
-
-        Returns:
-            Response wrapper with results and metadata
-
-        """
-        # Create final prompt collection for the wrapper
-        final_prompt_collection = PromptCollection.create_prompts(
-            sys_prompts=sys_prompt,
-            user_prompts=user_prompts,
-            contexts=contexts,
-            meta_datas=meta_data,
-            template_name=template_name if template_name else self.template_name,
-        )
-
-        # Create a response wrapper with our responses
-        response_wrapper = ResponseWrapper(all_responses)
-        response_wrapper.meta_data = {"self_rag_reflections": all_reflections}
-
-        return response_wrapper
 
     @override
     def run(
@@ -342,9 +317,28 @@ class SelfRAG(BaseRAG):
             logger.warning("No user prompts provided")
             return create_mock_response_wrapper(PromptCollection())
 
-        # Process each query
-        all_responses = []
-        all_reflections = []
+        # If we only have one prompt, process it directly
+        if len(user_prompts) == 1:
+            context = contexts[0] if contexts else None
+            current_meta_data = meta_data[0] if meta_data else {}
+
+            response_wrapper, reflections = self._process_single_query(
+                runner=runner,
+                query=user_prompts[0],
+                context=context,
+                meta_data=current_meta_data,
+                sys_prompt=sys_prompt,
+                template_name=template_name,
+            )
+
+            # Add reflections to metadata
+            if meta_data:
+                meta_data[0]["self_rag_reflections"] = reflections
+
+            return response_wrapper
+
+        # Process multiple queries
+        responses = []
         all_meta_data = meta_data.copy() if meta_data else [{} for _ in user_prompts]
 
         for idx, query in enumerate(user_prompts):
@@ -352,7 +346,7 @@ class SelfRAG(BaseRAG):
             current_meta_data = all_meta_data[idx] if idx < len(all_meta_data) else {}
 
             # Process query through the self-reflection pipeline
-            response_text, query_reflections = self._process_single_query(
+            response_wrapper, reflections = self._process_single_query(
                 runner=runner,
                 query=query,
                 context=context,
@@ -361,21 +355,30 @@ class SelfRAG(BaseRAG):
                 template_name=template_name,
             )
 
-            # Store results
-            all_responses.append(response_text)
-            all_reflections.append(query_reflections)
+            # Store the response
+            responses.append(response_wrapper.get_responses()[0])
 
             # Add reflections to metadata
             if idx < len(all_meta_data):
-                all_meta_data[idx]["reflections"] = query_reflections
+                all_meta_data[idx]["self_rag_reflections"] = reflections
 
-        # Create and return final response wrapper
-        return self._create_response_wrapper(
-            all_responses=all_responses,
-            all_reflections=all_reflections,
-            sys_prompt=sys_prompt,
-            user_prompts=user_prompts,
-            contexts=contexts,
-            meta_data=all_meta_data,
-            template_name=template_name,
+        # Use the correct way to create a ResponseWrapper with multiple responses
+        combined_response_wrapper = ResponseWrapper(
+            [
+                Response(
+                    request_id=f"self-rag-{i}",
+                    prompt_id="",
+                    conversation_id=i,
+                    sys_prompt=sys_prompt,
+                    user_prompt=user_prompts[i] if i < len(user_prompts) else "",
+                    response=responses[i],
+                    context=contexts[i] if i < len(contexts) else None,
+                    meta_data=all_meta_data[i] if i < len(all_meta_data) else {},
+                    arrival_time=0.0,
+                    finished_time=0.0,
+                )
+                for i in range(len(responses))
+            ]
         )
+
+        return combined_response_wrapper

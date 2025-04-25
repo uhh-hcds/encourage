@@ -996,7 +996,7 @@ wheels = [
 
 [[package]]
 name = "encourage"
-version = "0.2.6"
+version = "0.2.7"
 source = { editable = "." }
 dependencies = [
     { name = "absl-py" },
@@ -1090,7 +1090,7 @@ requires-dist = [
     { name = "pytest-mock", marker = "extra == 'ci'" },
     { name = "pyyaml" },
     { name = "qdrant-client" },
-    { name = "rank-bm25", specifier = ">=0.2.1" },
+    { name = "rank-bm25", specifier = ">=0.2.2" },
     { name = "rouge-score", specifier = ">=0.1.2" },
     { name = "ruff", marker = "extra == 'ci'" },
     { name = "sacrebleu", specifier = ">=2.4.3" },

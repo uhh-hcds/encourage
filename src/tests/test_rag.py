@@ -396,9 +396,26 @@ class TestSelfRAG(unittest.TestCase):
         from encourage.rag.self_rag import SelfRAG
 
         # Set up mock for _process_single_query
+        # Create Response objects for the mock responses
+        mock_response1 = Response(
+            request_id="mock_1",
+            prompt_id="prompt_1",
+            sys_prompt="You are a helpful AI assistant.",
+            user_prompt=self.queries[0],
+            response="AI is the field of making machines intelligent.",
+        )
+        mock_response2 = Response(
+            request_id="mock_2",
+            prompt_id="prompt_2",
+            sys_prompt="You are a helpful AI assistant.",
+            user_prompt=self.queries[1],
+            response="ML is a subset of AI focused on learning from data.",
+        )
+
+        # Mock returning ResponseWrapper objects instead of strings
         mock_process_single_query.side_effect = [
-            ("AI is the field of making machines intelligent.", ["Reflection 1"]),
-            ("ML is a subset of AI focused on learning from data.", ["Reflection 2"]),
+            (ResponseWrapper([mock_response1]), ["Reflection 1"]),
+            (ResponseWrapper([mock_response2]), ["Reflection 2"]),
         ]
 
         # Set up runner mock
@@ -415,35 +432,12 @@ class TestSelfRAG(unittest.TestCase):
             device="cpu",
         )
 
-        # Mock the ResponseWrapper creation to return proper Response objects
-        with patch("encourage.rag.self_rag.ResponseWrapper") as mock_response_wrapper:
-            # Create the appropriate Response objects
-            mock_response1 = Response(
-                request_id="mock_1",
-                prompt_id="prompt_1",
-                sys_prompt="You are a helpful AI assistant.",
-                user_prompt=self.queries[0],
-                response="AI is the field of making machines intelligent.",
-            )
-            mock_response2 = Response(
-                request_id="mock_2",
-                prompt_id="prompt_2",
-                sys_prompt="You are a helpful AI assistant.",
-                user_prompt=self.queries[1],
-                response="ML is a subset of AI focused on learning from data.",
-            )
-
-            # Set up the mock to return a proper ResponseWrapper with Response objects
-            mock_wrapper = ResponseWrapper([mock_response1, mock_response2])
-            mock_wrapper.meta_data = {"self_rag_reflections": [["Reflection 1"], ["Reflection 2"]]}
-            mock_response_wrapper.return_value = mock_wrapper
-
-            # Test run method
-            result = self.rag.run(
-                runner=runner,
-                sys_prompt="You are a helpful AI assistant.",
-                user_prompts=self.queries,
-            )
+        # Test run method without mocking ResponseWrapper
+        result = self.rag.run(
+            runner=runner,
+            sys_prompt="You are a helpful AI assistant.",
+            user_prompts=self.queries,
+        )
 
         # Verify _process_single_query was called twice (once for each query)
         self.assertEqual(mock_process_single_query.call_count, 2)
@@ -455,12 +449,6 @@ class TestSelfRAG(unittest.TestCase):
                 "AI is the field of making machines intelligent.",
                 "ML is a subset of AI focused on learning from data.",
             ],
-        )
-
-        # Check metadata contains reflections
-        self.assertIn("self_rag_reflections", result.meta_data)
-        self.assertEqual(
-            result.meta_data["self_rag_reflections"], [["Reflection 1"], ["Reflection 2"]]
         )
 
     def test_generate_reflection(self):
