@@ -30,6 +30,9 @@ class KnownContext(BaseRAG):
         """Initialize known context with context and metadata."""
         # Call parent's init with interface parameters
         self.context_collection = context_collection
+        self.template_name = template_name
+        self.collection_name = collection_name
+        self.retrieval_only = retrieval_only
 
     @override
     def run(
