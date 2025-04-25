@@ -131,7 +131,7 @@ class HydeRerankerRAG(HydeRAG):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
-        retrieval_instruction: list[str] = [],
+        retrieval_queries: list[str] = [],
         template_name: str = "",
     ) -> ResponseWrapper:
         """Execute the complete HYDE+Reranker RAG pipeline and return responses.
@@ -141,17 +141,17 @@ class HydeRerankerRAG(HydeRAG):
             sys_prompt: System prompt for the final answer generation
             user_prompts: List of user prompts (questions)
             meta_datas: List of metadata for the prompts
-            retrieval_instruction: Optional retrieval instructions
+            retrieval_queries: Optional retrieval queries
             template_name: Optional template name for prompt formatting
 
         Returns:
             ResponseWrapper containing the responses from the LLM
 
         """
-        # If specific retrieval instructions are provided, use them; otherwise use user_prompts
-        if retrieval_instruction:
-            logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            retrieved_documents = self.retrieve_contexts(retrieval_instruction)
+        # If specific retrieval queries are provided, use them; otherwise use user_prompts
+        if retrieval_queries:
+            logger.info(f"Generating {len(retrieval_queries)} retrieval queries.")
+            retrieved_documents = self.retrieve_contexts(retrieval_queries)
         else:
             logger.info(f"Using {len(user_prompts)} user prompts for retrieval.")
             retrieved_documents = self.retrieve_contexts(user_prompts)

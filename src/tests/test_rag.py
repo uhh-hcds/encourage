@@ -60,7 +60,7 @@ class TestBaseRAGIntegration(unittest.TestCase):
             runner=runner,
             sys_prompt="Answer precisely.",
             user_prompts=self.queries,
-            retrieval_instruction=["Define ML", "What is AI?"],
+            retrieval_queries=["Define ML", "What is AI?"],
         )
 
         runner.run.assert_called_once()
@@ -187,7 +187,7 @@ class TestRerankerRAG(unittest.TestCase):
             runner=runner,
             sys_prompt="Answer precisely.",
             user_prompts=self.queries,
-            retrieval_instruction=["What is AI?", "Define ML"],
+            retrieval_queries=["What is AI?", "Define ML"],
         )
 
         # Verify runner was called

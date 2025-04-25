@@ -125,17 +125,22 @@ class RerankerRAG(BaseRAG):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_data: list[MetaData] = [],
-        retrieval_instruction: list[str] = [],
+        retrieval_queries: list[str] = [],
         template_name: str = "",
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline with reranking and return responses."""
         # Generate queries and retrieve contexts with reranking
-        if retrieval_instruction:
-            logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            retrieved_documents = self.retrieve_contexts(retrieval_instruction)
+        if retrieval_queries:
+            logger.info(f"Generating {len(retrieval_queries)} retrieval queries.")
+            retrieved_documents = self.retrieve_contexts(retrieval_queries)
             self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
-            logger.info("No context retrieval queries provided. Using no context.")
+            logger.info(
+                """
+                No context retrieval queries provided. Using the user queries to fetch the
+                vector database
+                """
+            )
             self.contexts = []
 
         template_name = template_name if template_name else self.template_name
