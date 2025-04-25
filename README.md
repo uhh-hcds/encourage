@@ -29,7 +29,6 @@ This repository provides a flexible library for running local inference with or 
 ### 🚀 Getting Started
 
 ```python
-
 pip install encourage
 ```
 
@@ -46,12 +45,25 @@ For understanding how to use the inference runners, refer to the following tutor
 - [ChatInferenceRunner](./docs/conversation.md)
 - [BatchInferenceRunner](./docs/batch_inference.md)
 
+### 🔍 RAG Methods
+
+Encourage provides several RAG (Retrieval-Augmented Generation) methods to enhance your LLM responses with relevant context:
+
+- [Overview of RAG Methods](./docs/rag_methods.md)
+
+### 📊 Evaluation Metrics
+
+Encourage offers a comprehensive set of metrics for evaluating LLM and RAG performance:
+
+- [Metrics Overview](./docs/metrics_overview.md) - Table of all available metrics
+- [Metrics Explanation](./docs/metrics_explanation.md) - Detailed explanations and formulas
+- [Metrics Tutorial](./docs/metrics_tutorial.md) - Step-by-step guide to using metrics
+
 ### ⚙️ Custom Templates
 
 To use a custom template for the inference, follow the steps below:
 
 - [Create a custom template](./docs/templates.md)
-
 
 ### 📈 Model Tracking
 
