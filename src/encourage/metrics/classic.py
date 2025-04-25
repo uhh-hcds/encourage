@@ -132,7 +132,8 @@ class ROUGE(Metric):
         )[self.rouge_type]
         scores = np.mean(output)
         return MetricOutput(score=scores, raw=output)
-    
+
+@register_metric("ROUGEDetailed")
 class ROUGEDetailed(Metric):
     """Computes the ROUGE score for the generated answers and also returns the precision and the recall in raw format."""
 
