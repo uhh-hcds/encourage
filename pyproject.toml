@@ -1,7 +1,8 @@
 [project]
+
+description = "ENCOURAGE"
 name = "encourage"
 version = "0.2.6"
-description = "ENCOURAGE"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [{ name = "dida Datenschmiede GmbH", email = "info@dida.do" }]
@@ -39,7 +40,7 @@ dependencies = [
     "outlines>=0.1.11",
     "accelerate",
     "datasets>=3.5.0",
-    "rank_bm25>=0.2.1",
+    "rank-bm25>=0.2.2",
 ]
 
 [project.optional-dependencies]

@@ -45,7 +45,7 @@ class BaseRAG(RAGMethodInterface):
             Initializes the vector database with the provided context collection.
         retrieve_contexts(query_list, **kwargs) -> list[list[Document]]:
             Retrieves relevant contexts from the database based on the provided queries.
-        run(runner, sys_prompt, user_prompts=[], meta_data=[], retrieval_instruction=[])
+        run(runner, sys_prompt, user_prompts=[], meta_data=[], retrieval_queries=[])
         -> ResponseWrapper:
             Executes the RAG pipeline, including context retrieval and LLM inference,
             and returns the generated responses.
@@ -127,14 +127,14 @@ class BaseRAG(RAGMethodInterface):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_data: list[MetaData] = [],
-        retrieval_instruction: list[str] = [],
+        retrieval_queries: list[str] = [],
         template_name: str = "",
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline and return responses."""
         # Generate queries and retrieve contexts
-        if retrieval_instruction:
-            logger.info(f"Generating {len(retrieval_instruction)} retrieval queries.")
-            retrieved_documents = self.retrieve_contexts(retrieval_instruction)
+        if retrieval_queries:
+            logger.info(f"Generating {len(retrieval_queries)} retrieval queries.")
+            retrieved_documents = self.retrieve_contexts(retrieval_queries)
             self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
             logger.info("No context retrieval queries provided. Using no context.")

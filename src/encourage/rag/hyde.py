@@ -114,7 +114,7 @@ class HydeRAG(BaseRAG):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
-        retrieval_instruction: list[str] = [],
+        retrieval_queries: list[str] = [],
         template_name: str = "",
     ) -> ResponseWrapper:
         """Execute the HYDE RAG pipeline and return responses.
@@ -124,7 +124,7 @@ class HydeRAG(BaseRAG):
             sys_prompt: System prompt for the final answer generation
             user_prompts: Optional list of user prompts (questions)
             meta_datas: Optional list of metadata for the prompts
-            retrieval_instruction: Optional retrieval instructions
+            retrieval_queries: Optional retrieval queries
             template_name: Optional template name for prompt formatting
 
         Returns:

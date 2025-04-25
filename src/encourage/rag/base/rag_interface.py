@@ -51,7 +51,7 @@ class RAGMethodInterface(ABC):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
-        retrieval_instruction: list[str] = [],
+        retrieval_queries: list[str] = [],
     ) -> ResponseWrapper:
         """Execute the RAG pipeline and return responses."""
         pass

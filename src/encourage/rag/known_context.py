@@ -41,7 +41,7 @@ class KnownContext(BaseRAG):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_data: list[MetaData] = [],
-        retrieval_instruction: list[str] = [],
+        retrieval_queries: list[str] = [],
         template_name: str = "",
     ) -> ResponseWrapper:
         """Run inference on known context."""
