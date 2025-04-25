@@ -1,6 +1,7 @@
 """Hybrid RAG implementation combining vector embedding search with BM25 ranking."""
 
 import logging
+import uuid
 from typing import Any, Dict, List, Tuple, override
 
 import numpy as np
@@ -81,7 +82,7 @@ class HybridBM25RAG(BaseRAG):
         self.bm25_index = BM25Okapi(self.document_texts)
         logger.info(f"BM25 index created with {len(self.document_texts)} documents.")
 
-    def _get_bm25_scores(self, query: str) -> Tuple[np.ndarray, Dict[str, float]]:
+    def _get_bm25_scores(self, query: str) -> Tuple[np.ndarray, Dict[uuid.UUID, float]]:
         """Calculate and normalize BM25 scores for a query.
 
         Returns:
@@ -109,7 +110,7 @@ class HybridBM25RAG(BaseRAG):
         self,
         vector_docs: List[Document],
         bm25_docs: List[Document],
-        normalized_bm25_scores: Dict[str, float],
+        normalized_bm25_scores: Dict[uuid.UUID, float],
     ) -> List[Tuple[float, Document]]:
         """Calculate hybrid scores for documents."""
         # Get all unique document IDs
