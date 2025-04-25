@@ -10,6 +10,7 @@ from nltk import word_tokenize
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.registry import register_metric
+from rouge_score import rouge_scorer
 
 
 @register_metric("GeneratedAnswerLength")
@@ -131,6 +132,34 @@ class ROUGE(Metric):
         )[self.rouge_type]
         scores = np.mean(output)
         return MetricOutput(score=scores, raw=output)
+    
+class ROUGEDetailed(Metric):
+    """Computes the ROUGE score for the generated answers and also returns the precision and the recall in raw format."""
+
+    def __init__(self, rouge_type: str) -> None:
+        assert rouge_type in ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+        super().__init__(
+            name=rouge_type,
+            description="ROUGE score for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.rouge_type = rouge_type
+        self.scorer = rouge_scorer.RougeScorer([self.rouge_type], use_stemmer=True)
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        precision = []
+        recall = []
+        f1 = []
+        for ref, pred in zip([r.meta_data["reference_answer"] for r in responses], [r.response for r in responses]):
+            score = self.scorer.score(ref, pred)
+            precision.append(score[self.rouge_type].precision)
+            recall.append(score[self.rouge_type].recall)
+            f1.append(score[self.rouge_type].fmeasure)
+
+        f1_mean = sum(f1) / len(f1)
+        return MetricOutput(score=f1_mean, raw=f1, misc={"precision": precision, "recall": recall})
 
 
 @register_metric("BERTScore")
