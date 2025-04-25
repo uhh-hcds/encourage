@@ -196,21 +196,32 @@ class TestHybridBM25RAG:
         sample_documents: list[Document],
         doc_uuids: dict[str, uuid.UUID],
     ) -> None:
-        """Test the hybrid ranking function."""
+        """Test the hybrid ranking functionality."""
         # Mock vector and BM25 docs
         vector_docs = [sample_documents[0], sample_documents[2]]  # Python and NLP
-        bm25_docs = [sample_documents[0], sample_documents[3]]  # Python and ML
-
         query = "programming language Python"
 
-        # Get hybrid ranking
-        hybrid_results = hybrid_rag._hybrid_ranking(vector_docs, bm25_docs, query)
+        # Get sparse retrieval results
+        sparse_docs, sparse_scores = hybrid_rag._retrieve_sparse_results(query)
+
+        # Calculate hybrid scores
+        scored_docs = hybrid_rag._compute_hybrid_scores(vector_docs, sparse_docs, sparse_scores)
+
+        # Sort by score and get top_k docs
+        hybrid_results = [doc for _, doc in sorted(scored_docs, key=lambda x: x[0], reverse=True)][
+            : hybrid_rag.top_k
+        ]
 
         # Python document should be ranked first as it appears in both lists
         assert hybrid_results[0].id == doc_uuids["doc1"]
 
         # Should return at most top_k results
         assert len(hybrid_results) <= hybrid_rag.top_k
+
+        # Alternative approach: use _rank_documents directly
+        ranked_docs = hybrid_rag._rank_documents(vector_docs, query)
+        assert ranked_docs[0].id == doc_uuids["doc1"]
+        assert len(ranked_docs) <= hybrid_rag.top_k
 
     def test_run_method(self, hybrid_rag: HybridBM25RAG) -> None:
         """Test the run method with a mock runner."""

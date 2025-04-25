@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class HybridBM25RAG(BaseRAG):
-    """Hybrid RAG combining vector embeddings with BM25 ranking.
+    """Hybrid RAG combining dense embeddings with sparse lexical search.
 
-    Combines semantic search (vectors) with lexical search (BM25).
+    Combines semantic search (dense embeddings) with lexical search (sparse BM25).
 
     Attributes:
-        alpha: Weight for vector search scores (0-1)
-        beta: Weight for BM25 scores (0-1)
+        alpha: Weight for dense retrieval scores (0-1)
+        beta: Weight for sparse retrieval scores (0-1)
         bm25_index: BM25 index for lexical search
         document_texts: Preprocessed document texts
         document_map: Maps document text to Document objects
@@ -38,8 +38,8 @@ class HybridBM25RAG(BaseRAG):
         runner: BatchInferenceRunner | None = None,
         additional_prompt: str = "",
         template_name: str = "",
-        alpha: float = 0.5,  # Vector search weight
-        beta: float = 0.5,  # BM25 weight
+        alpha: float = 0.5,  # Dense retrieval weight
+        beta: float = 0.5,  # Sparse retrieval weight
         device: str = "cuda",
         where: dict[str, str] | None = None,
         **kwargs: Any,
@@ -82,16 +82,20 @@ class HybridBM25RAG(BaseRAG):
         self.bm25_index = BM25Okapi(self.document_texts)
         logger.info(f"BM25 index created with {len(self.document_texts)} documents.")
 
-    def _get_bm25_scores(self, query: str) -> Tuple[np.ndarray, Dict[uuid.UUID, float]]:
-        """Calculate and normalize BM25 scores for a query.
+    def _retrieve_sparse_results(self, query: str) -> Tuple[List[Document], Dict[uuid.UUID, float]]:
+        """Calculate BM25 scores and return top documents for a query.
 
         Returns:
-            Raw scores array and dictionary of normalized scores by doc ID
+            A tuple of (top sparse retrieval documents, normalized scores by document ID)
 
         """
         # Tokenize query and get scores
         tokenized_query = query.lower().split()
         bm25_scores = self.bm25_index.get_scores(tokenized_query)
+
+        # Get top k document indices
+        top_bm25_indices = np.argsort(bm25_scores)[::-1]
+        sparse_docs = [self.documents[i] for i in top_bm25_indices]
 
         # Normalize scores
         max_bm25_score = max(bm25_scores) if bm25_scores.any() else 1.0
@@ -104,25 +108,35 @@ class HybridBM25RAG(BaseRAG):
         else:
             normalized_scores = {}
 
-        return bm25_scores, normalized_scores
+        return sparse_docs, normalized_scores
 
-    def _calculate_hybrid_scores(
+    def _compute_hybrid_scores(
         self,
-        vector_docs: List[Document],
-        bm25_docs: List[Document],
-        normalized_bm25_scores: Dict[uuid.UUID, float],
+        dense_docs: List[Document],
+        sparse_docs: List[Document],
+        sparse_scores: Dict[uuid.UUID, float],
     ) -> List[Tuple[float, Document]]:
-        """Calculate hybrid scores for documents."""
+        """Compute hybrid scores combining dense and sparse retrieval results.
+
+        Args:
+            dense_docs: Documents from dense vector retrieval
+            sparse_docs: Documents from sparse BM25 retrieval
+            sparse_scores: Normalized BM25 scores by document ID
+
+        Returns:
+            List of (score, document) tuples ranked by hybrid score
+
+        """
         # Get all unique document IDs
-        all_doc_ids = {doc.id for doc in vector_docs} | {doc.id for doc in bm25_docs}
+        all_doc_ids = {doc.id for doc in dense_docs} | {doc.id for doc in sparse_docs}
 
         # Create maps for lookup
-        vector_map = {doc.id: (i, doc) for i, doc in enumerate(vector_docs)}
-        bm25_map = {doc.id: (i, doc) for i, doc in enumerate(bm25_docs)}
+        dense_map = {doc.id: (i, doc) for i, doc in enumerate(dense_docs)}
+        sparse_map = {doc.id: (i, doc) for i, doc in enumerate(sparse_docs)}
 
         # Find minimum non-zero BM25 score for scaling fallback scores
         min_nonzero_bm25 = min(
-            [score for score in normalized_bm25_scores.values() if score > 0], default=0.1
+            [score for score in sparse_scores.values() if score > 0], default=0.1
         )
         fallback_ceiling = min_nonzero_bm25 * 0.9  # Ensure fallbacks are below actual scores
 
@@ -130,34 +144,41 @@ class HybridBM25RAG(BaseRAG):
         scored_docs = []
 
         for doc_id in all_doc_ids:
-            # Get vector score (position-based)
-            vector_pos = vector_map.get(doc_id, (len(vector_docs), None))[0]
-            vector_score = (
-                1.0 - (vector_pos / max(len(vector_docs), 1))
-                if vector_pos < len(vector_docs)
-                else 0.0
+            # Get dense score (position-based)
+            dense_pos = dense_map.get(doc_id, (len(dense_docs), None))[0]
+            dense_score = (
+                1.0 - (dense_pos / max(len(dense_docs), 1)) if dense_pos < len(dense_docs) else 0.0
             )
 
-            # Get BM25 score
-            bm25_score = normalized_bm25_scores.get(doc_id, 0.0)
-
-            # If no BM25 score but in results, use position-based fallback scaled to be below min
-            # non-zero score
-            if bm25_score == 0.0 and doc_id in bm25_map:
-                bm25_pos = bm25_map[doc_id][0]
-                position_ratio = bm25_pos / max(len(bm25_docs), 1)
-                # Scale to be below minimum non-zero BM25 score
-                bm25_score = fallback_ceiling * (1.0 - position_ratio)
+            # Get sparse score or calculate fallback
+            sparse_score = sparse_scores.get(doc_id, 0.0)
+            if sparse_score == 0.0 and doc_id in sparse_map:
+                sparse_pos = sparse_map[doc_id][0]
+                position_ratio = sparse_pos / max(len(sparse_docs), 1)
+                # Scale fallback to be below minimum non-zero BM25 score
+                sparse_score = fallback_ceiling * (1.0 - position_ratio)
 
             # Calculate hybrid score
-            hybrid_score = (self.alpha * vector_score) + (self.beta * bm25_score)
+            hybrid_score = (self.alpha * dense_score) + (self.beta * sparse_score)
 
-            # Get document (prefer vector version)
-            doc = vector_map.get(doc_id, (None, None))[1] or bm25_map.get(doc_id, (None, None))[1]
+            # Get document (prefer dense version)
+            doc = dense_map.get(doc_id, (None, None))[1] or sparse_map.get(doc_id, (None, None))[1]
             if doc:
                 scored_docs.append((hybrid_score, doc))
 
         return scored_docs
+
+    def _rank_documents(self, dense_docs: List[Document], query: str) -> List[Document]:
+        """Rank documents using the hybrid dense + sparse approach."""
+        # Get sparse retrieval results
+        sparse_docs, sparse_scores = self._retrieve_sparse_results(query)
+
+        # Calculate hybrid scores
+        scored_docs = self._compute_hybrid_scores(dense_docs, sparse_docs, sparse_scores)
+
+        # Sort by score and return top_k
+        sorted_docs = [doc for _, doc in sorted(scored_docs, key=lambda x: x[0], reverse=True)]
+        return sorted_docs[: self.top_k]
 
     @override
     def retrieve_contexts(
@@ -165,44 +186,18 @@ class HybridBM25RAG(BaseRAG):
         query_list: list[str],
         **kwargs: Any,
     ) -> list[list[Document]]:
-        """Retrieve contexts using hybrid vector + BM25 approach."""
-        # Get vector search results
-        vector_results = super().retrieve_contexts(query_list=query_list, **kwargs)
+        """Retrieve contexts using hybrid dense + sparse approach."""
+        # Get dense retrieval results from parent class
+        dense_results = super().retrieve_contexts(query_list=query_list, **kwargs)
 
-        # Process each query
+        # Process each query using the hybrid ranking function
         final_results = []
-
         for idx, query in enumerate(query_list):
-            # Get vector docs for this query
-            vector_docs = vector_results[idx] if idx < len(vector_results) else []
+            # Get dense docs for this query
+            dense_docs = dense_results[idx] if idx < len(dense_results) else []
 
-            # Get BM25 scores and docs
-            bm25_scores, normalized_bm25_scores = self._get_bm25_scores(query)
-            top_bm25_indices = np.argsort(bm25_scores)[::-1][: self.top_k]
-            bm25_docs = [self.documents[i] for i in top_bm25_indices]
-
-            # Combine and rank documents
-            scored_docs = self._calculate_hybrid_scores(
-                vector_docs, bm25_docs, normalized_bm25_scores
-            )
-            sorted_docs = [doc for _, doc in sorted(scored_docs, key=lambda x: x[0], reverse=True)]
-            final_results.append(sorted_docs[: self.top_k])
+            # Rank using hybrid approach
+            ranked_docs = self._rank_documents(dense_docs, query)
+            final_results.append(ranked_docs)
 
         return final_results
-
-    def _hybrid_ranking(
-        self,
-        vector_docs: list[Document],
-        bm25_docs: list[Document],
-        query: str,
-    ) -> list[Document]:
-        """Legacy method for backward compatibility."""
-        # Calculate BM25 scores
-        _, normalized_bm25_scores = self._get_bm25_scores(query)
-
-        # Calculate hybrid scores
-        scored_docs = self._calculate_hybrid_scores(vector_docs, bm25_docs, normalized_bm25_scores)
-
-        # Sort by score and return top results
-        sorted_docs = [doc for _, doc in sorted(scored_docs, key=lambda x: x[0], reverse=True)]
-        return sorted_docs[: self.top_k]
