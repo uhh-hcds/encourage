@@ -3,6 +3,8 @@
 import logging
 from typing import Any, override
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
@@ -127,6 +129,7 @@ class RerankerRAG(BaseRAG):
         meta_data: list[MetaData] = [],
         retrieval_queries: list[str] = [],
         template_name: str = "",
+        response_format: BaseModel | None = None,
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline with reranking and return responses."""
         # Generate queries and retrieve contexts with reranking
@@ -158,4 +161,4 @@ class RerankerRAG(BaseRAG):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)

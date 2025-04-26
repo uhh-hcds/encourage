@@ -2,6 +2,8 @@
 
 from typing import Any, override
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
@@ -43,6 +45,7 @@ class KnownContext(BaseRAG):
         meta_data: list[MetaData] = [],
         retrieval_queries: list[str] = [],
         template_name: str = "",
+        response_format: BaseModel | None = None,
     ) -> ResponseWrapper:
         """Run inference on known context."""
         # For KnownContext, we always use the predefined context collection
@@ -64,4 +67,4 @@ class KnownContext(BaseRAG):
         if self.retrieval_only:
             return create_mock_response_wrapper(prompt_collection)
         else:
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)

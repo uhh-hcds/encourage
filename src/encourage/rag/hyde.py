@@ -10,6 +10,8 @@ Reference: https://arxiv.org/abs/2212.10496
 import logging
 from typing import Any, override
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
@@ -116,6 +118,7 @@ class HydeRAG(BaseRAG):
         meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
         template_name: str = "",
+        response_format: BaseModel | None = None,
     ) -> ResponseWrapper:
         """Execute the HYDE RAG pipeline and return responses.
 
@@ -126,6 +129,7 @@ class HydeRAG(BaseRAG):
             meta_datas: Optional list of metadata for the prompts
             retrieval_queries: Optional retrieval queries
             template_name: Optional template name for prompt formatting
+            response_format: Optional response format for structured output
 
         Returns:
             ResponseWrapper containing the responses from the LLM
@@ -159,4 +163,4 @@ class HydeRAG(BaseRAG):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM using the class runner
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)

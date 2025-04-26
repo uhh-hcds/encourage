@@ -6,6 +6,7 @@ from typing import Any, override
 from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
     SentenceTransformerEmbeddingFunction,
 )
+from pydantic import BaseModel
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
@@ -129,6 +130,7 @@ class BaseRAG(RAGMethodInterface):
         meta_data: list[MetaData] = [],
         retrieval_queries: list[str] = [],
         template_name: str = "",
+        response_format: BaseModel | None = None,
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline and return responses."""
         # Generate queries and retrieve contexts
@@ -155,4 +157,4 @@ class BaseRAG(RAGMethodInterface):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)
