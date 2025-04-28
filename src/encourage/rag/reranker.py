@@ -137,13 +137,8 @@ class RerankerRAG(BaseRAG):
             retrieved_documents = self.retrieve_contexts(retrieval_queries)
             self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
-            logger.info(
-                """
-                No context retrieval queries provided. Using the user queries to fetch the
-                vector database
-                """
-            )
-            self.contexts = []
+            logger.info(f"Using {len(user_prompts)} user prompts for retrieval.")
+            retrieved_documents = self.retrieve_contexts(user_prompts)
 
         # Create prompt collection with template_name from class
         prompt_collection = PromptCollection.create_prompts(
