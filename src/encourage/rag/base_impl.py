@@ -46,7 +46,7 @@ class BaseRAG(RAGMethodInterface):
             Initializes the vector database with the provided context collection.
         retrieve_contexts(query_list, **kwargs) -> list[list[Document]]:
             Retrieves relevant contexts from the database based on the provided queries.
-        run(runner, sys_prompt, user_prompts=[], meta_data=[], retrieval_queries=[])
+        run(runner, sys_prompt, user_prompts=[], meta_datas=[], retrieval_queries=[])
         -> ResponseWrapper:
             Executes the RAG pipeline, including context retrieval and LLM inference,
             and returns the generated responses.
@@ -127,10 +127,9 @@ class BaseRAG(RAGMethodInterface):
         runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: list[str] = [],
-        meta_data: list[MetaData] = [],
+        meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        template_name: str = "",
-        response_format: BaseModel | None = None,
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline and return responses."""
         # Generate queries and retrieve contexts
@@ -142,13 +141,13 @@ class BaseRAG(RAGMethodInterface):
             logger.info("No context retrieval queries provided. Using no context.")
             self.contexts = []
 
-        template_name = template_name if template_name else self.template_name
+        template_name = self.template_name
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
-            meta_datas=meta_data,
+            meta_datas=meta_datas,
             template_name=template_name,
         )
 

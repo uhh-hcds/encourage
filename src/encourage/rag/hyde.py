@@ -117,8 +117,7 @@ class HydeRAG(BaseRAG):
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        template_name: str = "",
-        response_format: BaseModel | None = None,
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the HYDE RAG pipeline and return responses.
 
@@ -128,7 +127,6 @@ class HydeRAG(BaseRAG):
             user_prompts: Optional list of user prompts (questions)
             meta_datas: Optional list of metadata for the prompts
             retrieval_queries: Optional retrieval queries
-            template_name: Optional template name for prompt formatting
             response_format: Optional response format for structured output
 
         Returns:
@@ -145,9 +143,6 @@ class HydeRAG(BaseRAG):
             for i, meta_data in enumerate(meta_datas):
                 if i < len(hypothetical_responses):
                     meta_data["hypothetical_answer"] = hypothetical_responses[i]
-
-        # Use provided template_name or fall back to self.template_name
-        template_name = template_name if template_name else self.template_name
 
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(

@@ -126,10 +126,9 @@ class RerankerRAG(BaseRAG):
         runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: list[str] = [],
-        meta_data: list[MetaData] = [],
+        meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        template_name: str = "",
-        response_format: BaseModel | None = None,
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline with reranking and return responses."""
         # Generate queries and retrieve contexts with reranking
@@ -146,14 +145,13 @@ class RerankerRAG(BaseRAG):
             )
             self.contexts = []
 
-        template_name = template_name if template_name else self.template_name
-        # Create prompt collection
+        # Create prompt collection with template_name from class
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
-            meta_datas=meta_data,
-            template_name=template_name,
+            meta_datas=meta_datas,
+            template_name=self.template_name,
         )
 
         if self.retrieval_only:

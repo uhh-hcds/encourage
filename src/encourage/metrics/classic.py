@@ -6,11 +6,11 @@ import evaluate
 import ir_measures
 import numpy as np
 from nltk import word_tokenize
+from rouge_score import rouge_scorer
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.registry import register_metric
-from rouge_score import rouge_scorer
 
 
 @register_metric("GeneratedAnswerLength")
@@ -133,9 +133,13 @@ class ROUGE(Metric):
         scores = np.mean(output)
         return MetricOutput(score=scores, raw=output)
 
+
 @register_metric("ROUGEDetailed")
 class ROUGEDetailed(Metric):
-    """Computes the ROUGE score for the generated answers and also returns the precision and the recall in raw format."""
+    """Computes the ROUGE score for the generated answers.
+
+    And also returns the precision and the recall in raw format.
+    """
 
     def __init__(self, rouge_type: str) -> None:
         assert rouge_type in ["rouge1", "rouge2", "rougeL", "rougeLsum"]
@@ -153,7 +157,9 @@ class ROUGEDetailed(Metric):
         precision = []
         recall = []
         f1 = []
-        for ref, pred in zip([r.meta_data["reference_answer"] for r in responses], [r.response for r in responses]):
+        for ref, pred in zip(
+            [r.meta_data["reference_answer"] for r in responses], [r.response for r in responses]
+        ):
             score = self.scorer.score(ref, pred)
             precision.append(score[self.rouge_type].precision)
             recall.append(score[self.rouge_type].recall)
@@ -350,7 +356,7 @@ class HitRateAtK(RetrievalMetric):
         super().__init__(
             name=f"hit{k}",
             description=(
-                "Checks if at least one relevant document is " "in the top-k retrieved documents."
+                "Checks if at least one relevant document is in the top-k retrieved documents."
             ),
             required_meta_data=["reference_document"],
             required_documents=True,

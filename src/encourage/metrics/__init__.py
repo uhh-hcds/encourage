@@ -6,7 +6,6 @@ from encourage.metrics.classic import (
     F1,
     GLEU,
     ROUGE,
-    ROUGEDetailed,
     BERTScore,
     ContextLength,
     ExactMatch,
@@ -15,6 +14,7 @@ from encourage.metrics.classic import (
     MeanReciprocalRank,
     RecallAtK,
     ReferenceAnswerLength,
+    ROUGEDetailed,
 )
 from encourage.metrics.context_precision import ContextPrecision
 from encourage.metrics.context_recall import ContextRecall

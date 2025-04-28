@@ -54,7 +54,7 @@ class RAGMethodInterface(ABC):
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        response_format: BaseModel | None = None,
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the RAG pipeline and return responses."""
         pass
