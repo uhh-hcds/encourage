@@ -8,7 +8,7 @@ Reference: https://arxiv.org/abs/2310.11511
 """
 
 import logging
-from typing import Any, List, Optional, Tuple, override
+from typing import Any, Dict, List, Optional, Sequence, Tuple, override
 
 from encourage.llm import BatchInferenceRunner, Response, ResponseWrapper
 from encourage.prompts import PromptCollection
@@ -87,172 +87,177 @@ class SelfRAG(BaseRAG):
             "feedback and retrieved information. Focus on factuality, completeness, and coherence."
         )
 
-    def _generate_reflection(
+    def _generate_batch_reflection(
         self,
         runner: BatchInferenceRunner,
-        query: str,
-        response: str,
-        context: Optional[Context] = None,
-    ) -> str:
-        """Generate a self-reflection on the current response.
+        queries: List[str],
+        responses: List[str],
+        contexts: Sequence[Optional[Context]],
+    ) -> List[str]:
+        """Generate batch reflections on the current responses.
 
         Args:
             runner: LLM runner
-            query: Original user query
-            response: Current response to evaluate
-            context: Retrieved context (if available)
+            queries: Original user queries
+            responses: Current responses to evaluate
+            contexts: Retrieved contexts (if available)
 
         Returns:
-            Reflection text critiquing the response
+            List of reflection texts critiquing each response
 
         """
-        reflection_user_prompt = f"QUERY: {query}\n\nRESPONSE: {response}\n\n"
+        reflection_user_prompts = []
 
-        if context:
-            reflection_user_prompt += f"CONTEXT: {context.to_string()}\n\n"
+        for i, (query, response) in enumerate(zip(queries, responses)):
+            prompt = f"QUERY: {query}\n\nRESPONSE: {response}\n\n"
 
-        reflection_user_prompt += (
-            "TASK: Evaluate the response for:\n"
-            "1. Factual accuracy (especially compared to the context)\n"
-            "2. Completeness of information\n"
-            "3. Relevance to the query\n"
-            "4. Coherence and clarity\n\n"
-            "Provide specific issues that need improvement."
-        )
+            # Safely handle None contexts by checking before calling to_string()
+            context = contexts[i] if i < len(contexts) else None
+            if context is not None:
+                prompt += f"CONTEXT: {context.to_string()}\n\n"
 
+            prompt += (
+                "TASK: Evaluate the response for:\n"
+                "1. Factual accuracy (especially compared to the context)\n"
+                "2. Completeness of information\n"
+                "3. Relevance to the query\n"
+                "4. Coherence and clarity\n\n"
+                "Provide specific issues that need improvement."
+            )
+            reflection_user_prompts.append(prompt)
+
+        # Create prompt collection for reflections
         reflection_prompts = PromptCollection.create_prompts(
-            sys_prompts=self.reflection_sys_prompt, user_prompts=[reflection_user_prompt]
+            sys_prompts=self.reflection_sys_prompt, user_prompts=reflection_user_prompts
         )
 
-        reflection_response = runner.run(reflection_prompts)
-        return reflection_response.get_responses()[0]
+        # Run batch inference for reflections
+        reflection_response_wrapper = runner.run(reflection_prompts)
+        return reflection_response_wrapper.get_responses()
 
-    def _generate_refined_response(
+    def _generate_batch_refined_responses(
         self,
         runner: BatchInferenceRunner,
-        query: str,
-        initial_response: str,
-        reflection: str,
-        context: Optional[Context] = None,
-    ) -> str:
-        """Generate an improved response based on reflection.
+        queries: List[str],
+        initial_responses: List[str],
+        reflections: List[str],
+        contexts: Sequence[Optional[Context]],
+    ) -> List[str]:
+        """Generate improved responses based on reflection in batch.
 
         Args:
             runner: LLM runner
-            query: Original user query
-            initial_response: Initial response to refine
-            reflection: Critical feedback from reflection
-            context: Retrieved context (if available)
+            queries: Original user queries
+            initial_responses: Initial responses to refine
+            reflections: Critical feedback from reflections
+            contexts: Retrieved contexts (if available)
 
         Returns:
-            Refined response text
+            List of refined response texts
 
         """
-        refinement_user_prompt = (
-            f"QUERY: {query}\n\n"
-            f"INITIAL RESPONSE: {initial_response}\n\n"
-            f"CRITICAL FEEDBACK: {reflection}\n\n"
-        )
+        refinement_user_prompts = []
 
-        if context:
-            refinement_user_prompt += f"CONTEXT: {context.to_string()}\n\n"
+        for i, (query, response, reflection) in enumerate(
+            zip(queries, initial_responses, reflections)
+        ):
+            prompt = (
+                f"QUERY: {query}\n\n"
+                f"INITIAL RESPONSE: {response}\n\n"
+                f"CRITICAL FEEDBACK: {reflection}\n\n"
+            )
 
-        refinement_user_prompt += (
-            "TASK: Provide an improved response that addresses the critical feedback. "
-            "Focus on factuality, completeness, and directly answering the query."
-        )
+            # Safely handle None contexts by checking before calling to_string()
+            context = contexts[i] if i < len(contexts) else None
+            if context is not None:
+                prompt += f"CONTEXT: {context.to_string()}\n\n"
 
+            prompt += (
+                "TASK: Provide an improved response that addresses the critical feedback. "
+                "Focus on factuality, completeness, and directly answering the query."
+            )
+            refinement_user_prompts.append(prompt)
+
+        # Create prompt collection for refinements
         refinement_prompts = PromptCollection.create_prompts(
-            sys_prompts=self.refinement_sys_prompt, user_prompts=[refinement_user_prompt]
+            sys_prompts=self.refinement_sys_prompt, user_prompts=refinement_user_prompts
         )
 
-        refined_response = runner.run(refinement_prompts)
-        return refined_response.get_responses()[0]
+        # Run batch inference for refined responses
+        refined_response_wrapper = runner.run(refinement_prompts)
+        return refined_response_wrapper.get_responses()
 
-    def _process_single_query(
+    def _batch_process_with_self_reflection(
         self,
         runner: BatchInferenceRunner,
-        query: str,
-        context: Optional[Context],
-        meta_data: MetaData,
+        user_prompts: List[str],
+        contexts: Sequence[Optional[Context]],
+        meta_datas: List[MetaData],
         sys_prompt: str,
         template_name: str,
-    ) -> Tuple[ResponseWrapper, List[str]]:
-        """Process a single query through the Self-RAG pipeline.
+    ) -> Tuple[List[str], Dict[int, List[str]]]:
+        """Process queries through the Self-RAG pipeline in batches.
 
         Args:
             runner: LLM runner
-            query: User query
-            context: Retrieved context (if available)
-            meta_data: Metadata for this query
+            user_prompts: List of user queries
+            contexts: List of retrieved contexts
+            meta_datas: List of metadata
             sys_prompt: System prompt
             template_name: Template name
 
         Returns:
-            Tuple of (final response wrapper, list of reflection texts)
+            Tuple of (final responses, reflections by query index)
 
         """
-        # Initial response generation
+        # Initial batch generation
+        valid_contexts = [ctx for ctx in contexts if ctx is not None]
         initial_prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
-            user_prompts=[query],
-            contexts=[context] if context else [],
-            meta_datas=[meta_data] if meta_data else [],
+            user_prompts=user_prompts,
+            contexts=valid_contexts,
+            meta_datas=meta_datas,
             template_name=template_name if template_name else self.template_name,
         )
 
         response_wrapper = runner.run(initial_prompt_collection)
-        response_text = response_wrapper.get_responses()[0]
+        responses = response_wrapper.get_responses()
 
-        # Store reflections for this query
-        query_reflections = []
+        # Store reflections for each query
+        all_reflections: Dict[int, List[str]] = {i: [] for i in range(len(user_prompts))}
 
         # Reflection and refinement rounds
-        for round_idx in range(self.reflection_rounds):
-            logger.info(
-                f"""
-                Starting reflection round {round_idx + 1}/{self.reflection_rounds}
-                for query: {query[:50]}...
-                """
-            )
-
-            # Generate reflection
-            reflection = self._generate_reflection(
-                runner=runner, query=query, response=response_text, context=context
-            )
-            query_reflections.append(reflection)
-
-            # Generate refined response
-            response_text = self._generate_refined_response(
+        current_responses = responses
+        for _ in range(self.reflection_rounds):
+            # Generate batch reflections
+            reflections = self._generate_batch_reflection(
                 runner=runner,
-                query=query,
-                initial_response=response_text,
-                reflection=reflection,
-                context=context,
+                queries=user_prompts,
+                responses=current_responses,
+                contexts=contexts,
             )
 
-        # When we finish reflection rounds, create a fresh response with the final text
-        # Rather than modifying the original response_wrapper which we don't have direct access to
-        final_response = Response(
-            request_id=f"self-rag-{query[:10]}",
-            prompt_id="",  # We're not tracking the original prompt ID
-            conversation_id=0,
-            sys_prompt=sys_prompt,
-            user_prompt=query,
-            response=response_text,
-            context=context,
-            meta_data=meta_data,
-            arrival_time=0.0,
-            finished_time=0.0,
-        )
+            # Store reflections
+            for i, reflection in enumerate(reflections):
+                if i in all_reflections:
+                    all_reflections[i].append(reflection)
 
-        return ResponseWrapper([final_response]), query_reflections
+            # Generate batch refined responses
+            current_responses = self._generate_batch_refined_responses(
+                runner=runner,
+                queries=user_prompts,
+                initial_responses=current_responses,
+                reflections=reflections,
+                contexts=contexts,
+            )
+
+        return current_responses, all_reflections
 
     def _retrieve_and_setup_contexts(
         self,
         user_prompts: List[str],
         retrieval_queries: List[str],
-    ) -> List[Context]:
+    ) -> List[Optional[Context]]:
         """Retrieve relevant contexts for the given queries.
 
         Args:
@@ -271,7 +276,7 @@ class SelfRAG(BaseRAG):
 
         # Retrieve contexts
         retrieved_documents = self.retrieve_contexts(query_list)
-        return [Context.from_documents(docs) for docs in retrieved_documents]
+        return [Context.from_documents(docs) if docs else None for docs in retrieved_documents]
 
     @override
     def run(
@@ -300,13 +305,16 @@ class SelfRAG(BaseRAG):
         # Retrieve contexts
         contexts = self._retrieve_and_setup_contexts(user_prompts, retrieval_queries)
 
+        # Get valid contexts for prompt collection
+        valid_contexts = [ctx for ctx in contexts if ctx is not None]
+
         # Handle retrieval-only mode
         if self.retrieval_only:
             logger.info("Retrieval-only mode: Skipping LLM inference.")
             prompt_collection = PromptCollection.create_prompts(
                 sys_prompts=sys_prompt,
                 user_prompts=user_prompts,
-                contexts=contexts,
+                contexts=valid_contexts,
                 meta_datas=meta_data,
                 template_name=template_name if template_name else self.template_name,
             )
@@ -315,70 +323,51 @@ class SelfRAG(BaseRAG):
         # Check if we have any user prompts
         if not user_prompts:
             logger.warning("No user prompts provided")
-            return create_mock_response_wrapper(PromptCollection())
+            return create_mock_response_wrapper(PromptCollection(prompts=[]))
 
-        # If we only have one prompt, process it directly
-        if len(user_prompts) == 1:
-            context = contexts[0] if contexts else None
-            current_meta_data = meta_data[0] if meta_data else {}
+        # Make sure meta_data is populated
+        all_meta_data = meta_data.copy() if meta_data else [MetaData() for _ in user_prompts]
 
-            response_wrapper, reflections = self._process_single_query(
-                runner=runner,
-                query=user_prompts[0],
-                context=context,
-                meta_data=current_meta_data,
-                sys_prompt=sys_prompt,
-                template_name=template_name,
-            )
+        # Process all queries through batch self-reflection pipeline
+        final_responses, all_reflections = self._batch_process_with_self_reflection(
+            runner=runner,
+            user_prompts=user_prompts,
+            contexts=contexts,
+            meta_datas=all_meta_data,
+            sys_prompt=sys_prompt,
+            template_name=template_name,
+        )
 
-            # Add reflections to metadata
-            if meta_data:
-                meta_data[0]["self_rag_reflections"] = reflections
-
-            return response_wrapper
-
-        # Process multiple queries
-        responses = []
-        all_meta_data = meta_data.copy() if meta_data else [{} for _ in user_prompts]
-
-        for idx, query in enumerate(user_prompts):
-            context = contexts[idx] if idx < len(contexts) else None
-            current_meta_data = all_meta_data[idx] if idx < len(all_meta_data) else {}
-
-            # Process query through the self-reflection pipeline
-            response_wrapper, reflections = self._process_single_query(
-                runner=runner,
-                query=query,
-                context=context,
-                meta_data=current_meta_data,
-                sys_prompt=sys_prompt,
-                template_name=template_name,
-            )
-
-            # Store the response
-            responses.append(response_wrapper.get_responses()[0])
-
-            # Add reflections to metadata
+        # Add reflections to metadata
+        for idx, reflections in all_reflections.items():
             if idx < len(all_meta_data):
-                all_meta_data[idx]["self_rag_reflections"] = reflections
+                # This ensures we're not trying to assign a list[str] to a str
+                all_meta_data[idx].data["self_rag_reflections"] = reflections
 
-        # Use the correct way to create a ResponseWrapper with multiple responses
-        combined_response_wrapper = ResponseWrapper(
-            [
+        # Create Response objects
+        response_objects = []
+        for i, response_text in enumerate(final_responses):
+            # Fix: Always use a valid Context object, never None
+            context_obj = Context()  # Create default context
+            if i < len(contexts) and contexts[i] is not None:
+                context_obj = contexts[i]
+
+            current_meta_data = all_meta_data[i] if i < len(all_meta_data) else MetaData()
+            user_prompt = user_prompts[i] if i < len(user_prompts) else ""
+
+            response_objects.append(
                 Response(
                     request_id=f"self-rag-{i}",
                     prompt_id="",
                     conversation_id=i,
                     sys_prompt=sys_prompt,
-                    user_prompt=user_prompts[i] if i < len(user_prompts) else "",
-                    response=responses[i],
-                    context=contexts[i] if i < len(contexts) else None,
-                    meta_data=all_meta_data[i] if i < len(all_meta_data) else {},
+                    user_prompt=user_prompt,
+                    response=response_text,
+                    context=context_obj,  # Now guaranteed to be a Context, not None
+                    meta_data=current_meta_data,
                     arrival_time=0.0,
                     finished_time=0.0,
                 )
-                for i in range(len(responses))
-            ]
-        )
+            )
 
-        return combined_response_wrapper
+        return ResponseWrapper(response_objects)
