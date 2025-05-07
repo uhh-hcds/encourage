@@ -12,6 +12,8 @@ It benefits from both:
 import logging
 from typing import Any, override
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
@@ -132,7 +134,7 @@ class HydeRerankerRAG(HydeRAG):
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        template_name: str = "",
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the complete HYDE+Reranker RAG pipeline and return responses.
 
@@ -142,7 +144,7 @@ class HydeRerankerRAG(HydeRAG):
             user_prompts: List of user prompts (questions)
             meta_datas: List of metadata for the prompts
             retrieval_queries: Optional retrieval queries
-            template_name: Optional template name for prompt formatting
+            response_format: Optional response format for structured output
 
         Returns:
             ResponseWrapper containing the responses from the LLM
@@ -165,16 +167,13 @@ class HydeRerankerRAG(HydeRAG):
                 if i < len(hypothetical_responses):
                     meta_data["hypothetical_answer"] = hypothetical_responses[i]
 
-        # Use provided template_name or fall back to self.template_name
-        template_name = template_name if template_name else self.template_name
-
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=contexts,
             meta_datas=meta_datas,
-            template_name=template_name,
+            template_name=self.template_name,
         )
 
         if self.retrieval_only:
@@ -182,4 +181,4 @@ class HydeRerankerRAG(HydeRAG):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)

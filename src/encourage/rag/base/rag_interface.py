@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
@@ -52,6 +54,7 @@ class RAGMethodInterface(ABC):
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the RAG pipeline and return responses."""
         pass

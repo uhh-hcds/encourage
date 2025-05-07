@@ -10,6 +10,8 @@ Reference: https://arxiv.org/abs/2212.10496
 import logging
 from typing import Any, override
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
@@ -115,7 +117,7 @@ class HydeRAG(BaseRAG):
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        template_name: str = "",
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the HYDE RAG pipeline and return responses.
 
@@ -125,7 +127,7 @@ class HydeRAG(BaseRAG):
             user_prompts: Optional list of user prompts (questions)
             meta_datas: Optional list of metadata for the prompts
             retrieval_queries: Optional retrieval queries
-            template_name: Optional template name for prompt formatting
+            response_format: Optional response format for structured output
 
         Returns:
             ResponseWrapper containing the responses from the LLM
@@ -142,9 +144,6 @@ class HydeRAG(BaseRAG):
                 if i < len(hypothetical_responses):
                     meta_data["hypothetical_answer"] = hypothetical_responses[i]
 
-        # Use provided template_name or fall back to self.template_name
-        template_name = template_name if template_name else self.template_name
-
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
@@ -159,4 +158,4 @@ class HydeRAG(BaseRAG):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM using the class runner
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)

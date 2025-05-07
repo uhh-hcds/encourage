@@ -3,6 +3,8 @@
 import logging
 from typing import Any, override
 
+from pydantic import BaseModel
+
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
@@ -124,9 +126,9 @@ class RerankerRAG(BaseRAG):
         runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: list[str] = [],
-        meta_data: list[MetaData] = [],
+        meta_datas: list[MetaData] = [],
         retrieval_queries: list[str] = [],
-        template_name: str = "",
+        response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline with reranking and return responses."""
         # Generate queries and retrieve contexts with reranking
@@ -135,22 +137,16 @@ class RerankerRAG(BaseRAG):
             retrieved_documents = self.retrieve_contexts(retrieval_queries)
             self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
-            logger.info(
-                """
-                No context retrieval queries provided. Using the user queries to fetch the
-                vector database
-                """
-            )
-            self.contexts = []
+            logger.info(f"Using {len(user_prompts)} user prompts for retrieval.")
+            retrieved_documents = self.retrieve_contexts(user_prompts)
 
-        template_name = template_name if template_name else self.template_name
-        # Create prompt collection
+        # Create prompt collection with template_name from class
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
-            meta_datas=meta_data,
-            template_name=template_name,
+            meta_datas=meta_datas,
+            template_name=self.template_name,
         )
 
         if self.retrieval_only:
@@ -158,4 +154,4 @@ class RerankerRAG(BaseRAG):
             return create_mock_response_wrapper(prompt_collection)
         else:
             # Run inference with the LLM
-            return runner.run(prompt_collection)
+            return runner.run(prompt_collection, response_format=response_format)
