@@ -87,7 +87,7 @@ class Response:
             "request_id": self.request_id,
             "prompt_id": self.prompt_id,
             "sys_prompt": self.sys_prompt if not truncated else self.sys_prompt[:50],
-            "user_prompt": self.user_prompt if not truncated else self.user_prompt[:50],
+            "user_prompt": self.user_prompt if not truncated else self.user_prompt[:100],
             "response": self.response,
             "conversation_id": self.conversation_id,
             "meta_data": self.meta_data.to_dict(truncated=truncated),

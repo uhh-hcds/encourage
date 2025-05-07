@@ -28,7 +28,7 @@ class Document:
     def to_dict(self, truncated: bool = False) -> dict[str, Any]:
         """Convert the Document instance to a dictionary."""
         return {
-            "content": self.content if not truncated else self.content[:50],
+            "content": self.content if not truncated else self.content[:100],
             "score": self.score,
             "distance": self.distance,
             "id": str(self.id),
