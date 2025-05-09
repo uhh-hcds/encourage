@@ -6,7 +6,7 @@ from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.registry import register_metric
 
-EPSILON = 1e-10
+EPSILON = 1e-4
 
 
 @register_metric("NumberMatch")
