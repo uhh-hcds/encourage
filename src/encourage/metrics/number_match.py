@@ -24,7 +24,9 @@ class NumberMatch(Metric):
         self.validate_nested_keys(responses)
 
         scores = [
-            int(self.compute_exact_score(r.response, r.meta_data["reference_answer"] or "", self.epsilon))
+            int(self.compute_exact_score(r.response,
+                                         r.meta_data["reference_answer"] or "",
+                                         self.epsilon))
             for r in responses
         ]
 
