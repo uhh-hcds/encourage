@@ -1,6 +1,6 @@
 """Classic metrics for evaluating RAG."""
 
-from typing import Any
+from typing import Any, Union
 
 import evaluate
 import ir_measures
@@ -239,7 +239,7 @@ class F1(Metric):
         )
         scores = np.mean(output["f1"]) / 100
         return MetricOutput(score=scores, raw=output)
-    
+
 @register_metric("DROP_F1")
 class DropF1(Metric):
     """DROP-style F1 score with strict number match and multi-span alignment."""
@@ -255,54 +255,54 @@ class DropF1(Metric):
         """Computes DROP-style F1 score."""
         self.validate_nested_keys(responses)
 
-        def normalize_answer(s):
+        def normalize_answer(s: str) -> str:
             """Lower text and remove punctuation, articles, and extra whitespace."""
             import re
             import string
 
-            def remove_articles(text):
+            def remove_articles(text: str) -> str:
                 return re.sub(r'\b(a|an|the)\b', ' ', text)
 
-            def white_space_fix(text):
+            def white_space_fix(text: str) -> str:
                 return ' '.join(text.split())
 
-            def remove_punc(text):
+            def remove_punc(text: str) -> str:
                 return ''.join(ch for ch in text if ch not in set(string.punctuation))
 
-            def lower(text):
+            def lower(text: str) -> str:
                 return text.lower()
 
             return white_space_fix(remove_articles(remove_punc(lower(s))))
 
-        def get_tokens(s):
+        def get_tokens(s: str) -> list[str]:
             if not s:
                 return []
             return normalize_answer(s).split()
 
-        def compute_f1(a_gold, a_pred):
+        def compute_f1(a_gold: str, a_pred: str) -> float:
             gold_toks = get_tokens(a_gold)
             pred_toks = get_tokens(a_pred)
             common = set(gold_toks) & set(pred_toks)
             num_same = len(common)
             if len(gold_toks) == 0 or len(pred_toks) == 0:
-                return int(gold_toks == pred_toks)
+                return float(gold_toks == pred_toks)
             if num_same == 0:
-                return 0
+                return 0.0
             precision = num_same / len(pred_toks)
             recall = num_same / len(gold_toks)
             f1 = (2 * precision * recall) / (precision + recall)
             return f1
 
-        scores = []
+        scores: list[float] = []
         for r in responses:
-            prediction = r.response
-            references = r.meta_data["reference_answer"]
+            prediction: str = r.response
+            references: Union[str, list[str]] = r.meta_data["reference_answer"] or []
             if isinstance(references, str):
                 references = [references]
             f1_scores = [compute_f1(ref, prediction) for ref in references]
             scores.append(max(f1_scores))
 
-        return MetricOutput(score=np.mean(scores), raw=scores)
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
 
 
 @register_metric("ExactMatch")
