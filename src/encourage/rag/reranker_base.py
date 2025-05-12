@@ -68,4 +68,4 @@ class Reranker:
             return []
 
         scores = self.reranker.predict([(query, doc.content) for doc in documents])
-        return [doc for _, doc in sorted(zip(scores, documents), reverse=True)[:top_k]]
+        return [doc for _, doc in sorted(zip(scores, documents), key=lambda x: x[0], reverse=True)[:top_k]]
