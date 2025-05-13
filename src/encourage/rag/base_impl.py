@@ -113,13 +113,19 @@ class BaseRAG(RAGMethodInterface):
         **kwargs: Any,
     ) -> list[list[Document]]:
         """Retrieve relevant contexts from the database."""
-        return self.client.query(
+        all_results = []
+        batch_size = 200
+        for i in range(0, len(query_list), batch_size):
+            batch_queries = query_list[i:i + batch_size]
+            results = self.client.query(
             collection_name=self.collection_name,
-            query=query_list,
+            query=batch_queries,
             top_k=self.top_k,
             embedding_function=self.embedding_function,
             where=self.where if self.where else None,
-        )
+            )
+            all_results.extend(results)
+        return all_results
 
     @override
     def run(
