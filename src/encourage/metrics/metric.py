@@ -95,7 +95,10 @@ class Metric(ABC):
                 raise ValueError(f"context must contain documents for {self._name} metric.")
             if not isinstance(response.context.documents, list):
                 raise ValueError(
-                    f"response.context.documents must be a list of documents for {self._name} metric."
+                    f"""
+                    {self._name.upper()}: response.context.documents must be a list
+                    of documents.
+                    """
                 )
 
             for doc in response.context.documents:
