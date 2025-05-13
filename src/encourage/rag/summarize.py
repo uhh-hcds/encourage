@@ -32,6 +32,7 @@ class SummarizationRAG(BaseRAG):
         summaries = self.create_summaries(runner, additional_prompt, context_collection)
         super().__init__(
             context_collection=summaries,
+            template_name=template_name,
             collection_name=collection_name,
             top_k=top_k,
             embedding_function=embedding_function,

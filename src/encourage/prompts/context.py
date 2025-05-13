@@ -25,10 +25,10 @@ class Document:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     meta_data: "MetaData" = field(default_factory=MetaData)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, truncated: bool = False) -> dict[str, Any]:
         """Convert the Document instance to a dictionary."""
         return {
-            "content": self.content,
+            "content": self.content if not truncated else self.content[:100],
             "score": self.score,
             "distance": self.distance,
             "id": str(self.id),
@@ -199,10 +199,10 @@ class Context:
         """
         self.prompt_vars.update(prompt_vars)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, truncated: bool = False) -> dict[str, Any]:
         """Convert the Context instance to a dictionary."""
         return {
-            "documents": [doc.to_dict() for doc in self.documents],
+            "documents": [doc.to_dict(truncated=truncated) for doc in self.documents],
             "prompt_vars": self.prompt_vars,
         }
 
