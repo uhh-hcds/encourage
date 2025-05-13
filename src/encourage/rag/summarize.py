@@ -72,7 +72,7 @@ class SummarizationRAG(BaseRAG):
         return summarized_documents
 
 
-class SummarizationContextRAG(BaseRAG):
+class SummarizationContextRAG(SummarizationRAG):
     """Implementation of RAG with context preserving summarization."""
 
     def __init__(
@@ -88,11 +88,9 @@ class SummarizationContextRAG(BaseRAG):
         template_name: str = "",
     ):
         """Initialize RAG method with configuration."""
-        self.template_name = template_name
         self.original_context = context_collection
-        summaries = self.create_summaries(runner, additional_prompt, context_collection)
         super().__init__(
-            context_collection=summaries,
+            context_collection=context_collection,
             template_name=template_name,
             collection_name=collection_name,
             top_k=top_k,
@@ -102,35 +100,6 @@ class SummarizationContextRAG(BaseRAG):
             runner=runner,
             additional_prompt=additional_prompt,
         )
-
-    def create_summaries(
-        self,
-        runner: BatchInferenceRunner,
-        additional_prompt: str,
-        context_collection: list[Document],
-    ) -> list[Document]:
-        """Create summary from the QA dataset."""
-        user_prompts = [context.content for context in context_collection]
-        prompt_collection = PromptCollection.create_prompts(
-            sys_prompts=additional_prompt,
-            user_prompts=user_prompts,
-            template_name=self.template_name,
-        )
-        responses = runner.run(prompt_collection)
-        sum_mapping = {
-            context.content: response.response
-            for response, context in zip(responses, context_collection)
-        }
-        summarized_documents = []
-        for doc in context_collection:
-            summarized_documents.append(
-                Document(
-                    content=sum_mapping[doc.content],
-                    meta_data=doc.meta_data,
-                    id=doc.id,
-                )
-            )
-        return summarized_documents
 
     @override
     def retrieve_contexts(
@@ -146,10 +115,7 @@ class SummarizationContextRAG(BaseRAG):
         # Get contexts using the parent implementation
         document_lists = super().retrieve_contexts(query_list, **kwargs)
 
-        # Create a new list of documents with original contexts
-        updated_document_lists = []
         for document_list in document_lists:
-            updated_list = []
             for doc in document_list:
                 original = next(
                     (
@@ -160,12 +126,7 @@ class SummarizationContextRAG(BaseRAG):
                     None,
                 )
                 if original:
-                    updated_list.append(
-                        Document(
-                            content=original.content,
-                            meta_data=original.meta_data,
-                            id=original.id,
-                        )
-                    )
-            updated_document_lists.append(updated_list)
-        return updated_document_lists
+                    doc.content = original.content
+                    doc.meta_data = original.meta_data
+
+        return document_lists
