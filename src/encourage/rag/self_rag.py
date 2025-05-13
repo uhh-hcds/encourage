@@ -8,7 +8,9 @@ Reference: https://arxiv.org/abs/2310.11511
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Sequence, Tuple, override
+from typing import Any, Dict, List, Optional, Sequence, Tuple, cast, override
+
+from pydantic import BaseModel
 
 from encourage.llm import BatchInferenceRunner, Response, ResponseWrapper
 from encourage.prompts import PromptCollection
@@ -284,8 +286,10 @@ class SelfRAG(BaseRAG):
         runner: BatchInferenceRunner,
         sys_prompt: str,
         user_prompts: List[str] = [],
-        meta_data: List[MetaData] = [],
+        meta_datas: List[MetaData] = [],
         retrieval_queries: List[str] = [],
+        response_format: type[BaseModel] | str | None = None,
+
         template_name: str = "",
     ) -> ResponseWrapper:
         """Execute Self-RAG pipeline of retrieval, generation, reflection and refinement.
@@ -294,8 +298,9 @@ class SelfRAG(BaseRAG):
             runner: LLM runner for inference
             sys_prompt: System prompt for generation
             user_prompts: User queries
-            meta_data: Metadata for prompts
+            meta_datas: Metadata for prompts
             retrieval_queries: Optional separate retrieval queries
+            response_format: Optional response format for structured output
             template_name: Template name to use
 
         Returns:
@@ -315,7 +320,7 @@ class SelfRAG(BaseRAG):
                 sys_prompts=sys_prompt,
                 user_prompts=user_prompts,
                 contexts=valid_contexts,
-                meta_datas=meta_data,
+                meta_datas=meta_datas,
                 template_name=template_name if template_name else self.template_name,
             )
             return create_mock_response_wrapper(prompt_collection)
@@ -326,23 +331,23 @@ class SelfRAG(BaseRAG):
             return create_mock_response_wrapper(PromptCollection(prompts=[]))
 
         # Make sure meta_data is populated
-        all_meta_data = meta_data.copy() if meta_data else [MetaData() for _ in user_prompts]
+        all_meta_datas = meta_datas.copy() if meta_datas else [MetaData() for _ in user_prompts]
 
         # Process all queries through batch self-reflection pipeline
         final_responses, all_reflections = self._batch_process_with_self_reflection(
             runner=runner,
             user_prompts=user_prompts,
             contexts=contexts,
-            meta_datas=all_meta_data,
+            meta_datas=all_meta_datas,
             sys_prompt=sys_prompt,
             template_name=template_name,
         )
 
         # Add reflections to metadata
         for idx, reflections in all_reflections.items():
-            if idx < len(all_meta_data):
+            if idx < len(all_meta_datas):
                 # This ensures we're not trying to assign a list[str] to a str
-                all_meta_data[idx].data["self_rag_reflections"] = reflections
+                all_meta_datas[idx].data["self_rag_reflections"] = reflections
 
         # Create Response objects
         response_objects = []
@@ -350,9 +355,9 @@ class SelfRAG(BaseRAG):
             # Fix: Always use a valid Context object, never None
             context_obj = Context()  # Create default context
             if i < len(contexts) and contexts[i] is not None:
-                context_obj = contexts[i]
+                context_obj = cast(Context, contexts[i])
 
-            current_meta_data = all_meta_data[i] if i < len(all_meta_data) else MetaData()
+            current_meta_datas = all_meta_datas[i] if i < len(all_meta_datas) else MetaData()
             user_prompt = user_prompts[i] if i < len(user_prompts) else ""
 
             response_objects.append(
@@ -364,7 +369,7 @@ class SelfRAG(BaseRAG):
                     user_prompt=user_prompt,
                     response=response_text,
                     context=context_obj,  # Now guaranteed to be a Context, not None
-                    meta_data=current_meta_data,
+                    meta_data=current_meta_datas,
                     arrival_time=0.0,
                     finished_time=0.0,
                 )
