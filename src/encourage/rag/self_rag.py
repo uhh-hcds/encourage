@@ -1,56 +1,49 @@
-#self_rag.py
-"""Self‑RAG implementation – **now with real structured outputs.**
+"""Self-RAG (Retrieval, Generation, and Critique through Self-Reflection) implementation.
 
-This revision wires the Pydantic schemas declared at the top (_BinaryResponse,
-_RelevanceResponse …) directly into every LLM call via
-``BatchInferenceRunner.run(..., response_format=<YourSchema>)``. Doing so lets
-Encourage parse the LLM‑returned JSON and gives us strong typing instead of the
-previous string‑based heuristics.
+Self-RAG is a framework that enhances LLM responses by combining retrieval with self-reflection.
+The model determines when to retrieve, critique its own output for factuality, and adopts a
+reflection-driven approach to improve response quality.
+
+Reference: https://arxiv.org/abs/2310.11511
 """
+
 from __future__ import annotations
 
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, override
 
 from pydantic import BaseModel, Field
+import json
+
 
 from encourage.llm import BatchInferenceRunner, Response, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
-from encourage.utils.llm_mock import create_mock_response_wrapper
+from encourage.utils.llm_mock import create_mock_response_wrappers
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Structured outputs (Pydantic) ---------------------------------------------
-
-class BinaryResponse(BaseModel):
-    """Yes/No response used for the retrieval decision."""
-
-    response: str = Field(..., pattern="^(Yes|No)$")
+# Structured outputs (Pydantic)
 
 class RelevanceResponse(BaseModel):
-    """Relevant/Irrelevant response for context filtering."""
-
     response: str = Field(..., pattern="^(Relevant|Irrelevant)$")
 
 class GenerationResponse(BaseModel):
     response: str
 
 class SupportResponse(BaseModel):
-    response: str = Field(..., pattern="^(Fully supported|Partially supported|No support)$")
+    response: str = Field(
+        ..., pattern="^(Fully supported|Partially supported|No support)$"
+    )
 
 class UtilityResponse(BaseModel):
     response: int = Field(..., ge=1, le=5)
 
-# ---------------------------------------------------------------------------
-#  SelfRAG -----------------------------------------------------------
-
 class SelfRAG(BaseRAG):
-    """Self‑RAG with structured‑output powered stages."""
+    """Self‑RAG pipeline (retrieval ➜ relevance check ➜ generation ➜ support check ➜ utility)."""
 
     def __init__(
         self,
@@ -60,7 +53,6 @@ class SelfRAG(BaseRAG):
         top_k: int = 3,
         device: str = "cuda",
         runner: BatchInferenceRunner | None = None,
-        reflection_rounds: int = 1,
         **kwargs: Any,
     ) -> None:
         super().__init__(
@@ -71,40 +63,45 @@ class SelfRAG(BaseRAG):
             device=device,
             runner=runner,
         )
-        self.reflection_rounds = reflection_rounds
-        # --- System prompts (shortened for brevity) ----------------------
-        self._decision_sys = "Given a user query, answer only 'Yes' or 'No' – do we need external retrieval?"
-        self._relevance_sys = "Relevant or Irrelevant? Answer with one of those two words only."
-        self._generation_sys = "Answer helpfully using the supplied context."
-        self._support_sys = "Label as Fully supported, Partially supported or No support – exactly one."
-        self._utility_sys = "Rate utility on a 1‑5 integer scale. Output the number only."
-        self._reflection_sys = (
-            "Critique the answer for factual accuracy, completeness and relevance."
+
+        # System prompts for each step
+        self._relevance_sys = (
+            "You are a critical evaluator employed by a RAG system. Analyze the retrieved context for factuality, relevance, "
+            "coherence, and information completeness. Identify any hallucinations or missing "
+            "important information from the retrieved context."
+            "Relevant or Irrelevant? Answer with one of those two words only."
         )
-        self._refine_sys = "Improve the answer based on the critique above."
+        self._support_sys = "Given the response and the context, determine if the response is supported by the context. Label as Fully supported, Partially supported or No support – output exactly one of those only."
+        self._utility_sys = "Given the query and the response, rate the utility of the response from 1 to 5. Output the number only."
 
-    # -------------------------------------------------------------------
-    # Pipeline entry ------------------------------------------------------
-
+    @override
     def run(
         self,
         runner: BatchInferenceRunner,
         sys_prompt: str,
-        user_prompts: List[str],
-        **_,
-    ) -> ResponseWrapper:  # type: ignore[override]
+        user_prompts: list[str] | None = None,
+        meta_datas: list[MetaData] | None = None,
+        retrieval_queries: list[str] | None = None,
+        response_format: type[BaseModel] | str | None = None,  # kept for API parity
+    ) -> ResponseWrapper:
+        
+        user_prompts = [(up or "") for up in (user_prompts or [])]
 
         if not user_prompts:
             return create_mock_response_wrapper(PromptCollection(prompts=[]))
 
-        # 1) Retrieval decision ------------------------------------------
-        needs_retrieval = self._decide_retrieval(runner, user_prompts)
+        # 1) Retrieve + relevance filter (for every query)
 
-        # 2) Retrieve + relevance filter ----------------------------------
-        retrieved = self._retrieve_and_filter(runner, user_prompts, needs_retrieval)
+        retrieved = self._retrieve_and_filter(
+            runner,
+            user_prompts,
+            retrieval_queries=retrieval_queries,
+        )
 
-        # 3) Generate / score / pick best ---------------------------------
-        answers = []
+        self._generation_sys = sys_prompt
+        self.response_format = response_format
+        # 2) Generate / score / pick best (for every retrieved *relevant* document)
+        answers: List[str] = []
         for q, docs in zip(user_prompts, retrieved):
             if not docs:
                 answers.append(self._generate_no_ctx(runner, q))
@@ -114,89 +111,105 @@ class SelfRAG(BaseRAG):
             util = self._rate_utility(runner, q, cands)
             answers.append(self._select(cands, sup, util))
 
-        # 4) Optional reflection loop ------------------------------------
-        if self.reflection_rounds:
-            answers = self._reflect_and_refine(runner, user_prompts, answers, retrieved)
-
-        # 5) Wrap ---------------------------------------------------------
+        # 3) Wrap
         responses: List[Response] = []
         for i, (q, a, docs) in enumerate(zip(user_prompts, answers, retrieved)):
-            ctx = Context.from_documents(docs) if docs else Context()
+            if docs:
+                ctx = Context.from_documents(docs)
+            else:  # supply an empty context to avoid metric errors
+                ctx = Context.from_documents([Document(content="No context retrieved", score=0.0)])
             responses.append(
                 Response(
-                    request_id=f"esrag-{i}",
+                    request_id=f"selfrag-{i}",
                     prompt_id="",
                     conversation_id=i,
                     sys_prompt=sys_prompt,
                     user_prompt=q,
                     response=a,
                     context=ctx,
-                    meta_data=MetaData(),
+                    meta_data=(meta_datas[i] if meta_datas and i < len(meta_datas) else MetaData()),
                     arrival_time=0.0,
                     finished_time=0.0,
                 )
             )
         return ResponseWrapper(responses)
 
-    # -------------------------------------------------------------------
-    # Helper stages -------------------------------------------------------
-
-    def _decide_retrieval(self, runner: BatchInferenceRunner, queries: List[str]) -> List[bool]:
-        pcs = PromptCollection.create_prompts(
-            sys_prompts=self._decision_sys,
-            user_prompts=[f"{q}" for q in queries],
-        )
-        preds = runner.run(pcs, response_format=BinaryResponse).get_parsed()  # type: ignore[attr-defined]
-        return [p.response == "Yes" for p in preds]
-
     def _retrieve_and_filter(
         self,
         runner: BatchInferenceRunner,
         queries: List[str],
-        needs: List[bool],
+        retrieval_queries: list[str] | None = None,
     ) -> List[List[Document]]:
+        """Retrieve contexts *once* for the full `queries` list and then filter.
+
+        This leverages `BaseRAG.retrieve_contexts`, which already batches the
+        VectorStore calls internally.  We simply iterate over the returned
+        document lists and discard those marked *Irrelevant*.
+        """
+        # 1. Retrieve *top_k* docs for **all** queries in one go
+        if retrieval_queries and len(retrieval_queries) == len(queries):
+            lookup_strings = retrieval_queries
+        else:
+            # Fall back to the user queries when nothing (usable) was supplied
+            lookup_strings = queries
+            
+        all_raw_docs = self.retrieve_contexts(lookup_strings)
+
+
+        # 2. Build a single relevance‑classification batch
+        user_prompts: List[str] = []
+        mapping: List[tuple[int, int]] = []  # (query_idx, doc_idx)
+        for q_idx, (retrieval_query, q, docs) in enumerate(zip(retrieval_queries, queries, all_raw_docs)):
+            for d_idx, doc in enumerate(docs):
+                mapping.append((q_idx, d_idx))
+                user_prompts.append(f"RETRIEVAL QUERY: {retrieval_query} CONTEXT: {doc.content}") # QUERY: {q} 
+
+        if not user_prompts:
+            return [[] for _ in queries]
+
+        pcs = PromptCollection.create_prompts(
+            sys_prompts=self._relevance_sys,
+            user_prompts=user_prompts,
+        )
+        relevance_preds = runner.run(pcs, response_format=RelevanceResponse)
+        # 3. Distribute filtered docs back to their queries
         docs_per_q: List[List[Document]] = [[] for _ in queries]
-        for idx, (q, need) in enumerate(zip(queries, needs)):
-            if need:
-                raw_docs = self.retrieve_contexts([q])[0]
-                # Relevance filtering
-                pcs = PromptCollection.create_prompts(
-                    sys_prompts=self._relevance_sys,
-                    user_prompts=[
-                        f"QUERY: {q}\nCONTEXT: {d.page_content}" for d in raw_docs
-                    ],
-                )
-                rels = runner.run(pcs, response_format=RelevanceResponse).get_parsed()  # type: ignore[attr-defined]
-                docs_per_q[idx] = [d for d, r in zip(raw_docs, rels) if r.response == "Relevant"]
+        for (q_idx, d_idx), pred in zip(mapping, relevance_preds):
+            tag = json.loads(pred.response)["response"]    
+            if tag == "Relevant":
+                docs_per_q[q_idx].append(all_raw_docs[q_idx][d_idx])
+
         return docs_per_q
 
     def _generate_candidates(self, runner: BatchInferenceRunner, q: str, docs: List[Document]) -> List[str]:
         pcs = PromptCollection.create_prompts(
             sys_prompts=self._generation_sys,
-            user_prompts=[f"QUERY: {q}\nCONTEXT: {d.page_content}" for d in docs],
+            user_prompts=[f"QUERY: {q}\nCONTEXT: {d.content}" for d in docs],
         )
-        return [g.response for g in runner.run(pcs, response_format=GenerationResponse).get_parsed()]  # type: ignore[attr-defined]
+        return [g.response for g in runner.run(pcs, response_format=self.response_format)]
 
     def _assess_support(self, runner: BatchInferenceRunner, ans: List[str], docs: List[Document]) -> List[str]:
         pcs = PromptCollection.create_prompts(
             sys_prompts=self._support_sys,
             user_prompts=[
-                f"RESPONSE: {a}\nCONTEXT: {d.page_content}" for a, d in zip(ans, docs)
+                f"RESPONSE: {a}\nCONTEXT: {d.content}" for a, d in zip(ans, docs)
             ],
         )
-        return [s.response for s in runner.run(pcs, response_format=SupportResponse).get_parsed()]  # type: ignore[attr-defined]
+        return [s.response for s in runner.run(pcs, response_format=SupportResponse)]
 
     def _rate_utility(self, runner: BatchInferenceRunner, q: str, ans: List[str]) -> List[int]:
         pcs = PromptCollection.create_prompts(
             sys_prompts=self._utility_sys,
             user_prompts=[f"QUERY: {q}\nRESPONSE: {a}" for a in ans],
         )
-        return [u.response for u in runner.run(pcs, response_format=UtilityResponse).get_parsed()]  # type: ignore[attr-defined]
+        return [u.response for u in runner.run(pcs, response_format=UtilityResponse)]
 
     @staticmethod
     def _select(ans: List[str], sup: List[str], util: List[int]) -> str:
         ranking: List[Tuple[int, int, str]] = []
         for a, s, u in zip(ans, sup, util):
+            s = json.loads(s)["response"]
+            u = json.loads(u)["response"] 
             s_rank = 2 if s.startswith("Fully") else 1 if s.startswith("Partially") else 0
             ranking.append((s_rank, u, a))
         return max(ranking)[2]
@@ -206,34 +219,4 @@ class SelfRAG(BaseRAG):
             sys_prompts=self._generation_sys,
             user_prompts=[f"QUERY: {q}\nCONTEXT: No additional context"],
         )
-        return runner.run(pc, response_format=GenerationResponse).get_parsed()[0].response  # type: ignore[attr-defined]
-
-    # Reflection loop (unchanged except structured outputs not required) ---
-    def _reflect_and_refine(
-        self,
-        runner: BatchInferenceRunner,
-        q: List[str],
-        ans: List[str],
-        docs: List[List[Document]],
-    ) -> List[str]:
-        current = ans
-        for _ in range(self.reflection_rounds):
-            # Reflection
-            pcs = PromptCollection.create_prompts(
-                sys_prompts=self._reflection_sys,
-                user_prompts=[
-                    f"QUERY: {qq}\nRESPONSE: {aa}\nCONTEXT: {Context.from_documents(dd).to_string() if dd else 'No context'}"
-                    for qq, aa, dd in zip(q, current, docs)
-                ],
-            )
-            crit = [r.response for r in runner.run(pcs, response_format=GenerationResponse).get_parsed()]  # reuse GenerationResponse to hold string
-            # Refinement
-            pcs2 = PromptCollection.create_prompts(
-                sys_prompts=self._refine_sys,
-                user_prompts=[
-                    f"QUERY: {qq}\nINITIAL RESPONSE: {aa}\nCRITIQUE: {cc}\nCONTEXT: {Context.from_documents(dd).to_string() if dd else 'No context'}"
-                    for qq, aa, cc, dd in zip(q, current, crit, docs)
-                ],
-            )
-            current = [r.response for r in runner.run(pcs2, response_format=GenerationResponse).get_parsed()]
-        return current
+        return runner.run(pc, response_format=self.response_format)[0].response
