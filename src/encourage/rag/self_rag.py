@@ -20,7 +20,7 @@ from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
-from encourage.utils.llm_mock import create_mock_response_wrappers
+from encourage.utils.llm_mock import create_mock_response_wrapper
 
 import logging
 
