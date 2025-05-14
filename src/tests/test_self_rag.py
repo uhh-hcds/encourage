@@ -1,22 +1,36 @@
 """unittest‑based offline tests for `SelfRAG`.
 
-Run with either `python -m unittest test_self_rag.py` **or** `pytest`.  When
+Run with either        # VectorStore query stub ------------------------------------------------
+        vs_instance = self.mock_vs_cls.return_value
+
+        def mock_query(
+            collection_name: str,
+            query: List[str],
+            top_k: int,
+            **kwargs: Any
+        ) -> List[List[Document]]:
+            results: List[List[Document]] = []
+            for q in query:
+                matches: List[Document] = []
+                for d in self.sample_docs:
+                    if any(word.lower() in d.content.lower() for word in q.split()):
+                        matches.append(d)
+                results.append(matches[:top_k])
+            return resultsunittest test_self_rag.py` **or** `pytest`.  When
 invoked via `unittest`, discovery works because `TestSelfRAG` now inherits from
 `unittest.TestCase`.
 """
+
 from __future__ import annotations
 
-import uuid
 import unittest
+import uuid
 from typing import Any, List
 from unittest.mock import MagicMock, patch
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import Document, MetaData
-
-# ---------------------------------------------------------------------------
-# SUT import – adjust if your class/module lives elsewhere -------------------
-from encourage.rag.self_rag import SelfRAG  # noqa: E402 – deferred import after patches
+from encourage.rag.self_rag import SelfRAG
 
 # ---------------------------------------------------------------------------
 # Helper functions -----------------------------------------------------------
@@ -32,7 +46,9 @@ def _build_sample_documents() -> List[Document]:
         "Deep Learning: Deep learning uses neural networks with multiple layers",
     ]
     return [
-        Document(content=txt, meta_data=MetaData({"source": f"src{i}"}), id=uuid.UUID(int=i + 1))  # stable UUIDs
+        Document(
+            content=txt, meta_data=MetaData({"source": f"src{i}"}), id=uuid.UUID(int=i + 1)
+        )  # stable UUIDs
         for i, txt in enumerate(texts)
     ]
 
@@ -64,7 +80,9 @@ class TestSelfRAG(unittest.TestCase):
         # VectorStore query stub ------------------------------------------------
         vs_instance = self.mock_vs_cls.return_value
 
-        def mock_query(collection_name: str, query: List[str], top_k: int, **kwargs: Any):  # type: ignore[unused-argument]
+        def mock_query(
+            collection_name: str, query: List[str], top_k: int, **kwargs: Any
+        ) -> List[List[Document]]:
             results: List[List[Document]] = []
             for q in query:
                 matches: List[Document] = []
@@ -93,7 +111,7 @@ class TestSelfRAG(unittest.TestCase):
 
     def test_initialisation(self) -> None:
         self.assertEqual(self.rag.top_k, 3)
-        self.assertEqual(self.rag.reflection_rounds, 0)
+        # SelfRAG doesn't have reflection_rounds attribute
 
     def test_retrieve_contexts(self) -> None:
         out = self.rag.retrieve_contexts(["Python programming"])

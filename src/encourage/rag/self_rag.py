@@ -9,11 +9,11 @@ Reference: https://arxiv.org/abs/2310.11511
 
 from __future__ import annotations
 
+import json
+import logging
 from typing import Any, List, Tuple, override
 
 from pydantic import BaseModel, Field
-import json
-
 
 from encourage.llm import BatchInferenceRunner, Response, ResponseWrapper
 from encourage.prompts import PromptCollection
@@ -22,25 +22,34 @@ from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
-import logging
-
 logger = logging.getLogger(__name__)
 
 # Structured outputs (Pydantic)
 
+
 class RelevanceResponse(BaseModel):
+    """Response model for relevance classification."""
+
     response: str = Field(..., pattern="^(Relevant|Irrelevant)$")
 
+
 class GenerationResponse(BaseModel):
+    """Response model for generation."""
+
     response: str
 
+
 class SupportResponse(BaseModel):
-    response: str = Field(
-        ..., pattern="^(Fully supported|Partially supported|No support)$"
-    )
+    """Response model for support classification."""
+
+    response: str = Field(..., pattern="^(Fully supported|Partially supported|No support)$")
+
 
 class UtilityResponse(BaseModel):
+    """Response model for utility rating."""
+
     response: int = Field(..., ge=1, le=5)
+
 
 class SelfRAG(BaseRAG):
     """Self‑RAG pipeline (retrieval ➜ relevance check ➜ generation ➜ support check ➜ utility)."""
@@ -65,14 +74,21 @@ class SelfRAG(BaseRAG):
         )
 
         # System prompts for each step
-        self._relevance_sys = (
-            "You are a critical evaluator employed by a RAG system. Analyze the retrieved context for factuality, relevance, "
-            "coherence, and information completeness. Identify any hallucinations or missing "
-            "important information from the retrieved context."
-            "Relevant or Irrelevant? Answer with one of those two words only."
-        )
-        self._support_sys = "Given the response and the context, determine if the response is supported by the context. Label as Fully supported, Partially supported or No support – output exactly one of those only."
-        self._utility_sys = "Given the query and the response, rate the utility of the response from 1 to 5. Output the number only."
+        self._relevance_sys = """
+        You are a critical evaluator employed by a RAG system. Analyze the retrieved context for
+        factuality, relevance, coherence, and information completeness. Identify any hallucinations
+        or missing important information from the retrieved context.
+        Relevant or Irrelevant? Answer with one of those two words only.
+        """
+        self._support_sys = """
+        Given the response and the context, determine if the response is supported by the context.
+        Label as Fully supported, Partially supported or No support – output exactly one of
+        those only.
+        """
+        self._utility_sys = """
+        Given the query and the response, rate the utility of the response from 1 to 5. Output the
+        number only.
+        """
 
     @override
     def run(
@@ -84,14 +100,12 @@ class SelfRAG(BaseRAG):
         retrieval_queries: list[str] | None = None,
         response_format: type[BaseModel] | str | None = None,  # kept for API parity
     ) -> ResponseWrapper:
-        
         user_prompts = [(up or "") for up in (user_prompts or [])]
 
         if not user_prompts:
             return create_mock_response_wrapper(PromptCollection(prompts=[]))
 
         # 1) Retrieve + relevance filter (for every query)
-
         retrieved = self._retrieve_and_filter(
             runner,
             user_prompts,
@@ -100,6 +114,7 @@ class SelfRAG(BaseRAG):
 
         self._generation_sys = sys_prompt
         self.response_format = response_format
+
         # 2) Generate / score / pick best (for every retrieved *relevant* document)
         answers: List[str] = []
         for q, docs in zip(user_prompts, retrieved):
@@ -152,17 +167,22 @@ class SelfRAG(BaseRAG):
         else:
             # Fall back to the user queries when nothing (usable) was supplied
             lookup_strings = queries
-            
-        all_raw_docs = self.retrieve_contexts(lookup_strings)
 
+        all_raw_docs = self.retrieve_contexts(lookup_strings)
 
         # 2. Build a single relevance‑classification batch
         user_prompts: List[str] = []
         mapping: List[tuple[int, int]] = []  # (query_idx, doc_idx)
-        for q_idx, (retrieval_query, q, docs) in enumerate(zip(retrieval_queries, queries, all_raw_docs)):
+        # Ensure retrieval_queries is an iterable before zipping
+        retrieval_queries_iter = retrieval_queries or []
+        for q_idx, (retrieval_query, _, docs) in enumerate(
+            zip(retrieval_queries_iter, queries, all_raw_docs)
+        ):
             for d_idx, doc in enumerate(docs):
                 mapping.append((q_idx, d_idx))
-                user_prompts.append(f"RETRIEVAL QUERY: {retrieval_query} CONTEXT: {doc.content}") # QUERY: {q} 
+                user_prompts.append(
+                    f"RETRIEVAL QUERY: {retrieval_query} CONTEXT: {doc.content}"
+                )  # QUERY: {q}
 
         if not user_prompts:
             return [[] for _ in queries]
@@ -175,25 +195,34 @@ class SelfRAG(BaseRAG):
         # 3. Distribute filtered docs back to their queries
         docs_per_q: List[List[Document]] = [[] for _ in queries]
         for (q_idx, d_idx), pred in zip(mapping, relevance_preds):
-            tag = json.loads(pred.response)["response"]    
+            try:
+                pred = json.loads(pred.response)
+                tag = pred["response"]
+            except json.JSONDecodeError:
+                logger.error(f"Failed to decode JSON response: {pred.response}")
+                tag = "Irrelevant"  # Default to Irrelevant if decoding fails
+                continue
+
             if tag == "Relevant":
                 docs_per_q[q_idx].append(all_raw_docs[q_idx][d_idx])
 
         return docs_per_q
 
-    def _generate_candidates(self, runner: BatchInferenceRunner, q: str, docs: List[Document]) -> List[str]:
+    def _generate_candidates(
+        self, runner: BatchInferenceRunner, q: str, docs: List[Document]
+    ) -> List[str]:
         pcs = PromptCollection.create_prompts(
             sys_prompts=self._generation_sys,
             user_prompts=[f"QUERY: {q}\nCONTEXT: {d.content}" for d in docs],
         )
         return [g.response for g in runner.run(pcs, response_format=self.response_format)]
 
-    def _assess_support(self, runner: BatchInferenceRunner, ans: List[str], docs: List[Document]) -> List[str]:
+    def _assess_support(
+        self, runner: BatchInferenceRunner, ans: List[str], docs: List[Document]
+    ) -> List[str]:
         pcs = PromptCollection.create_prompts(
             sys_prompts=self._support_sys,
-            user_prompts=[
-                f"RESPONSE: {a}\nCONTEXT: {d.content}" for a, d in zip(ans, docs)
-            ],
+            user_prompts=[f"RESPONSE: {a}\nCONTEXT: {d.content}" for a, d in zip(ans, docs)],
         )
         return [s.response for s in runner.run(pcs, response_format=SupportResponse)]
 
@@ -208,10 +237,11 @@ class SelfRAG(BaseRAG):
     def _select(ans: List[str], sup: List[str], util: List[int]) -> str:
         ranking: List[Tuple[int, int, str]] = []
         for a, s, u in zip(ans, sup, util):
-            s = json.loads(s)["response"]
-            u = json.loads(u)["response"] 
-            s_rank = 2 if s.startswith("Fully") else 1 if s.startswith("Partially") else 0
-            ranking.append((s_rank, u, a))
+            s_json = json.loads(s)["response"]
+            # Convert utility value to int if it's a string
+            u_value = u if isinstance(u, int) else json.loads(u)["response"]
+            s_rank = 2 if s_json.startswith("Fully") else 1 if s_json.startswith("Partially") else 0
+            ranking.append((s_rank, u_value, a))
         return max(ranking)[2]
 
     def _generate_no_ctx(self, runner: BatchInferenceRunner, q: str) -> str:
@@ -219,4 +249,5 @@ class SelfRAG(BaseRAG):
             sys_prompts=self._generation_sys,
             user_prompts=[f"QUERY: {q}\nCONTEXT: No additional context"],
         )
-        return runner.run(pc, response_format=self.response_format)[0].response
+        response = runner.run(pc, response_format=self.response_format)[0].response
+        return str(response) if response is not None else ""
