@@ -66,7 +66,7 @@ def mock_embedding_function() -> str:
 def hybrid_rag(sample_documents: list[Document], mock_embedding_function: str) -> HybridBM25RAG:
     # Mock SentenceTransformerEmbeddingFunction
     with (
-        patch("encourage.rag.base_impl.SentenceTransformerEmbeddingFunction"),
+        patch("encourage.rag.base_impl.embedding_functions.SentenceTransformerEmbeddingFunction"),
         patch("encourage.rag.base_impl.VectorStore") as mock_vector_store,
         patch("encourage.rag.base_impl.ChromaClient") as mock_chroma,
     ):
@@ -121,7 +121,9 @@ class TestHybridBM25RAG:
         """Test that HybridBM25RAG initializes correctly."""
         # Mock SentenceTransformerEmbeddingFunction to avoid actual model loading
         with (
-            patch("encourage.rag.base_impl.SentenceTransformerEmbeddingFunction"),
+            patch(
+                "encourage.rag.base_impl.embedding_functions.SentenceTransformerEmbeddingFunction"
+            ),
             patch("encourage.rag.base_impl.ChromaClient") as mock_chroma,
         ):
             chroma_instance = mock_chroma.return_value
@@ -150,7 +152,9 @@ class TestHybridBM25RAG:
         """Test that initialization fails with invalid weights."""
         # Mock dependencies to avoid actual initialization
         with (
-            patch("encourage.rag.base_impl.SentenceTransformerEmbeddingFunction"),
+            patch(
+                "encourage.rag.base_impl.embedding_functions.SentenceTransformerEmbeddingFunction"
+            ),
             patch("encourage.rag.base_impl.ChromaClient"),
         ):
             # Alpha + Beta != 1

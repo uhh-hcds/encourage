@@ -128,10 +128,9 @@ class ChromaClient(VectorStore):
 
         where_chromadb = cast(Where, where)
         # Batch processing for queries larger than a certain size
+        keys = ["ids", "documents", "metadatas", "distances"]
         batch_size = 40 if quota else 200
-        all_results: dict[Any, Any] = {
-            key: [] for key in ["ids", "documents", "metadatas", "distances"]
-        }
+        all_results: dict[Any, Any] = {key: [] for key in keys}
 
         for i in range(0, len(query), batch_size):
             batch_result = collection.query(
@@ -141,7 +140,8 @@ class ChromaClient(VectorStore):
                 **kwargs,
             )
             for key, values in batch_result.items():
-                all_results[key].extend(values)
+                if key in all_results:
+                    all_results[key].extend(values)
             if quota:
                 time.sleep(60)
 
