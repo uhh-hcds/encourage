@@ -4,7 +4,7 @@ import logging
 import os
 from typing import Any, override
 
-import chromadb.utils.embedding_functions as embedding_functions
+from chromadb.utils import embedding_functions
 from pydantic import BaseModel
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
@@ -77,7 +77,6 @@ class BaseRAG(RAGMethodInterface):
         self.template_name = template_name
         self.context_collection = self.filter_duplicates(context_collection)
         self.client = self.init_db()
-        self.check_quota = False
 
     def get_embedding_model(self, name: str, device: str = "cuda") -> Any:
         """Return embedding model based on name."""
@@ -101,6 +100,7 @@ class BaseRAG(RAGMethodInterface):
                 raise ValueError(f"{env_var} not set.")
             self.check_quota = True
             return fn(api_key=key, model_name=model)
+        self.check_quota = False
         return embedding_functions.SentenceTransformerEmbeddingFunction(name, device=device)
 
     def filter_duplicates(self, context_collection: list[Document]) -> list[Document]:
