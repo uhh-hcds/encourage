@@ -24,9 +24,11 @@ class NumberMatch(Metric):
         self.validate_nested_keys(responses)
 
         scores = [
-            int(self.compute_exact_score(r.response,
-                                         r.meta_data["reference_answer"] or "",
-                                         self.epsilon))
+            int(
+                self.compute_exact_score(
+                    r.response, r.meta_data["reference_answer"] or "", self.epsilon
+                )
+            )
             for r in responses
         ]
 
@@ -40,10 +42,6 @@ class NumberMatch(Metric):
         Assume that gt is in correct format, i.e. either 'yes' 'no' or represents a float.
         Assume that pd is either 'yes' 'no' or represents a float, or 'None'.
         """
-        if ground_truth in ["yes", "no"]:
-            return ground_truth == prediction
-        if prediction in ["yes", "no", "None"]:
-            return False
         try:
             ground_truth_num = float(ground_truth)
             prediction_num = float(prediction)

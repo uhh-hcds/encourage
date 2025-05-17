@@ -100,14 +100,8 @@ class HydeRAG(BaseRAG):
         # Store the hypothetical answers for later use in metadata
         responses = self.hypothetical_answers.get_responses()
 
-        # Use hypothetical answers as search vectors instead of original queries
-        return self.client.query(
-            collection_name=self.collection_name,
-            query=responses,
-            top_k=self.top_k,
-            embedding_function=self.embedding_function,
-            where=self.where if self.where else None,
-        )
+        # Use the parent class's retrieve_contexts with the hypothetical answers as queries
+        return super().retrieve_contexts(responses, **kwargs)
 
     @override
     def run(

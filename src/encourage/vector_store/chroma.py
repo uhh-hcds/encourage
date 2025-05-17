@@ -1,6 +1,7 @@
 """Chroma vector store implementation."""
 
 import logging
+import time
 import uuid
 from contextlib import suppress
 from typing import Any, Sequence, cast
@@ -53,6 +54,7 @@ class ChromaClient(VectorStore):
         collection_name: str,
         documents: list[Document],
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
+        quota: bool = False,
     ) -> None:
         """Insert documents."""
         collection = self.client.get_collection(
@@ -67,12 +69,14 @@ class ChromaClient(VectorStore):
         ]
         ids = [str(document.id) for document in documents]
 
-        batch_size = 5000
+        batch_size = 40 if quota else 2000
         for i in range(0, len(document_content), batch_size):
             batch_documents = document_content[i : i + batch_size]
             batch_metadatas = meta_data[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
             collection.add(documents=batch_documents, metadatas=batch_metadatas, ids=batch_ids)  # type: ignore
+            if quota:
+                time.sleep(60)
 
     def count_documents(
         self,
@@ -97,6 +101,7 @@ class ChromaClient(VectorStore):
         top_k: int,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
         where: dict[str, str] | None = None,
+        quota: bool = False,
         **kwargs: Any,
     ) -> list[list[Document]]:
         """Query the collection with a list of queries.
@@ -107,6 +112,7 @@ class ChromaClient(VectorStore):
             top_k: The number of results to return per query
             embedding_function: The embedding function to use
             where: Optional metadata filtering condition in the form {"key": "value"}
+            quota: If True, will check for quota limits and sleep if necessary
             **kwargs: Additional parameters to pass to the query
 
         Returns:
@@ -121,9 +127,25 @@ class ChromaClient(VectorStore):
             query = [query]
 
         where_chromadb = cast(Where, where)
-        result = collection.query(
-            query_texts=query, n_results=top_k, where=where_chromadb, **kwargs
-        )
+        # Batch processing for queries larger than a certain size
+        batch_size = 40 if quota else 200
+        all_results: dict[Any, Any] = {
+            key: [] for key in ["ids", "documents", "metadatas", "distances"]
+        }
+
+        for i in range(0, len(query), batch_size):
+            batch_result = collection.query(
+                query_texts=query[i : i + batch_size],
+                n_results=top_k,
+                where=where_chromadb,
+                **kwargs,
+            )
+            for key, values in batch_result.items():
+                all_results[key].extend(values)
+            if quota:
+                time.sleep(60)
+
+        result = all_results
 
         ids = cast(list[list[str]], result.get("ids"))
         docs = cast(list[list[str]], result.get("documents"))
