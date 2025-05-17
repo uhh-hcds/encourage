@@ -29,6 +29,7 @@ class SummarizationRAG(BaseRAG):
     ):
         """Initialize RAG method with configuration."""
         self.template_name = template_name
+        context_collection = super().filter_duplicates(context_collection)
         summaries = self.create_summaries(runner, additional_prompt, context_collection)
         super().__init__(
             context_collection=summaries,
