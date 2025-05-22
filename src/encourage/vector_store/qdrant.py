@@ -85,7 +85,7 @@ class QdrantCustomClient(VectorStore):
 
     def query(self, collection_name: str, query: list, top_k: int = 10, **kwargs: Any) -> list:
         """Query a Qdrant collection."""
-        return self.client.search(collection_name, query, top_k, **kwargs)
+        return self.client.search(collection_name, query, limit=top_k, **kwargs)
 
     def get_llama_index_class(self, collection_name: str) -> BasePydanticVectorStore:
         """Get the Llama index class."""

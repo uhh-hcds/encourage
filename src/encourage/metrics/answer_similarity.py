@@ -45,4 +45,4 @@ class AnswerSimilarity(Metric):
 
         similarity_matrix = self.model.similarity(answer_emb, reference_emb)
         similarities = similarity_matrix.diagonal().tolist()
-        return MetricOutput(score=np.mean(similarities), raw=similarities)
+        return MetricOutput(score=float(np.mean(similarities)), raw=similarities)

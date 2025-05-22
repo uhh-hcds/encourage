@@ -55,7 +55,7 @@ class AnswerRelevance(Metric):
         committal_responses = [
             response
             for response, output in zip(responses, self.non_answer_result.raw)
-            if output.non_answer == 0  # noqa: E501
+            if output == 0
         ]
 
         if not committal_responses:

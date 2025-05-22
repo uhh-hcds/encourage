@@ -101,7 +101,7 @@ class HybridBM25RAG(BaseRAG):
         max_bm25_score = max(bm25_scores) if bm25_scores.any() else 1.0
         if max_bm25_score > 0:
             normalized_scores = {
-                self.documents[i].id: score / max_bm25_score
+                self.documents[i].id: float(score) / float(max_bm25_score)
                 for i, score in enumerate(bm25_scores)
                 if score > 0
             }
