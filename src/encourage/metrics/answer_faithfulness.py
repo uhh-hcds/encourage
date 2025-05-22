@@ -58,7 +58,7 @@ class AnswerFaithfulness(Metric):
             sys_prompts="",
             user_prompts=["" for _ in claim_prompts],
             contexts=claim_prompts,
-            template_name=MetricTemplates.LLAMA3_ANSWER_FAITHFULNESS_SPLIT.value,
+            template_name=MetricTemplates.ANSWER_FAITHFULNESS_SPLIT.value,
         )
         # Step 3: Generate claims
         responses_claims: ResponseWrapper = self._runner.run(prompt_collection, OutputSplit)
@@ -95,7 +95,7 @@ class AnswerFaithfulness(Metric):
             sys_prompts="",
             user_prompts=["" for _ in nli_contexts],
             contexts=nli_contexts,
-            template_name=MetricTemplates.LLAMA3_ANSWER_FAITHFULNESS_NLI.value,
+            template_name=MetricTemplates.ANSWER_FAITHFULNESS_NLI.value,
         )
 
         # Step 6: Generate NLI responses

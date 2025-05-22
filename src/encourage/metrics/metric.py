@@ -12,13 +12,13 @@ from encourage.llm.response_wrapper import ResponseWrapper
 class MetricTemplates(Enum):
     """Enum class for metric templates."""
 
-    LLAMA3_ANSWER_FAITHFULNESS_NLI = "llama3_answer_faithfulness_nli.j2"
-    LLAMA3_ANSWER_FAITHFULNESS_SPLIT = "llama3_answer_faithfulness_split.j2"
-    LLAMA3_ANSWER_RELEVANCE = "llama3_answer_relevance.j2"
-    LLAMA3_CONTEXT_PRECISION = "llama3_context_precision.j2"
-    LLAMA3_CONTEXT_RECALL = "llama3_context_recall.j2"
-    LLAMA3_NON_ANSWER_CRITIQUE = "llama3_non_answer_critic.j2"
-    LLAMA3_ANSWER_EXTRACTION = "llama3_answer_extraction.j2"
+    ANSWER_FAITHFULNESS_NLI = "answer_faithfulness_nli.j2"
+    ANSWER_FAITHFULNESS_SPLIT = "answer_faithfulness_split.j2"
+    ANSWER_RELEVANCE = "answer_relevance.j2"
+    CONTEXT_PRECISION = "context_precision.j2"
+    CONTEXT_RECALL = "context_recall.j2"
+    NON_ANSWER_CRITIQUE = "non_answer_critic.j2"
+    ANSWER_EXTRACTION = "answer_extraction.j2"
 
 
 @dataclass

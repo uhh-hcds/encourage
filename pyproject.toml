@@ -22,7 +22,7 @@ dependencies = [
     "qdrant-client",
     "uv==0.4.28",
     "pytest",
-    "vllm==0.7.3",
+    "vllm>=0.8.4",
     "pydantic>=2.9.2",
     "sentence-transformers>=3.2.1",
     "fastembed>=0.4.1",
@@ -41,6 +41,8 @@ dependencies = [
     "accelerate",
     "datasets>=3.5.0",
     "rank-bm25>=0.2.2",
+    "smolagents>=1.14.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.26.0",
 ]
 
 [project.optional-dependencies]
