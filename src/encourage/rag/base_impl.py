@@ -84,7 +84,7 @@ class BaseRAG(RAGMethodInterface):
             "Google": (
                 "GOOGLE_API_KEY",
                 embedding_functions.GoogleGenerativeAiEmbeddingFunction,
-                "gemini-embedding-exp-03-07",
+                "models/text-embedding-004",
             ),
             "OpenAI": (
                 "OPENAI_API_KEY",
