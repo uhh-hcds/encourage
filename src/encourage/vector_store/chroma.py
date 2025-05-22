@@ -13,6 +13,7 @@ from chromadb.errors import NotFoundError
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
+from tqdm import tqdm
 
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
@@ -70,7 +71,7 @@ class ChromaClient(VectorStore):
         ids = [str(document.id) for document in documents]
 
         batch_size = 40 if quota else 2000
-        for i in range(0, len(document_content), batch_size):
+        for i in tqdm(range(0, len(document_content), batch_size), desc="Inserting documents"):
             batch_documents = document_content[i : i + batch_size]
             batch_metadatas = meta_data[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
@@ -132,7 +133,7 @@ class ChromaClient(VectorStore):
         batch_size = 40 if quota else 200
         all_results: dict[Any, Any] = {key: [] for key in keys}
 
-        for i in range(0, len(query), batch_size):
+        for i in tqdm(range(0, len(query), batch_size), desc="Querying documents"):
             batch_result = collection.query(
                 query_texts=query[i : i + batch_size],
                 n_results=top_k,
