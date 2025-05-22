@@ -250,7 +250,7 @@ def model_response_to_chat_completion(model_response: ModelResponse | Any) -> Ch
             id=model_response.id,
             choices=[
                 Choice(
-                    finish_reason=choice.finish_reason,  # type: ignore
+                    finish_reason="length",
                     index=choice.index,
                     logprobs=None,
                     message=ChatCompletionMessage(

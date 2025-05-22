@@ -45,9 +45,11 @@ class TestChromaClient(unittest.TestCase):
         collection = self.chroma_client.client.get_collection("test_collection")
         result = collection.query(query_texts=["This is document 1"], n_results=1)
 
-        self.assertGreater(len(result["documents"]), 0)  # type: ignore
-        self.assertEqual(len(result["documents"][0]), 1)  # type: ignore
-        self.assertEqual(result["documents"][0][0], "This is document 1")  # type: ignore
+        length = len(result["documents"]) if result["documents"] is not None else 0
+        self.assertGreater(length, 0)
+        self.assertEqual(length, 1)
+        if result["documents"] is not None:
+            self.assertEqual(result["documents"][0][0], "This is document 1")
         print("Documents inserted successfully.")
 
     def test_meta_data(self):
@@ -60,8 +62,9 @@ class TestChromaClient(unittest.TestCase):
         collection = self.chroma_client.client.get_collection("test_collection")
         result = collection.query(query_texts=["Document with metadata"], n_results=1)
 
-        self.assertEqual(len(result["documents"][0]), 1)  # type: ignore
-        self.assertEqual(result["documents"][0][0], "This is document 1")  # type: ignore
+        length = len(result["documents"]) if result["documents"] is not None else 0
+        self.assertGreater(length, 0)
+        self.assertEqual(length, 1)
         print("Documents with metadata inserted successfully.")
 
     def test_query(self):

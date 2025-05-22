@@ -35,7 +35,7 @@ class MetaData:
         if not self.tags:
             return {}
 
-        def convert_value(value: str, truncated: bool = False) -> str | Any:
+        def convert_value(value: str | Any, truncated: bool = False) -> str | Any:
             """Convert the value to a JSON-safe format."""
             if not isinstance(value, str) and hasattr(value, "to_dict"):
                 return value.to_dict(truncated=truncated)
