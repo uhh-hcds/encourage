@@ -38,6 +38,11 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
+    def count_documents(self, collection_name: str, embedding_function: Any = "") -> int:
+        """Count documents in a collection."""
+        pass
+
+    @abstractmethod
     def insert_documents(self, collection_name: str, vector_store_document: list[Document]) -> None:
         """Insert documents."""
         pass

@@ -47,6 +47,12 @@ class QdrantCustomClient(VectorStore):
         )
         logger.info(f"Collection {collection_name} successfully created")
 
+    def count_documents(self, collection_name: str) -> int:
+        """Count documents in a Qdrant collection."""
+        if not self.client.collection_exists(collection_name):
+            raise ValueError(f"Collection {collection_name} does not exist.")
+        return int(self.client.count(collection_name).count) or 0
+
     def insert_documents(
         self,
         collection_name: str,

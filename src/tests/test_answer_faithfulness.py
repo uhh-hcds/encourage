@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from unittest.mock import create_autospec
 
 from encourage.llm.inference_runner import BatchInferenceRunner
@@ -21,13 +22,23 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "This is a generated answer.",
-                        "reference_document": Document(id="1", content=""),
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"id": 1, "content": "Here is an example content", "score": 1.0},
-                        {"id": 0, "content": "Here is example content", "score": 0.5},
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is an example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is example content",
+                            score=0.5,
+                        ),
                     ]
                 ),
                 arrival_time=0.0,
@@ -43,16 +54,38 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "Another reference answer.",
-                        "reference_document": Document(id="0", content=""),
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"id": 1, "content": "Here is example content", "score": 1.0},
-                        {"id": 2, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 3, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 4, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 0, "content": "Here is an example content with extra", "score": 0.0},
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
                     ]
                 ),
                 arrival_time=0.0,

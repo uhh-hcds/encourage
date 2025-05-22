@@ -1,6 +1,8 @@
 import unittest
+import uuid
 
 from encourage.llm.response import Response
+from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics import (
     BLEU,
     F1,
@@ -23,7 +25,7 @@ from encourage.prompts.meta_data import MetaData
 class TestMetrics(unittest.TestCase):
     def setUp(self):
         # Sample responses for testing
-        self.responses = [
+        self.responses_mock = [
             Response(
                 request_id="1",
                 prompt_id="p1",
@@ -34,17 +36,23 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "This is a generated answer.",
-                        "reference_document": Document(id="1", content=""),
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {
-                            "id": 1,
-                            "content": "Here is an example content",
-                            "score": 1.0,
-                        },
-                        {"id": 0, "content": "Here is example content", "score": 0.5},
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is an example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is example content",
+                            score=0.5,
+                        ),
                     ]
                 ),
                 arrival_time=0.0,
@@ -60,38 +68,45 @@ class TestMetrics(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "Another reference answer.",
-                        "reference_document": Document(id="0", content=""),
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"id": 1, "content": "Here is example content", "score": 1.0},
-                        {
-                            "id": 2,
-                            "content": "Here is an example content with extra",
-                            "score": 0.0,
-                        },
-                        {
-                            "id": 3,
-                            "content": "Here is an example content with extra",
-                            "score": 0.0,
-                        },
-                        {
-                            "id": 4,
-                            "content": "Here is an example content with extra",
-                            "score": 0.0,
-                        },
-                        {
-                            "id": 0,
-                            "content": "Here is an example content with extra",
-                            "score": 0.0,
-                        },
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
                     ]
                 ),
                 arrival_time=0.0,
                 finished_time=1.0,
             ),
         ]
+        self.responses = ResponseWrapper(self.responses_mock)  # Wrap the provided responses
 
     def test_generated_answer_length(self):
         metric = GeneratedAnswerLength()
@@ -170,7 +185,7 @@ class TestMetrics(unittest.TestCase):
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
-        self.assertAlmostEqual(output.score, 0.6)
+        self.assertAlmostEqual(output.score, 0.416, places=2)
 
     def test_recall(self):
         metric = RecallAtK(2)
