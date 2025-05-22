@@ -137,10 +137,18 @@ class Context:
         if isinstance(document, str):
             return Document(content=document, score=0.0, id=doc_id, meta_data=meta_data)
         elif isinstance(document, dict):
+            doc_id_value = document.get("id", None)
+            if doc_id_value is None:
+                doc_id_value = uuid.uuid4()
+            elif not isinstance(doc_id_value, uuid.UUID):
+                doc_id_value = uuid.UUID(str(doc_id_value))
+            score_value = document.get("score", 0.0)
+            if score_value is None:
+                score_value = 0.0
             return Document(
-                id=document.get("id", None),
+                id=doc_id_value,
                 content=document.get("content", ""),
-                score=document.get("score", None),
+                score=score_value,
                 meta_data=meta_data,
                 distance=document.get("distance", None),
             )

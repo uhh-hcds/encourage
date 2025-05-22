@@ -3,8 +3,9 @@ import uuid
 from unittest.mock import MagicMock, create_autospec, patch
 
 from encourage.llm.inference_runner import BatchInferenceRunner
+from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.prompts.context import Document
+from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
 from encourage.rag.base_impl import BaseRAG
 from encourage.rag.reranker import RerankerRAG
@@ -12,6 +13,87 @@ from encourage.rag.reranker import RerankerRAG
 
 class TestBaseRAGIntegration(unittest.TestCase):
     def setUp(self):
+        self.responses_mock = [
+            Response(
+                request_id="1",
+                prompt_id="p1",
+                sys_prompt="System prompt example.",
+                user_prompt="User prompt example.",
+                response="This is a generated answer.",
+                conversation_id=1,
+                meta_data=MetaData(
+                    tags={
+                        "reference_answer": "This is a generated answer.",
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
+                    }
+                ),
+                context=Context.from_documents(
+                    [
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is an example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is example content",
+                            score=0.5,
+                        ),
+                    ]
+                ),
+                arrival_time=0.0,
+                finished_time=1.0,
+            ),
+            Response(
+                request_id="2",
+                prompt_id="p2",
+                sys_prompt="Another system prompt.",
+                user_prompt="Another user prompt.",
+                response="Another generated answer.",
+                conversation_id=2,
+                meta_data=MetaData(
+                    tags={
+                        "reference_answer": "Another reference answer.",
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
+                    }
+                ),
+                context=Context.from_documents(
+                    [
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                    ]
+                ),
+                arrival_time=0.0,
+                finished_time=1.0,
+            ),
+        ]
         self.collection_name = f"test_collection_{uuid.uuid4()}"
         # Create test documents directly instead of dataframe
         self.documents = [
@@ -22,6 +104,7 @@ class TestBaseRAGIntegration(unittest.TestCase):
                 id=uuid.uuid4(), content="ML is a subset of AI.", meta_data=MetaData({"id": "2"})
             ),
         ]
+        self.responses = ResponseWrapper(self.responses_mock)
 
         # Initialize RAG with the new interface
         self.rag = BaseRAG(
@@ -52,29 +135,9 @@ class TestBaseRAGIntegration(unittest.TestCase):
         self.assertGreaterEqual(len(documents[0]), 1)
 
     def test_run_with_mocked_runner(self):
-        from encourage.llm.response import Response
-
         runner = create_autospec(BatchInferenceRunner)
-        # Create proper Response objects instead of using strings
-        mock_responses = ResponseWrapper(
-            [
-                Response(
-                    request_id="mock_1",
-                    prompt_id="prompt_1",
-                    sys_prompt="Answer precisely.",
-                    user_prompt=self.queries[0],
-                    response="Mock response 1",
-                ),
-                Response(
-                    request_id="mock_2",
-                    prompt_id="prompt_2",
-                    sys_prompt="Answer precisely.",
-                    user_prompt=self.queries[1],
-                    response="Mock response 2",
-                ),
-            ]
-        )
-        runner.run.return_value = mock_responses
+
+        runner.run.return_value = self.responses
 
         result = self.rag.run(
             runner=runner,
@@ -85,11 +148,93 @@ class TestBaseRAGIntegration(unittest.TestCase):
 
         runner.run.assert_called_once()
         self.assertIsInstance(result, ResponseWrapper)
-        self.assertEqual(result.get_responses(), ["Mock response 1", "Mock response 2"])
+        self.assertEqual(result.response_data, self.responses.response_data)
 
 
 class TestRerankerRAG(unittest.TestCase):
     def setUp(self):
+        self.responses_mock = [
+            Response(
+                request_id="1",
+                prompt_id="p1",
+                sys_prompt="System prompt example.",
+                user_prompt="User prompt example.",
+                response="This is a generated answer.",
+                conversation_id=1,
+                meta_data=MetaData(
+                    tags={
+                        "reference_answer": "This is a generated answer.",
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
+                    }
+                ),
+                context=Context.from_documents(
+                    [
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is an example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is example content",
+                            score=0.5,
+                        ),
+                    ]
+                ),
+                arrival_time=0.0,
+                finished_time=1.0,
+            ),
+            Response(
+                request_id="2",
+                prompt_id="p2",
+                sys_prompt="Another system prompt.",
+                user_prompt="Another user prompt.",
+                response="Another generated answer.",
+                conversation_id=2,
+                meta_data=MetaData(
+                    tags={
+                        "reference_answer": "Another reference answer.",
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
+                    }
+                ),
+                context=Context.from_documents(
+                    [
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                    ]
+                ),
+                arrival_time=0.0,
+                finished_time=1.0,
+            ),
+        ]
+        self.responses = ResponseWrapper(self.responses_mock)
         self.collection_name = f"test_reranker_collection_{uuid.uuid4()}"
         # Create test documents
         self.documents = [
@@ -182,34 +327,13 @@ class TestRerankerRAG(unittest.TestCase):
 
     @patch("encourage.rag.reranker_base.CrossEncoder")
     def test_run_with_mocked_runner(self, mock_cross_encoder):
-        from encourage.llm.response import Response
-
         # Setup CrossEncoder mock
         mock_cross_encoder.return_value = MagicMock()
         mock_cross_encoder.return_value.predict.return_value = [0.9, 0.8, 0.7, 0.6]
 
         # Setup runner mock
         runner = create_autospec(BatchInferenceRunner)
-        # Create proper Response objects instead of using strings
-        mock_responses = ResponseWrapper(
-            [
-                Response(
-                    request_id="mock_1",
-                    prompt_id="prompt_1",
-                    sys_prompt="Answer precisely.",
-                    user_prompt=self.queries[0],
-                    response="Mock reranker response 1",
-                ),
-                Response(
-                    request_id="mock_2",
-                    prompt_id="prompt_2",
-                    sys_prompt="Answer precisely.",
-                    user_prompt=self.queries[1],
-                    response="Mock reranker response 2",
-                ),
-            ]
-        )
-        runner.run.return_value = mock_responses
+        runner.run.return_value = self.responses
 
         # Initialize RerankerRAG
         self.rag = RerankerRAG(
@@ -235,9 +359,7 @@ class TestRerankerRAG(unittest.TestCase):
 
         # Verify response
         self.assertIsInstance(result, ResponseWrapper)
-        self.assertEqual(
-            result.get_responses(), ["Mock reranker response 1", "Mock reranker response 2"]
-        )
+        self.assertEqual(result.response_data, self.responses.response_data)
 
     @patch("encourage.rag.reranker_base.CrossEncoder")
     def test_reranker_edge_case_empty_documents(self, mock_cross_encoder):

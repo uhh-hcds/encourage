@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from unittest.mock import create_autospec, patch
 
 from encourage.llm.inference_runner import BatchInferenceRunner
@@ -12,7 +13,7 @@ from encourage.prompts.meta_data import MetaData
 class TestContextRecall(unittest.TestCase):
     def setUp(self):
         # Sample responses as setup
-        self.responses = [
+        self.responses_mock = [
             Response(
                 request_id="1",
                 prompt_id="p1",
@@ -23,13 +24,23 @@ class TestContextRecall(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "This is a generated answer.",
-                        "reference_document": Document(id="1", content=""),
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"id": 1, "content": "Here is an example content", "score": 1.0},
-                        {"id": 0, "content": "Here is example content", "score": 0.5},
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is an example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is example content",
+                            score=0.5,
+                        ),
                     ]
                 ),
                 arrival_time=0.0,
@@ -45,23 +56,45 @@ class TestContextRecall(unittest.TestCase):
                 meta_data=MetaData(
                     tags={
                         "reference_answer": "Another reference answer.",
-                        "reference_document": Document(id="0", content=""),
+                        "reference_document": Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
+                        ),
                     }
                 ),
                 context=Context.from_documents(
                     [
-                        {"id": 1, "content": "Here is example content", "score": 1.0},
-                        {"id": 2, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 3, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 4, "content": "Here is an example content with extra", "score": 0.0},
-                        {"id": 0, "content": "Here is an example content with extra", "score": 0.0},
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                            content="Here is example content",
+                            score=1.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
+                        Document(
+                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
+                            content="Here is an example content with extra",
+                            score=0.0,
+                        ),
                     ]
                 ),
                 arrival_time=0.0,
                 finished_time=1.0,
             ),
         ]
-        self.responses = ResponseWrapper(self.responses)  # Wrap the provided responses
+        self.responses = ResponseWrapper(self.responses_mock)  # Wrap the provided responses
         self.runner = create_autospec(BatchInferenceRunner)  # Mock runner
         self.runner.run.return_value = ResponseWrapper(
             [

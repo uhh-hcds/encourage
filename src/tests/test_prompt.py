@@ -79,8 +79,13 @@ class TestPromptCollection(unittest.TestCase):
             PromptCollection.create_prompts(
                 sys_prompts=self.sys_prompts,
                 user_prompts=self.user_prompts,
-                contexts=[{"info": "context1"}],  # Partial context (1 item instead of 2)
-                meta_datas=[{"meta": "meta1"}, {"meta": "meta2"}],  # Full meta_data (2 items)
+                contexts=[
+                    Context.from_prompt_vars({"info": "context1"})
+                ],  # Partial context (1 item instead of 2)
+                meta_datas=[
+                    MetaData({"meta": "meta1"}),
+                    MetaData({"meta": "meta2"}),
+                ],  # Full meta_data (2 items)
             )
 
         # Test with a partial list of meta_datas, expecting a ValueError for meta_datas mismatch
@@ -90,8 +95,11 @@ class TestPromptCollection(unittest.TestCase):
             PromptCollection.create_prompts(
                 sys_prompts=self.sys_prompts,
                 user_prompts=self.user_prompts,
-                contexts=[{"info": "context1"}, {"info": "context2"}],  # Full context (2 items)
-                meta_datas=[{"meta": "meta1"}],  # Partial meta_data (1 item instead of 2)
+                contexts=[
+                    Context.from_prompt_vars({"info": "context1"}),
+                    Context.from_prompt_vars({"info": "context2"}),
+                ],  # Partial context (1 item instead of 2)
+                meta_datas=[MetaData({"meta": "meta1"})],  # Partial meta_data (1 item instead of 2)
             )
 
     def test_from_json(self):

@@ -12,9 +12,9 @@ from mlflow.entities import SpanType
 from openai import OpenAI
 from openai.types.chat.chat_completion import (
     ChatCompletion,
-    ChatCompletionMessage,
     Choice,
 )
+from openai.types.chat.chat_completion_message import ChatCompletionMessage
 from openai.types.completion_usage import CompletionUsage
 from pydantic import BaseModel
 from tqdm import tqdm
@@ -250,7 +250,7 @@ def model_response_to_chat_completion(model_response: ModelResponse | Any) -> Ch
             id=model_response.id,
             choices=[
                 Choice(
-                    finish_reason=choice.finish_reason,
+                    finish_reason="length",
                     index=choice.index,
                     logprobs=None,
                     message=ChatCompletionMessage(

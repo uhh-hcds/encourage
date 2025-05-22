@@ -65,7 +65,8 @@ class TestResponseWrapper(unittest.TestCase):
             str(self.prompt_collection.prompts[0].id)
         )
         self.assertIsNotNone(response)
-        self.assertEqual(response.prompt_id, self.prompt_collection.prompts[0].id)
+        if response is not None:
+            self.assertEqual(response.prompt_id, self.prompt_collection.prompts[0].id)
 
     def test_no_response_found_by_prompt_id(self):
         """Test behavior when no response is found by prompt ID."""

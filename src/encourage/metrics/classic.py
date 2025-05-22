@@ -87,7 +87,10 @@ class BLEU(Metric):
             references=[[r.meta_data["reference_answer"]] for r in responses],
             max_order=self.n_grams,
         )
-        return MetricOutput(score=output["bleu"], raw=output)
+
+        if output is None or "bleu" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(score=output["bleu"], raw=[output["bleu"]])
 
 
 @register_metric("gleu")
@@ -104,6 +107,8 @@ class GLEU(Metric):
             predictions=[r.response for r in responses],
             references=[r.meta_data["reference_answer"] for r in responses],
         )
+        if output is None or "google_bleu" not in output:
+            return MetricOutput(score=0.0, raw=[])
         return MetricOutput(score=output["google_bleu"], raw=[])
 
 
@@ -124,14 +129,22 @@ class ROUGE(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
+
         output = self.metric.compute(
-            predictions=[r.response for r in responses],
-            references=[r.meta_data["reference_answer"] for r in responses],
+            predictions=[r.response for r in responses if "reference_answer" in r.meta_data],
+            references=[
+                r.meta_data["reference_answer"]
+                for r in responses
+                if "reference_answer" in r.meta_data
+            ],
             rouge_types=[self.rouge_type],
             use_aggregator=False,
-        )[self.rouge_type]
-        scores = np.mean(output)
-        return MetricOutput(score=scores, raw=output)
+        )
+        if output is None or self.rouge_type not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=float(np.mean(output[self.rouge_type])), raw=output[self.rouge_type]
+        )
 
 
 @register_metric("ROUGEDetailed")
@@ -158,9 +171,10 @@ class ROUGEDetailed(Metric):
         recall = []
         f1 = []
         for ref, pred in zip(
-            [r.meta_data["reference_answer"] for r in responses], [r.response for r in responses]
+            [r.meta_data["reference_answer"] for r in responses],
+            [r.response for r in responses],
         ):
-            score = self.scorer.score(ref, pred)
+            score = self.scorer.score(ref or "", pred)
             precision.append(score[self.rouge_type].precision)
             recall.append(score[self.rouge_type].recall)
             f1.append(score[self.rouge_type].fmeasure)
@@ -190,6 +204,8 @@ class BERTScore(Metric):
             references=[r.meta_data["reference_answer"] for r in responses],
             **self.metric_args,
         )
+        if result is None or "f1" not in result:
+            return MetricOutput(score=0.0, raw=[])
         return MetricOutput(
             score=np.mean(result["f1"]),
             raw=result["f1"],
@@ -237,8 +253,13 @@ class F1(Metric):
             predictions=formatted_predictions,
             references=formatted_references,
         )
-        scores = np.mean(output["f1"]) / 100
-        return MetricOutput(score=scores, raw=output)
+
+        if output is None or "f1" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=np.mean(output["f1"]) / 100, raw=output["f1"], misc={"output": output}
+        )
+
 
 @register_metric("DROP_F1")
 class DropF1(Metric):
@@ -261,18 +282,18 @@ class DropF1(Metric):
             import string
 
             def remove_articles(text: str) -> str:
-                return re.sub(r'\b(a|an|the)\b', ' ', text)
+                return re.sub(r"\b(a|an|the)\b", " ", text)
 
             def white_space_fix(text: str) -> str:
-                return ' '.join(text.split())
+                return " ".join(text.split())
 
-            def remove_punc(text: str) -> str:
-                return ''.join(ch for ch in text if ch not in set(string.punctuation))
+            def remove_punctuation(text: str) -> str:
+                return "".join(ch for ch in text if ch not in set(string.punctuation))
 
             def lower(text: str) -> str:
                 return text.lower()
 
-            return white_space_fix(remove_articles(remove_punc(lower(s))))
+            return white_space_fix(remove_articles(remove_punctuation(lower(s))))
 
         def get_tokens(s: str) -> list[str]:
             if not s:
@@ -280,16 +301,16 @@ class DropF1(Metric):
             return normalize_answer(s).split()
 
         def compute_f1(a_gold: str, a_pred: str) -> float:
-            gold_toks = get_tokens(a_gold)
-            pred_toks = get_tokens(a_pred)
-            common = set(gold_toks) & set(pred_toks)
+            gold_token = get_tokens(a_gold)
+            pred_token = get_tokens(a_pred)
+            common = set(gold_token) & set(pred_token)
             num_same = len(common)
-            if len(gold_toks) == 0 or len(pred_toks) == 0:
-                return float(gold_toks == pred_toks)
+            if len(gold_token) == 0 or len(pred_token) == 0:
+                return float(gold_token == pred_token)
             if num_same == 0:
                 return 0.0
-            precision = num_same / len(pred_toks)
-            recall = num_same / len(gold_toks)
+            precision = num_same / len(pred_token)
+            recall = num_same / len(gold_token)
             f1 = (2 * precision * recall) / (precision + recall)
             return f1
 
@@ -345,8 +366,11 @@ class ExactMatch(Metric):
             predictions=formatted_predictions,
             references=formatted_references,
         )
-        scores = np.mean(output["exact"]) / 100
-        return MetricOutput(score=scores, raw=output["exact"], misc={"output": output})
+        if output is None or "exact" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=np.mean(output["exact"]) / 100, raw=output["exact"], misc={"output": output}
+        )
 
 
 class RetrievalMetric(Metric):
@@ -384,7 +408,7 @@ class MeanReciprocalRank(RetrievalMetric):
         qrels, run = self.responses_to_trec(responses)
         mrr = ir_measures.MRR()
         scores = [score.value for score in mrr.iter_calc(qrels, run)]
-        return MetricOutput(score=np.mean(scores), raw=scores)
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
 
 
 @register_metric("RecallAtK")
@@ -409,7 +433,7 @@ class RecallAtK(RetrievalMetric):
         qrels, run = self.responses_to_trec(responses)
         recall = ir_measures.R(cutoff=self.k)
         scores = [score.value for score in recall.iter_calc(qrels, run)]
-        return MetricOutput(score=np.mean(scores), raw=scores)
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
 
 
 @register_metric("HitRateAtK")
@@ -433,4 +457,4 @@ class HitRateAtK(RetrievalMetric):
         qrels, run = self.responses_to_trec(responses)
         hit_rate = ir_measures.Success(cutoff=self.k)
         scores = [score.value for score in hit_rate.iter_calc(qrels, run)]
-        return MetricOutput(score=np.mean(scores), raw=scores)
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
