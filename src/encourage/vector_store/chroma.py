@@ -1,6 +1,7 @@
 """Chroma vector store implementation."""
 
 import logging
+import time
 import uuid
 from contextlib import suppress
 from typing import Any, Sequence, cast
@@ -12,6 +13,7 @@ from chromadb.errors import NotFoundError
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
 from llama_index.core.vector_stores.types import BasePydanticVectorStore
 from llama_index.vector_stores.chroma import ChromaVectorStore
+from tqdm import tqdm
 
 from encourage.prompts.context import Document
 from encourage.prompts.meta_data import MetaData
@@ -53,6 +55,7 @@ class ChromaClient(VectorStore):
         collection_name: str,
         documents: list[Document],
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
+        quota: bool = False,
     ) -> None:
         """Insert documents."""
         collection = self.client.get_collection(
@@ -67,7 +70,14 @@ class ChromaClient(VectorStore):
         ]
         ids = [str(document.id) for document in documents]
 
-        collection.add(documents=document_content, metadatas=meta_data, ids=ids)  # type: ignore
+        batch_size = 40 if quota else 2000
+        for i in tqdm(range(0, len(document_content), batch_size), desc="Inserting documents"):
+            batch_documents = document_content[i : i + batch_size]
+            batch_metadatas = meta_data[i : i + batch_size]
+            batch_ids = ids[i : i + batch_size]
+            collection.add(documents=batch_documents, metadatas=batch_metadatas, ids=batch_ids)  # type: ignore
+            if quota:
+                time.sleep(60)
 
     def count_documents(
         self,
@@ -92,6 +102,7 @@ class ChromaClient(VectorStore):
         top_k: int,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
         where: dict[str, str] | None = None,
+        quota: bool = False,
         **kwargs: Any,
     ) -> list[list[Document]]:
         """Query the collection with a list of queries.
@@ -102,6 +113,7 @@ class ChromaClient(VectorStore):
             top_k: The number of results to return per query
             embedding_function: The embedding function to use
             where: Optional metadata filtering condition in the form {"key": "value"}
+            quota: If True, will check for quota limits and sleep if necessary
             **kwargs: Additional parameters to pass to the query
 
         Returns:
@@ -116,9 +128,25 @@ class ChromaClient(VectorStore):
             query = [query]
 
         where_chromadb = cast(Where, where)
-        result = collection.query(
-            query_texts=query, n_results=top_k, where=where_chromadb, **kwargs
-        )
+        # Batch processing for queries larger than a certain size
+        keys = ["ids", "documents", "metadatas", "distances"]
+        batch_size = 40 if quota else 200
+        all_results: dict[Any, Any] = {key: [] for key in keys}
+
+        for i in tqdm(range(0, len(query), batch_size), desc="Querying documents"):
+            batch_result = collection.query(
+                query_texts=query[i : i + batch_size],
+                n_results=top_k,
+                where=where_chromadb,
+                **kwargs,
+            )
+            for key, values in batch_result.items():
+                if key in all_results:
+                    all_results[key].extend(values)
+            if quota:
+                time.sleep(60)
+
+        result = all_results
 
         ids = cast(list[list[str]], result.get("ids"))
         docs = cast(list[list[str]], result.get("documents"))

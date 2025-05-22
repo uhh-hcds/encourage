@@ -92,15 +92,24 @@ class Metric(ABC):
                     raise ValueError(f"context must contain '{key}' for {self._name} metric.")
 
             if self.required_documents and len(response.context.documents) == 0:
-                raise ValueError("context must contain documents for this metric.")
+                raise ValueError(f"context must contain documents for {self._name} metric.")
             if not isinstance(response.context.documents, list):
-                raise ValueError("response.context.documents must be a list of documents.")
+                raise ValueError(
+                    f"""
+                    {self._name.upper()}: response.context.documents must be a list
+                    of documents.
+                    """
+                )
 
             for doc in response.context.documents:
                 if not doc.content:
-                    raise ValueError("Each document must contain 'content'.")
+                    raise ValueError(
+                        f"Each document must contain 'content' for {self._name} metric."
+                    )
                 if doc.score is not None and not isinstance(doc.score, (int, float)):
-                    raise ValueError("Document score must be a number or None.")
+                    raise ValueError(
+                        f"Document score must be a number or None for {self._name} metric."
+                    )
 
     @abstractmethod
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:

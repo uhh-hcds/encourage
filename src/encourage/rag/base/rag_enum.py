@@ -9,6 +9,7 @@ from encourage.rag.hybrid_bm25 import HybridBM25RAG
 from encourage.rag.hyde import HydeRAG
 from encourage.rag.hyde_reranker import HydeRerankerRAG
 from encourage.rag.known_context import KnownContext
+from encourage.rag.no_context import NoContext
 from encourage.rag.reranker import RerankerRAG
 from encourage.rag.summarize import SummarizationContextRAG, SummarizationRAG
 
@@ -21,6 +22,7 @@ class RAGMethod(Enum):
     Hyde = "Hyde"
     Base = "Base"
     KnownContext = "KnownContext"
+    NoContext = "NoContext"
     Summarization = "Summarization"
     SummarizationContextRAG = "SummarizationContextRAG"
     Reranker = "Reranker"
@@ -33,6 +35,7 @@ class RAGMethod(Enum):
             RAGMethod.Hyde: HydeRAG,
             RAGMethod.Base: BaseRAG,
             RAGMethod.KnownContext: KnownContext,
+            RAGMethod.NoContext: NoContext,
             RAGMethod.Summarization: SummarizationRAG,
             RAGMethod.SummarizationContextRAG: SummarizationContextRAG,
             RAGMethod.Reranker: RerankerRAG,

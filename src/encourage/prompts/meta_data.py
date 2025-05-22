@@ -30,18 +30,18 @@ class MetaData:
         """Iterate over the keys in the metadata."""
         return iter(self.tags)
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self, truncated: bool = False) -> dict[str, str]:
         """Convert the metadata to a JSON-safe dictionary."""
         if not self.tags:
             return {}
 
-        def convert_value(value: str) -> str | Any:
+        def convert_value(value: str, truncated: bool = False) -> str | Any:
             """Convert the value to a JSON-safe format."""
             if hasattr(value, "to_dict"):
-                return value.to_dict()
+                return value.to_dict(truncated=truncated)
             return value
 
-        return {key: convert_value(value) for key, value in self.tags.items()}
+        return {key: convert_value(value, truncated=truncated) for key, value in self.tags.items()}
 
     @classmethod
     def from_dict(cls, meta_dict: dict[str, Any]) -> "MetaData":

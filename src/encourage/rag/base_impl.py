@@ -1,11 +1,10 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
+import os
 from typing import Any, override
 
-from chromadb.utils.embedding_functions.sentence_transformer_embedding_function import (
-    SentenceTransformerEmbeddingFunction,
-)
+from chromadb.utils import embedding_functions
 from pydantic import BaseModel
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
@@ -70,9 +69,7 @@ class BaseRAG(RAGMethodInterface):
         """Initialize RAG method with configuration."""
         self.collection_name = collection_name
         self.top_k = top_k
-        self.embedding_function = SentenceTransformerEmbeddingFunction(
-            embedding_function, device=device
-        )
+        self.embedding_function = self.get_embedding_model(embedding_function, device=device)
         self.retrieval_only = retrieval_only
         self.runner = runner
         self.additional_prompt = additional_prompt
@@ -80,6 +77,31 @@ class BaseRAG(RAGMethodInterface):
         self.template_name = template_name
         self.context_collection = self.filter_duplicates(context_collection)
         self.client = self.init_db()
+
+    def get_embedding_model(self, name: str, device: str = "cuda") -> Any:
+        """Return embedding model based on name."""
+        key_map = {
+            "Google": (
+                "GOOGLE_API_KEY",
+                embedding_functions.GoogleGenerativeAiEmbeddingFunction,
+                "models/text-embedding-004",
+            ),
+            "OpenAI": (
+                "OPENAI_API_KEY",
+                embedding_functions.OpenAIEmbeddingFunction,
+                "text-embedding-3-large",
+            ),
+        }
+
+        if name in key_map:
+            env_var, fn, model = key_map[name]
+            key = os.getenv(env_var)
+            if not key:
+                raise ValueError(f"{env_var} not set.")
+            self.check_quota = True
+            return fn(api_key=key, model_name=model)
+        self.check_quota = False
+        return embedding_functions.SentenceTransformerEmbeddingFunction(name, device=device)
 
     def filter_duplicates(self, context_collection: list[Document]) -> list[Document]:
         """Filter out duplicate documents from the context collection."""
@@ -103,6 +125,7 @@ class BaseRAG(RAGMethodInterface):
             collection_name=self.collection_name,
             documents=self.context_collection,
             embedding_function=self.embedding_function,
+            quota=self.check_quota,
         )
         logger.info("Database initialized.")
         return chroma_client
@@ -119,6 +142,7 @@ class BaseRAG(RAGMethodInterface):
             top_k=self.top_k,
             embedding_function=self.embedding_function,
             where=self.where if self.where else None,
+            quota=self.check_quota,
         )
 
     @override
