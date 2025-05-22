@@ -3,8 +3,6 @@
 import logging
 from typing import Any
 
-from llama_index.core.vector_stores.types import BasePydanticVectorStore
-from llama_index.vector_stores.chroma import ChromaVectorStore
 from qdrant_client import AsyncQdrantClient, QdrantClient, models
 from qdrant_client.conversions import common_types
 
@@ -92,8 +90,3 @@ class QdrantCustomClient(VectorStore):
     def query(self, collection_name: str, query: list, top_k: int = 10, **kwargs: Any) -> list:
         """Query a Qdrant collection."""
         return self.client.search(collection_name, query, limit=top_k, **kwargs)
-
-    def get_llama_index_class(self, collection_name: str) -> BasePydanticVectorStore:
-        """Get the Llama index class."""
-        collection = self.client.get_collection(collection_name=collection_name)
-        return ChromaVectorStore(chroma_collection=collection)

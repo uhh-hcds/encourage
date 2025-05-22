@@ -2,7 +2,7 @@
 
 description = "ENCOURAGE"
 name = "encourage"
-version = "0.2.8"
+version = "0.2.10"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [{ name = "dida Datenschmiede GmbH", email = "info@dida.do" }]
@@ -21,7 +21,6 @@ dependencies = [
     "pre-commit",
     "qdrant-client",
     "uv==0.4.28",
-    "pytest",
     "vllm>=0.8.4",
     "pydantic>=2.9.2",
     "sentence-transformers>=3.2.1",
@@ -88,6 +87,14 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = "src/tests"
 pythonpath = ["."]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore:.*PyType_Spec with a metaclass that has custom tp_new.*:DeprecationWarning",
+    "ignore:.*Support for class-based `config` is deprecated.*:DeprecationWarning",
+    "ignore:.*Mean of empty slice.*:RuntimeWarning",
+    "ignore:.*invalid value encountered in scalar divide.*:RuntimeWarning",
+]
 
 [tool.isort]
 profile = "black"

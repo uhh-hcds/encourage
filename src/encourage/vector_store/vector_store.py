@@ -5,8 +5,6 @@ import socket
 from abc import ABC, abstractmethod
 from typing import Any
 
-from llama_index.core.vector_stores.types import BasePydanticVectorStore
-
 from encourage.prompts.context import Document
 
 logger = logging.getLogger(__name__)
@@ -52,9 +50,4 @@ class VectorStore(ABC):
         self, collection_name: str, query: list, top_k: int, **kwargs: Any
     ) -> list[list[Document]]:
         """Query the collection."""
-        pass
-
-    @abstractmethod
-    def get_llama_index_class(self, collection_name: str) -> BasePydanticVectorStore:
-        """Get the Llama index class."""
         pass
