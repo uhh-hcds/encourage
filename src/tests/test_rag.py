@@ -135,8 +135,6 @@ class TestBaseRAGIntegration(unittest.TestCase):
         self.assertGreaterEqual(len(documents[0]), 1)
 
     def test_run_with_mocked_runner(self):
-        from encourage.llm.response import Response
-
         runner = create_autospec(BatchInferenceRunner)
 
         runner.run.return_value = self.responses
@@ -169,7 +167,11 @@ class TestRerankerRAG(unittest.TestCase):
                         "reference_document": Document(
                             id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
                         ),
+                    }
                 ),
+                context=Context.from_documents(
+                    [
+                        Document(
                             id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
                             content="Here is an example content",
                             score=1.0,
@@ -325,8 +327,6 @@ class TestRerankerRAG(unittest.TestCase):
 
     @patch("encourage.rag.reranker_base.CrossEncoder")
     def test_run_with_mocked_runner(self, mock_cross_encoder):
-        from encourage.llm.response import Response
-
         # Setup CrossEncoder mock
         mock_cross_encoder.return_value = MagicMock()
         mock_cross_encoder.return_value.predict.return_value = [0.9, 0.8, 0.7, 0.6]
