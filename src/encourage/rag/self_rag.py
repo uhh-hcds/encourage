@@ -60,8 +60,12 @@ class SelfRAG(BaseRAG):
         collection_name: str,
         embedding_function: Any,
         top_k: int = 3,
-        device: str = "cuda",
+        retrieval_only: bool = False,
         runner: BatchInferenceRunner | None = None,
+        additional_prompt: str = "",
+        where: dict[str, str] | None = None,
+        device: str = "cuda",
+        template_name: str = "",
         **kwargs: Any,
     ) -> None:
         super().__init__(
@@ -69,8 +73,11 @@ class SelfRAG(BaseRAG):
             collection_name=collection_name,
             embedding_function=embedding_function,
             top_k=top_k,
-            device=device,
+            retrieval_only=retrieval_only,
+            where=where,
             runner=runner,
+            template_name=template_name,
+            additional_prompt=additional_prompt,
         )
 
         # System prompts for each step
@@ -119,9 +126,9 @@ class SelfRAG(BaseRAG):
         answers: List[str] = []
         for q, docs in zip(user_prompts, retrieved):
             if not docs:
-                answers.append(self._generate_no_ctx(runner, q))
+                answers.append(self._generate_no_ctx(runner, q, response_format=response_format))
                 continue
-            cands = self._generate_candidates(runner, q, docs)
+            cands = self._generate_candidates(runner, q, docs, response_format=response_format)
             sup = self._assess_support(runner, cands, docs)
             util = self._rate_utility(runner, q, cands)
             answers.append(self._select(cands, sup, util))
@@ -209,13 +216,18 @@ class SelfRAG(BaseRAG):
         return docs_per_q
 
     def _generate_candidates(
-        self, runner: BatchInferenceRunner, q: str, docs: List[Document]
+        self,
+        runner: BatchInferenceRunner,
+        q: str,
+        docs: List[Document],
+        response_format: type[BaseModel] | str | None = None,
     ) -> List[str]:
         pcs = PromptCollection.create_prompts(
             sys_prompts=self._generation_sys,
             user_prompts=[f"QUERY: {q}\nCONTEXT: {d.content}" for d in docs],
         )
-        return [g.response for g in runner.run(pcs, response_format=self.response_format)]
+        format_to_use = response_format if response_format is not None else self.response_format
+        return [g.response for g in runner.run(pcs, response_format=format_to_use)]
 
     def _assess_support(
         self, runner: BatchInferenceRunner, ans: List[str], docs: List[Document]
@@ -244,10 +256,16 @@ class SelfRAG(BaseRAG):
             ranking.append((s_rank, u_value, a))
         return max(ranking)[2]
 
-    def _generate_no_ctx(self, runner: BatchInferenceRunner, q: str) -> str:
+    def _generate_no_ctx(
+        self,
+        runner: BatchInferenceRunner,
+        q: str,
+        response_format: type[BaseModel] | str | None = None,
+    ) -> str:
         pc = PromptCollection.create_prompts(
             sys_prompts=self._generation_sys,
             user_prompts=[f"QUERY: {q}\nCONTEXT: No additional context"],
         )
-        response = runner.run(pc, response_format=self.response_format)[0].response
+        format_to_use = response_format if response_format is not None else self.response_format
+        response = runner.run(pc, response_format=format_to_use)[0].response
         return str(response) if response is not None else ""

@@ -11,8 +11,6 @@ from chromadb import Collection, EmbeddingFunction, Where
 from chromadb.config import Settings
 from chromadb.errors import NotFoundError
 from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
-from llama_index.core.vector_stores.types import BasePydanticVectorStore
-from llama_index.vector_stores.chroma import ChromaVectorStore
 from tqdm import tqdm
 
 from encourage.prompts.context import Document
@@ -166,15 +164,3 @@ class ChromaClient(VectorStore):
             ]
             for i in range(len(query))
         ]
-
-    def get_llama_index_class(
-        self,
-        collection_name: str,
-        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
-    ) -> BasePydanticVectorStore:
-        """Get the Llama index class."""
-        collection = self.client.get_collection(
-            name=collection_name,
-            embedding_function=embedding_function,
-        )
-        return ChromaVectorStore(chroma_collection=collection)

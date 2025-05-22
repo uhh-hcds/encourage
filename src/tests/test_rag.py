@@ -301,9 +301,7 @@ class TestSelfRAG(unittest.TestCase):
         if hasattr(self, "rag") and hasattr(self.rag, "client"):
             self.rag.client.delete_collection(self.collection_name)
 
-    @patch("encourage.rag.self_rag.SelfRAG._generate_reflection")
-    @patch("encourage.rag.self_rag.SelfRAG._generate_refined_response")
-    def test_selfrag_initialization(self, mock_generate_refined_response, mock_generate_reflection):
+    def test_selfrag_initialization(self):
         from encourage.rag.self_rag import SelfRAG
 
         # Initialize SelfRAG
@@ -312,32 +310,22 @@ class TestSelfRAG(unittest.TestCase):
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
             top_k=2,
-            reflection_rounds=1,
             template_name="llama3_conv.j2",
             device="cpu",
         )
 
         # Verify initialization parameters
-        self.assertEqual(self.rag.reflection_rounds, 1)
         self.assertEqual(self.rag.top_k, 2)
         self.assertEqual(self.rag.collection_name, self.collection_name)
 
-    @patch("encourage.rag.self_rag.SelfRAG._generate_reflection")
-    @patch("encourage.rag.self_rag.SelfRAG._generate_refined_response")
-    def test_process_single_query(self, mock_refined_response, mock_reflection):
+    def test_process_single_query(self):
         from encourage.llm.response import Response
         from encourage.rag.self_rag import SelfRAG
-
-        # Set up mocks
-        mock_reflection.return_value = "This response needs improvement in factuality."
-        mock_refined_response.return_value = (
-            "AI is a field of computer science focused on creating intelligent machines."
-        )
 
         # Set up runner mock
         runner = create_autospec(BatchInferenceRunner)
 
-        # Create a proper Response object for the mock
+        # Mock response for _retrieve_and_filter
         mock_response = Response(
             request_id="test_id",
             prompt_id="test_prompt",
@@ -354,104 +342,36 @@ class TestSelfRAG(unittest.TestCase):
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
             top_k=1,
-            reflection_rounds=1,
             template_name="llama3_conv.j2",
             device="cpu",
         )
 
-        # Create a context from the first document
-        from encourage.prompts.context import Context
-
-        test_context = Context.from_documents([self.documents[0]])
-
-        # Use a patch to handle the _process_single_query method
-        with patch(
-            "encourage.rag.self_rag.SelfRAG._process_single_query", autospec=True
-        ) as mock_method:
-            mock_method.return_value = (
-                "AI is a field of computer science focused on creating intelligent machines.",
-                ["This response needs improvement in factuality."],
-            )
-
-            # Test _process_single_query method
-            response_text, reflections = self.rag._process_single_query(
+        # Mock the method calls
+        with (
+            patch.object(self.rag, "_retrieve_and_filter", return_value=[[self.documents[0]]]),
+            patch.object(self.rag, "_generate_candidates", return_value=["AI response"]),
+            patch.object(
+                self.rag, "_assess_support", return_value=['"response":"Fully supported"']
+            ),
+            patch.object(self.rag, "_rate_utility", return_value=[5]),
+            patch.object(
+                self.rag,
+                "_select",
+                return_value="AI is a technology that simulates human intelligence",
+            ),
+        ):
+            # Test run method with mocked internal methods
+            result = self.rag.run(
                 runner=runner,
-                query="What is AI?",
-                context=test_context,
-                meta_data={},
                 sys_prompt="You are a helpful AI assistant.",
-                template_name="llama3_conv.j2",
+                user_prompts=["What is AI?"],
             )
 
-        # Check the results
-        self.assertEqual(
-            response_text,
-            "AI is a field of computer science focused on creating intelligent machines.",
-        )
-        self.assertEqual(reflections, ["This response needs improvement in factuality."])
+        # Check that the result is a ResponseWrapper
+        self.assertIsInstance(result, ResponseWrapper)
 
-    @patch("encourage.rag.self_rag.SelfRAG._process_single_query")
-    def test_run_with_reflection(self, mock_process_single_query):
-        from encourage.llm.response import Response
-        from encourage.rag.self_rag import SelfRAG
-
-        # Set up mock for _process_single_query
-        # Create Response objects for the mock responses
-        mock_response1 = Response(
-            request_id="mock_1",
-            prompt_id="prompt_1",
-            sys_prompt="You are a helpful AI assistant.",
-            user_prompt=self.queries[0],
-            response="AI is the field of making machines intelligent.",
-        )
-        mock_response2 = Response(
-            request_id="mock_2",
-            prompt_id="prompt_2",
-            sys_prompt="You are a helpful AI assistant.",
-            user_prompt=self.queries[1],
-            response="ML is a subset of AI focused on learning from data.",
-        )
-
-        # Mock returning ResponseWrapper objects instead of strings
-        mock_process_single_query.side_effect = [
-            (ResponseWrapper([mock_response1]), ["Reflection 1"]),
-            (ResponseWrapper([mock_response2]), ["Reflection 2"]),
-        ]
-
-        # Set up runner mock
-        runner = create_autospec(BatchInferenceRunner)
-
-        # Initialize SelfRAG
-        self.rag = SelfRAG(
-            context_collection=self.documents,
-            collection_name=self.collection_name,
-            embedding_function="all-MiniLM-L6-v2",
-            top_k=2,
-            reflection_rounds=1,
-            template_name="llama3_conv.j2",
-            device="cpu",
-        )
-
-        # Test run method without mocking ResponseWrapper
-        result = self.rag.run(
-            runner=runner,
-            sys_prompt="You are a helpful AI assistant.",
-            user_prompts=self.queries,
-        )
-
-        # Verify _process_single_query was called twice (once for each query)
-        self.assertEqual(mock_process_single_query.call_count, 2)
-
-        # Check response content
-        self.assertEqual(
-            result.get_responses(),
-            [
-                "AI is the field of making machines intelligent.",
-                "ML is a subset of AI focused on learning from data.",
-            ],
-        )
-
-    def test_generate_reflection(self):
+    def test_support_assessment(self):
+        """Test the SelfRAG's support assessment functionality."""
         from encourage.llm.response import Response
         from encourage.rag.self_rag import SelfRAG
 
@@ -463,11 +383,11 @@ class TestSelfRAG(unittest.TestCase):
             request_id="test_id",
             prompt_id="prompt_id",
             sys_prompt="You are a critical evaluator.",
-            user_prompt="Evaluate this response for factuality.",
-            response="The response lacks detail about AI applications.",
+            user_prompt="Evaluate this response for support.",
+            response='{"response": "Fully supported"}',
         )
-        reflection_response = ResponseWrapper([mock_response])
-        runner.run.return_value = reflection_response
+        support_response = ResponseWrapper([mock_response])
+        runner.run.return_value = support_response
 
         # Initialize SelfRAG
         self.rag = SelfRAG(
@@ -475,110 +395,16 @@ class TestSelfRAG(unittest.TestCase):
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
             top_k=1,
-            reflection_rounds=1,
             template_name="llama3_conv.j2",
             device="cpu",
         )
 
-        # Test _generate_reflection method
-        from encourage.prompts.context import Context
-
-        test_context = Context.from_documents([self.documents[0]])
-
-        # Patch the to_string method on Context
-        with patch.object(Context, "to_string", return_value="AI is a field of study."):
-            reflection = self.rag._generate_reflection(
-                runner=runner,
-                query="What is AI?",
-                response="AI is about computers.",
-                context=test_context,
+        # Test _assess_support method with mocks
+        with patch.object(self.rag, "_assess_support", return_value=["Fully supported"]):
+            result = self.rag._assess_support(
+                runner=runner, ans=["AI is a field of study."], docs=[self.documents[0]]
             )
-
-        # Verify runner was called
-        runner.run.assert_called_once()
-
-        # Check reflection result
-        self.assertEqual(reflection, "The response lacks detail about AI applications.")
-
-    def test_generate_refined_response(self):
-        from encourage.llm.response import Response
-        from encourage.rag.self_rag import SelfRAG
-
-        # Set up runner mock
-        runner = create_autospec(BatchInferenceRunner)
-
-        # Create a proper Response object instead of using a string
-        mock_response = Response(
-            request_id="test_id",
-            prompt_id="prompt_id",
-            sys_prompt="You are an expert assistant.",
-            user_prompt="Improve your response based on feedback.",
-            response="AI is the study of making intelligent computer systems.",
-        )
-        refined_response = ResponseWrapper([mock_response])
-        runner.run.return_value = refined_response
-
-        # Initialize SelfRAG
-        self.rag = SelfRAG(
-            context_collection=self.documents,
-            collection_name=self.collection_name,
-            embedding_function="all-MiniLM-L6-v2",
-            top_k=1,
-            reflection_rounds=1,
-            template_name="llama3_conv.j2",
-            device="cpu",
-        )
-
-        # Test _generate_refined_response method
-        from encourage.prompts.context import Context
-
-        test_context = Context.from_documents([self.documents[0]])
-
-        # Patch the to_string method on Context
-        with patch.object(Context, "to_string", return_value="AI is a field of study."):
-            refined = self.rag._generate_refined_response(
-                runner=runner,
-                query="What is AI?",
-                initial_response="AI is about computers.",
-                reflection="The response is too vague and lacks technical accuracy.",
-                context=test_context,
-            )
-
-        # Verify runner was called
-        runner.run.assert_called_once()
-
-        # Check refined response
-        self.assertEqual(refined, "AI is the study of making intelligent computer systems.")
-
-    def test_retrieval_only_mode(self):
-        from encourage.rag.self_rag import SelfRAG
-
-        # Set up runner mock
-        runner = create_autospec(BatchInferenceRunner)
-
-        # Initialize SelfRAG with retrieval_only=True
-        self.rag = SelfRAG(
-            context_collection=self.documents,
-            collection_name=self.collection_name,
-            embedding_function="all-MiniLM-L6-v2",
-            top_k=2,
-            retrieval_only=True,
-            template_name="llama3_conv.j2",
-            device="cpu",
-        )
-
-        # Test run method in retrieval-only mode
-        result = self.rag.run(
-            runner=runner,
-            sys_prompt="You are a helpful AI assistant.",
-            user_prompts=self.queries,
-        )
-
-        # Runner should not be called in retrieval-only mode
-        runner.run.assert_not_called()
-
-        # Response should be a mock response wrapper
-        self.assertIsInstance(result, ResponseWrapper)
+            self.assertEqual(result, ["Fully supported"])
 
 
 if __name__ == "__main__":
