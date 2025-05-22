@@ -42,7 +42,7 @@ dependencies = [
     "datasets>=3.5.0",
     "rank-bm25>=0.2.2",
     "smolagents>=1.14.0",
-    "opentelemetry-exporter-otlp-proto-grpc==1.25.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.26.0",
 ]
 
 [project.optional-dependencies]
