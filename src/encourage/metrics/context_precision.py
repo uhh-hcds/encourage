@@ -78,7 +78,7 @@ class ContextPrecision(Metric):
             sys_prompts="",
             user_prompts=["" for _ in all_contexts],
             contexts=all_contexts,
-            template_name=MetricTemplates.LLAMA3_CONTEXT_PRECISION.value,
+            template_name=MetricTemplates.CONTEXT_PRECISION.value,
         )
 
         # Store mapping and count so _calculate_metric can group results by original question.

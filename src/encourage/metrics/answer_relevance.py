@@ -83,7 +83,7 @@ class AnswerRelevance(Metric):
             sys_prompts="",
             user_prompts=["" for _ in committal_responses],
             contexts=contexts_extract,
-            template_name=MetricTemplates.LLAMA3_ANSWER_EXTRACTION.value,
+            template_name=MetricTemplates.ANSWER_EXTRACTION.value,
         )
 
         extracted_answers = self._runner.run(prompt_collection_extract, ExtractedAnswer)
@@ -108,7 +108,7 @@ class AnswerRelevance(Metric):
             sys_prompts="",
             user_prompts=["" for _ in extracted_answers],
             contexts=contexts,
-            template_name=MetricTemplates.LLAMA3_ANSWER_RELEVANCE.value,
+            template_name=MetricTemplates.ANSWER_RELEVANCE.value,
         )
 
         self.responses: ResponseWrapper = self._runner.run(prompt_collection, GeneratedQuestion)

@@ -1,6 +1,4 @@
-<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-
-## Instruction
+s## Instruction
 Given a context, and an answer, analyze each sentence in the answer and classify if the sentence can be attributed to the given context or not. 
 If the answer is only a word or a few words, consider the entire answer as one sentence. Do not use context elements as answer sentences.
 ONLY use the answer while classifying and return it as it is. 
@@ -20,8 +18,6 @@ Classification: {{ example.model_dump()['classification'] }}
 
 {% endfor %}
 
-<|start_header_id|>user<|end_header_id|>
-
 ## Task
 Question: "{{ task.question }}"
 Context: 
@@ -30,6 +26,3 @@ Context:
 {% endfor %}
 Answer: "{{ task.answer }}"
 Classification:
-
-<|eot_id|>
-<|start_header_id|>assistant<|end_header_id|>

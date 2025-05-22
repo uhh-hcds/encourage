@@ -52,7 +52,7 @@ class ContextRecall(Metric):
             sys_prompts="",
             user_prompts=["" for _ in responses],
             contexts=contexts,
-            template_name=MetricTemplates.LLAMA3_CONTEXT_RECALL.value,
+            template_name=MetricTemplates.CONTEXT_RECALL.value,
         )
         self.responses = self._runner.run(prompt_collection, ClassifiedSentencesList)
         return self._calculate_metric()

@@ -47,7 +47,7 @@ class NonAnswerCritic(Metric):
             sys_prompts="",
             user_prompts=["" for _ in responses],
             contexts=contexts,
-            template_name=MetricTemplates.LLAMA3_NON_ANSWER_CRITIQUE.value,
+            template_name=MetricTemplates.NON_ANSWER_CRITIQUE.value,
         )
         self.responses = self._runner.run(prompt_collection, ClassifiedAnswer)
         return self._calculate_metric()
