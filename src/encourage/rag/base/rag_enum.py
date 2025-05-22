@@ -11,6 +11,7 @@ from encourage.rag.hyde_reranker import HydeRerankerRAG
 from encourage.rag.known_context import KnownContext
 from encourage.rag.no_context import NoContext
 from encourage.rag.reranker import RerankerRAG
+from encourage.rag.self_rag import SelfRAG
 from encourage.rag.summarize import SummarizationContextRAG, SummarizationRAG
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class RAGMethod(Enum):
     Reranker = "Reranker"
     HydeReranker = "HydeReranker"
     HybridBM25 = "HybridBM25"
+    SelfRAG = "SelfRAG"
 
     def get_class(self) -> type[RAGMethodInterface]:
         """Get the implementation class for this RAG method."""
@@ -41,5 +43,6 @@ class RAGMethod(Enum):
             RAGMethod.Reranker: RerankerRAG,
             RAGMethod.HydeReranker: HydeRerankerRAG,
             RAGMethod.HybridBM25: HybridBM25RAG,
+            RAGMethod.SelfRAG: SelfRAG,
         }
         return method_classes[self]  # type: ignore

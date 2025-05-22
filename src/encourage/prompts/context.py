@@ -213,6 +213,15 @@ class Context:
         prompt_vars = context_dict["prompt_vars"]
         return cls(documents=documents, prompt_vars=prompt_vars)
 
+    def to_string(self) -> str:
+        """Convert the context documents to a string representation.
+
+        Returns:
+            str: String representation of all documents in this context
+
+        """
+        return "\n\n".join(doc.content for doc in self.documents)
+
     def __getitem__(self, key: int) -> Document:
         return self.documents[key]
 
