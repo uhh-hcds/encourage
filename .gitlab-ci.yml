@@ -24,7 +24,7 @@ before_script:
   - source .venv/bin/activate
   - make -B venv
 
-unit_test:
+lint_and_unit_test:
   stage: test
   variables:
     PYTEST_ADDOPTS: "--cov-report=xml --cov-report=term"
