@@ -114,7 +114,12 @@ class ToolInferenceRunner(InferenceRunner):
             tool_call = completion.choices[0].message.tool_calls[0]  # type: ignore
             args = json.loads(tool_call.function.arguments)
             matching_function = next(
-                (func for func in tool_functions if func.__name__ == tool_call.function.name), None
+                (
+                    func
+                    for func in tool_functions
+                    if getattr(func, "__name__", None) == tool_call.function.name
+                ),
+                None,
             )
             result = None
             if matching_function:

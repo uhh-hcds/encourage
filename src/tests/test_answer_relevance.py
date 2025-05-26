@@ -111,15 +111,16 @@ class TestMetrics(unittest.TestCase):
         metric.embeddings_model = mock_model
 
         # Mock the non_answer_critic output
-        metric.non_answer_critic = MagicMock()
-        metric.non_answer_critic.return_value = MetricOutput(
-            score=0.0,  # since all responses are non-answers
-            raw=[],  # assuming an empty list for raw non-answers
-            misc={
-                "noncommittal": [1, 1, 1],  # mock noncommittal responses
-                "rationales": None,
-                "generated_questions": None,
-            },
+        metric.non_answer_critic = MagicMock(
+            return_value=MetricOutput(
+                score=0.0,  # since all responses are non-answers
+                raw=[],  # assuming an empty list for raw non-answers
+                misc={
+                    "noncommittal": [1, 1, 1],  # mock noncommittal responses
+                    "rationales": None,
+                    "generated_questions": None,
+                },
+            )
         )
 
         # Create empty committal responses scenario

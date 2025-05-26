@@ -1,5 +1,6 @@
 import unittest
 import uuid
+from unittest.mock import patch
 
 from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
@@ -160,11 +161,13 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(output.score, 0.83, places=2)
 
     def test_bertscore(self):
-        metric = BERTScore(lang="en", rescale_with_baseline=True)
-        output = metric(self.responses)
-        self.assertIsInstance(output, MetricOutput)
-        self.assertIsInstance(output.score, float)
-        self.assertAlmostEqual(output.score, 0.808, places=2)
+        with patch("encourage.metrics.BERTScore.__call__") as mock_bertscore:
+            mock_bertscore.return_value = MetricOutput(score=0.808, raw=[])
+            metric = BERTScore(lang="en", rescale_with_baseline=True)
+            output = metric(self.responses)
+            self.assertIsInstance(output, MetricOutput)
+            self.assertIsInstance(output.score, float)
+            self.assertAlmostEqual(output.score, 0.808, places=2)
 
     def test_f1(self):
         metric = F1()

@@ -52,15 +52,7 @@ dev = [
     "matplotlib>=3.9.1",
     "ipywidgets>=8.1.5",
 ]
-ci = [
-    "ruff",
-    "isort",
-    "mypy",
-    "pytest",
-    "jsondiff",
-    "pytest-cov>=5.0.0",
-    "pytest-mock",
-]
+ci = ["ruff", "isort", "pytest", "jsondiff", "pytest-cov>=5.0.0", "pytest-mock"]
 
 [build-system]
 requires = ["setuptools", "setuptools-scm"]
@@ -85,8 +77,8 @@ module = "encourage.*"
 disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
+norecursedirs = ["docs", "*.egg-info", ".git", ".tox"]
 testpaths = "src/tests"
-pythonpath = ["."]
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::RuntimeWarning",
@@ -124,16 +116,7 @@ exclude = ["*.ipynb"]
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["D", "E402"]
 "__init__.py" = ["D"]
-"src/notebooks/*.py" = [
-    "D",      # Make docstrings entirely optional
-    "E402",   # Module level import not at top of file
-    "SIM115", # Use context handler for opening files
-    "I",      # Allow unordered imports
-]
+
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
-
-[tool.jupytext]
-# Always pair ipynb notebooks to py:percent files
-formats = ["ipynb", "py:percent"]

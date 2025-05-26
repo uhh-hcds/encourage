@@ -15,7 +15,7 @@ prompt_collection = PromptCollection.create_prompts(
 Define the template and add custom keys to the template.
 It will add the context to the prompt using the value for that.
 
-First, create a custom template `llama3_custom.j2` in the `/src/g4k/shared/prompts/templates` directory:
+First, create a custom template `llama3_custom.j2` in the `/src/prompts/templates` directory:
 
 ```jinja2
 

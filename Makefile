@@ -39,12 +39,11 @@ sync-all:
 
 format:
 	isort src/encourage src/tests
-	ruff format src/g4k src/tests
+	ruff format src/encourage src/tests
 
 lint: uv
 	ruff check src/encourage src/tests
-	# we don't check the typing in the notebooks
-	mypy --ignore-missing-imports --incremental src/encourage src/tests
+	uvx ty check 
 
 tests: uv
 	pytest
