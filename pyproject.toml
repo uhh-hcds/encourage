@@ -62,19 +62,6 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["encourage*"]
 
-[tool.mypy]
-# Uncomment the following if you use Pydantic in the project
-# plugins = ["pydantic.mypy"]
-show_error_codes = true
-disallow_incomplete_defs = true
-ignore_missing_imports = true
-warn_unused_ignores = true
-warn_return_any = true
-warn_unreachable = true
-
-[[tool.mypy.overrides]]
-module = "encourage.*"
-disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 norecursedirs = ["docs", "*.egg-info", ".git", ".tox"]
@@ -108,7 +95,6 @@ lint.ignore = [
     "B008", # Do not perform function calls in argument defaults
     "B905", # `zip()` without an explicit `strict=` parameter
 ]
-lint.exclude = ["*.ipynb"] # TODO: do we really want this?
 
 [tool.ruff.format]
 exclude = ["*.ipynb"]
