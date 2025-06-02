@@ -207,7 +207,7 @@ class BERTScore(Metric):
         if result is None or "f1" not in result:
             return MetricOutput(score=0.0, raw=[])
         return MetricOutput(
-            score=np.mean(result["f1"]),
+            score=float(np.mean(result["f1"])),
             raw=result["f1"],
             misc={"precision": result["precision"], "recall": result["recall"]},
         )
@@ -257,7 +257,7 @@ class F1(Metric):
         if output is None or "f1" not in output:
             return MetricOutput(score=0.0, raw=[])
         return MetricOutput(
-            score=np.mean(output["f1"]) / 100, raw=output["f1"], misc={"output": output}
+            score=float(np.mean(output["f1"]) / 100), raw=output["f1"], misc={"output": output}
         )
 
 
@@ -369,7 +369,9 @@ class ExactMatch(Metric):
         if output is None or "exact" not in output:
             return MetricOutput(score=0.0, raw=[])
         return MetricOutput(
-            score=np.mean(output["exact"]) / 100, raw=output["exact"], misc={"output": output}
+            score=float(np.mean(output["exact"]) / 100),
+            raw=output["exact"],
+            misc={"output": output},
         )
 
 

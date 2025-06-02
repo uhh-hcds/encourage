@@ -25,7 +25,7 @@ def enable_tracing(span_name: str | None = None) -> Callable:
                 return func(*args, **kwargs)
 
             cls_instance = args[0] if args else None
-            current_span_name = span_name or func.__name__
+            current_span_name = span_name or getattr(func, "__name__", str(func))
             trace_logic = getattr(cls_instance, "_trace_logic", None)
 
             # Start the span with the dynamic name
@@ -33,7 +33,7 @@ def enable_tracing(span_name: str | None = None) -> Callable:
             func_return = func(*args, **kwargs)
 
             with mlflow.start_span(current_span_name) as span:
-                if callable(trace_logic):
+                if trace_logic is not None and callable(trace_logic):
                     trace_logic(span, func_input, func_return)
 
             return func_return
