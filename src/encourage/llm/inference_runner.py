@@ -3,7 +3,7 @@
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Type
+from typing import TYPE_CHECKING, Any, Callable, Type
 
 import mlflow
 from litellm import batch_completion
@@ -18,11 +18,13 @@ from openai.types.chat.chat_completion_message import ChatCompletionMessage
 from openai.types.completion_usage import CompletionUsage
 from pydantic import BaseModel
 from tqdm import tqdm
-from vllm import SamplingParams
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
+
+if TYPE_CHECKING:
+    from vllm import SamplingParams
 
 
 class InferenceRunner(ABC):
@@ -30,7 +32,7 @@ class InferenceRunner(ABC):
 
     def __init__(
         self,
-        sampling_parameters: SamplingParams,
+        sampling_parameters: "SamplingParams",
         model_name: str,
         base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
@@ -55,7 +57,7 @@ class ChatInferenceRunner(InferenceRunner):
 
     def __init__(
         self,
-        sampling_parameters: SamplingParams,
+        sampling_parameters: "SamplingParams",
         model_name: str,
         base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
@@ -210,20 +212,25 @@ class OpenAIChatInferenceRunner(InferenceRunner):
 
     def __init__(
         self,
-        sampling_parameters: SamplingParams,
+        sampling_parameters: "SamplingParams",
         model_name: str,
     ):
         env_var_name = "OPENAI_API_KEY"
         super().__init__(sampling_parameters, model_name, env_var_name=env_var_name)
         self.client = OpenAI()
 
-    def run(self, prompt: Prompt) -> ResponseWrapper:
+    def run(
+        self,
+        prompt: Prompt,
+        response_format: Type[BaseModel] | str | None = None,
+    ) -> ResponseWrapper:
         """Run the model with the given query."""
         response = self.client.chat.completions.create(
             model=self.model_name,
             messages=prompt.conversation.dialog,  # type: ignore
             max_tokens=self.sampling_parameters.max_tokens,
             temperature=self.sampling_parameters.temperature,
+            response_format=response_format,  # type: ignore
         )
         return ResponseWrapper.from_prompt_collection(
             [response], PromptCollection.from_prompts([prompt])
