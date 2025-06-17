@@ -3,7 +3,6 @@
 import re
 from typing import Iterator, Optional
 
-import nltk
 import numpy as np
 from pydantic import BaseModel, ValidationError, conint
 
@@ -32,6 +31,8 @@ class AnswerFaithfulness(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Check how faithful the answer is to the question."""
+        import nltk
+
         # Step 1: Split records into claims
         sents = []
         claim_prompts, response_indices = [], []

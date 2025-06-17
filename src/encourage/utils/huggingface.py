@@ -1,9 +1,11 @@
 """Huggingface Dataset Handler."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
-from datasets import Dataset
+
+if TYPE_CHECKING:
+    from datasets import Dataset
 
 
 class HuggingfaceDatasetHandler:
@@ -16,8 +18,10 @@ class HuggingfaceDatasetHandler:
         self.dataset = self.transform_to_dataset(dataset)
         self.dataset_split = dataset_split
 
-    def transform_to_dataset(self, dataset: dict | list | pd.DataFrame | Any) -> Dataset:
+    def transform_to_dataset(self, dataset: dict | list | pd.DataFrame | Any) -> "Dataset":
         """Transform the data to a Huggingface Dataset."""
+        from datasets import Dataset
+
         if isinstance(dataset, list):
             return Dataset.from_list(dataset)
         elif isinstance(dataset, dict):

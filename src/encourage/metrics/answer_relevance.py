@@ -4,7 +4,6 @@ from typing import Optional
 
 import numpy as np
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput, MetricTemplates
@@ -34,6 +33,8 @@ class AnswerRelevance(Metric):
             description="Check how relevant the answer is to the question",
             runner=runner,
         )
+        from sentence_transformers import SentenceTransformer
+
         self.embeddings_model = SentenceTransformer(model_name)
         # TODO: Add a parameter for the number of generated questions
         self.n_claims = 3

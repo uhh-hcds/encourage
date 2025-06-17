@@ -99,7 +99,7 @@ class TestAnswerSimilarity(unittest.TestCase):
         self.responses = ResponseWrapper(self.responses_mock)
         self.model_name = "mock-model"  # Specify a mock model name
 
-    @patch("encourage.metrics.answer_similarity.SentenceTransformer", autospec=True)
+    @patch("sentence_transformers.SentenceTransformer", autospec=True)
     def test_similarity_computation(self, mock_sentence_transformer):
         # Mock the SentenceTransformer model
         mock_model = mock_sentence_transformer.return_value
@@ -119,7 +119,7 @@ class TestAnswerSimilarity(unittest.TestCase):
         self.assertAlmostEqual(result.score, 0.85, places=2)  # Mean similarity (0.8+0.9)/2
         self.assertEqual(result.raw, [0.8, 0.9])  # Diagonal values of the similarity matrix
 
-    @patch("encourage.metrics.answer_similarity.SentenceTransformer", autospec=True)
+    @patch("sentence_transformers.SentenceTransformer", autospec=True)
     def test_empty_responses(self, mock_sentence_transformer):
         # Setup an empty ResponseWrapper
         empty_responses = ResponseWrapper([])
@@ -136,7 +136,7 @@ class TestAnswerSimilarity(unittest.TestCase):
         self.assertEqual(result.score, 0.0)  # Score should be 0 when no responses
         self.assertEqual(result.raw, [])  # Raw similarities should be empty
 
-    @patch("encourage.metrics.answer_similarity.SentenceTransformer", autospec=True)
+    @patch("sentence_transformers.SentenceTransformer", autospec=True)
     def test_single_response(self, mock_sentence_transformer):
         # Set up a single response scenario
         single_response = ResponseWrapper([self.responses[0]])
@@ -159,7 +159,7 @@ class TestAnswerSimilarity(unittest.TestCase):
         self.assertAlmostEqual(result.score, 0.7, places=2)
         self.assertEqual(result.raw, [0.7])
 
-    @patch("encourage.metrics.answer_similarity.SentenceTransformer", autospec=True)
+    @patch("sentence_transformers.SentenceTransformer", autospec=True)
     def test_embedding_computation(self, mock_sentence_transformer):
         # Mock the SentenceTransformer encode method to return embeddings
         mock_model = mock_sentence_transformer.return_value
