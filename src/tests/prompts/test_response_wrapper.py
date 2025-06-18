@@ -1,14 +1,11 @@
 import unittest
-from unittest import mock
 from unittest.mock import MagicMock
 
 from encourage.llm.response import Response
+from encourage.llm.response_wrapper import (
+    ResponseWrapper,  # Replace with the actual import path
+)
 from encourage.prompts.prompt_collection import PromptCollection
-
-with mock.patch.dict("sys.modules", {"vllm": mock.MagicMock()}):
-    from encourage.llm.response_wrapper import (
-        ResponseWrapper,  # Replace with the actual import path
-    )
 
 
 class TestResponseWrapper(unittest.TestCase):
