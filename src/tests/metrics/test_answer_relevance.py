@@ -1,102 +1,18 @@
 import unittest
-import uuid
 from unittest.mock import MagicMock, create_autospec, patch
 
 import numpy as np
 
-from encourage.llm.inference_runner import BatchInferenceRunner
-from encourage.llm.response import Response
+from encourage.llm import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.metrics.answer_relevance import AnswerRelevance
-from encourage.metrics.metric import MetricOutput
-from encourage.prompts.context import Context, Document
-from encourage.prompts.meta_data import MetaData
+from encourage.metrics import AnswerRelevance, MetricOutput
+from tests.fake_responses import create_responses
 
 
 class TestMetrics(unittest.TestCase):
     def setUp(self):
-        # Sample responses for testing
-        self.responses = [
-            Response(
-                request_id="1",
-                prompt_id="p1",
-                sys_prompt="System prompt example.",
-                user_prompt="User prompt example.",
-                response="This is a generated answer.",
-                conversation_id=1,
-                meta_data=MetaData(
-                    tags={
-                        "reference_answer": "This is a generated answer.",
-                        "reference_document": Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
-                        ),
-                    }
-                ),
-                context=Context.from_documents(
-                    [
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
-                            content="Here is an example content",
-                            score=1.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
-                            content="Here is example content",
-                            score=0.5,
-                        ),
-                    ]
-                ),
-                arrival_time=0.0,
-                finished_time=1.0,
-            ),
-            Response(
-                request_id="2",
-                prompt_id="p2",
-                sys_prompt="Another system prompt.",
-                user_prompt="Another user prompt.",
-                response="Another generated answer.",
-                conversation_id=2,
-                meta_data=MetaData(
-                    tags={
-                        "reference_answer": "Another reference answer.",
-                        "reference_document": Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
-                        ),
-                    }
-                ),
-                context=Context.from_documents(
-                    [
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
-                            content="Here is example content",
-                            score=1.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                    ]
-                ),
-                arrival_time=0.0,
-                finished_time=1.0,
-            ),
-        ]
+        self.responses = ResponseWrapper(create_responses(2))
+
         # Create a mock runner
         self.runner = create_autospec(BatchInferenceRunner)
 
@@ -113,19 +29,17 @@ class TestMetrics(unittest.TestCase):
         # Mock the non_answer_critic output
         metric.non_answer_critic = MagicMock(
             return_value=MetricOutput(
-                score=0.0,  # since all responses are non-answers
-                raw=[],  # assuming an empty list for raw non-answers
+                score=0.0,
+                raw=[],
                 misc={
-                    "noncommittal": [1, 1, 1],  # mock noncommittal responses
+                    "noncommittal": [1, 1, 1],
                     "rationales": None,
                     "generated_questions": None,
                 },
             )
         )
 
-        # Create empty committal responses scenario
-        responses = ResponseWrapper(self.responses)
-        result = metric(responses)
+        result = metric(self.responses)
 
         # Assertions for the empty case
         self.assertEqual(result.score, 0.0)
