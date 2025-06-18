@@ -46,7 +46,7 @@ lint: uv
 	uvx ty check 
 
 tests: uv
-	pytest
+	pytest --cov-report xml --cov=encourage
 
 licenses:
 	pip-licenses --from=mixed --order=license --summary

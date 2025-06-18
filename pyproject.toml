@@ -73,6 +73,7 @@ include = ["encourage*"]
 
 [tool.pytest.ini_options]
 norecursedirs = ["docs", "*.egg-info", ".git", ".tox"]
+
 testpaths = "src/tests"
 filterwarnings = [
     "ignore::DeprecationWarning",

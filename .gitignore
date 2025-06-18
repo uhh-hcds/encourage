@@ -30,4 +30,6 @@ __pycache__/
 *.log
 mlruns
 test.ipynb
-test_*.ipynb
+tes
+
+coverage.*
