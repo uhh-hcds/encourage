@@ -2,8 +2,6 @@
 
 import logging
 
-from sentence_transformers import CrossEncoder
-
 from encourage.prompts.context import Document
 
 logger = logging.getLogger(__name__)
@@ -39,12 +37,15 @@ class Reranker:
             device: Device to use for reranker model
 
         """
+        from sentence_transformers import CrossEncoder
+
         self.reranker_model = reranker_model
         self.rerank_ratio = rerank_ratio
         self.device = device
 
         # Load the reranker model
         logger.info(f"Loading reranker model: {reranker_model}")
+
         self.reranker = CrossEncoder(reranker_model, device=device)
 
     def calculate_initial_top_k(self, top_k: int) -> int:

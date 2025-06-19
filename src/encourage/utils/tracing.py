@@ -3,8 +3,6 @@
 from functools import wraps
 from typing import Any, Callable
 
-import mlflow
-
 _TRACING_ENABLED = False
 
 
@@ -20,6 +18,8 @@ def enable_tracing(span_name: str | None = None) -> Callable:
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            import mlflow
+
             # Check global tracing flag
             if not _TRACING_ENABLED:
                 return func(*args, **kwargs)
@@ -48,6 +48,8 @@ def mlflow_trace(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
+        import mlflow
+
         if _TRACING_ENABLED:
             return mlflow.trace(func)(*args, **kwargs)
         else:

@@ -1,12 +1,10 @@
 """Classic metrics for evaluating RAG."""
 
+from functools import cached_property
 from typing import Any, Union
 
-import evaluate
 import ir_measures
 import numpy as np
-from nltk import word_tokenize
-from rouge_score import rouge_scorer
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
@@ -25,6 +23,8 @@ class GeneratedAnswerLength(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
+        from nltk.tokenize import word_tokenize
+
         lengths = [len(word_tokenize(r.response)) for r in responses]
         score = float(np.mean(lengths))
         return MetricOutput(score=score, raw=lengths)
@@ -43,6 +43,8 @@ class ReferenceAnswerLength(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
+        from nltk.tokenize import word_tokenize
+
         self.validate_nested_keys(responses)
         lengths = [len(word_tokenize(r.meta_data["reference_answer"])) for r in responses]
         score = float(np.mean(lengths))
@@ -62,6 +64,8 @@ class ContextLength(Metric):
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
+        from nltk.tokenize import word_tokenize
+
         self.validate_nested_keys(responses)
         lengths = [
             sum(len(word_tokenize(document.content)) for document in r.context.documents)
@@ -77,8 +81,16 @@ class BLEU(Metric):
 
     def __init__(self, n_grams: int = 4) -> None:
         super().__init__(name="bleu", description="BLEU score for the generated answers")
-        self.metric = evaluate.load("bleu")
+
+        self.metric = self.load_metric
         self.n_grams = n_grams
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the BLEU metric."""
+        from evaluate import load
+
+        return load("bleu")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
@@ -99,7 +111,14 @@ class GLEU(Metric):
 
     def __init__(self) -> None:
         super().__init__(name="gleu", description="GLEU score for the generated answers")
-        self.metric = evaluate.load("google_bleu")
+        self.metric = self.load_metric
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the GLEU metric."""
+        from evaluate import load
+
+        return load("google_bleu")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
@@ -123,8 +142,16 @@ class ROUGE(Metric):
             description="ROUGE score for the generated answers",
             required_meta_data=["reference_answer"],
         )
-        self.metric = evaluate.load("rouge")
+
+        self.metric = self.load_metric
         self.rouge_type = rouge_type
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the ROUGE metric."""
+        from evaluate import load
+
+        return load("rouge")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
@@ -155,6 +182,8 @@ class ROUGEDetailed(Metric):
     """
 
     def __init__(self, rouge_type: str) -> None:
+        from rouge_score import rouge_scorer
+
         assert rouge_type in ["rouge1", "rouge2", "rougeL", "rougeLsum"]
         super().__init__(
             name=rouge_type,
@@ -193,8 +222,16 @@ class BERTScore(Metric):
             description="BERTScore for the generated answers",
             required_meta_data=["reference_answer"],
         )
-        self.metric = evaluate.load("bertscore")
+
+        self.metric = self.load_metric
         self.metric_args = metric_args
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the BERTScore metric."""
+        from evaluate import load
+
+        return load("bertscore")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
@@ -223,7 +260,15 @@ class F1(Metric):
             description="F1 score for the generated answers",
             required_meta_data=["reference_answer"],
         )
-        self.metric = evaluate.load("squad_v2")
+
+        self.metric = self.load_metric
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the F1 metric."""
+        from evaluate import load
+
+        return load("squad_v2")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
@@ -336,7 +381,14 @@ class ExactMatch(Metric):
             description="Exact match for the generated answers",
             required_meta_data=["reference_answer"],
         )
-        self.metric = evaluate.load("squad_v2")
+        self.metric = self.load_metric
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the Exact Match metric."""
+        from evaluate import load
+
+        return load("squad_v2")
 
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""

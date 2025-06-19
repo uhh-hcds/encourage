@@ -5,10 +5,6 @@ import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Callable, Type
 
-import mlflow
-from litellm import batch_completion
-from litellm.types.utils import ModelResponse
-from mlflow.entities import SpanType
 from openai import OpenAI
 from openai.types.chat.chat_completion import (
     ChatCompletion,
@@ -103,6 +99,8 @@ class ToolInferenceRunner(InferenceRunner):
         """Run the model with the given query and tool calls."""
         client = OpenAI(base_url=self.base_url, api_key=self.api_key)
         messages = prompt.conversation.dialog
+        import mlflow
+        from mlflow.entities import SpanType
 
         with mlflow.start_span("ToolChain", span_type=SpanType.TOOL):
             completion = client.chat.completions.create(
@@ -160,6 +158,8 @@ class BatchInferenceRunner(InferenceRunner):
         batch_size: int = 50,  # Default batch size
     ) -> ResponseWrapper:
         """Run the model with the given queries."""
+        from litellm import batch_completion
+
         extra_body = {}
         if response_format:
             if isinstance(response_format, type) and issubclass(response_format, BaseModel):
@@ -237,8 +237,10 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         )
 
 
-def model_response_to_chat_completion(model_response: ModelResponse | Any) -> ChatCompletion:
+def model_response_to_chat_completion(model_response: Any) -> ChatCompletion:
     """Convert a ModelResponse object to a ChatCompletion object."""
+    from litellm.types.utils import ModelResponse
+
     if not isinstance(model_response, ModelResponse):
         # Handle case where response is not a ModelResponse
         return ChatCompletion(

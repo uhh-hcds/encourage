@@ -100,7 +100,7 @@ class TestMetrics(unittest.TestCase):
         # Create a mock runner
         self.runner = create_autospec(BatchInferenceRunner)
 
-    @patch("encourage.metrics.answer_relevance.SentenceTransformer", autospec=True)
+    @patch("sentence_transformers.SentenceTransformer", autospec=True)
     def test_answer_relevance_empty_committal_responses(self, mock_sentence_transformer):
         # Setup mock for SentenceTransformer
         mock_model = mock_sentence_transformer.return_value

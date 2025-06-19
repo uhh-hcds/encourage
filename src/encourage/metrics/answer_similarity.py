@@ -3,7 +3,6 @@
 from typing import Union
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
@@ -21,6 +20,8 @@ class AnswerSimilarity(Metric):
             runner=None,  # type: ignore
             required_meta_data=["reference_answer"],
         )
+        from sentence_transformers import SentenceTransformer
+
         self.model = SentenceTransformer(model_name)
 
     def _get_embedding(self, text: Union[list[str], str]) -> np.ndarray:
