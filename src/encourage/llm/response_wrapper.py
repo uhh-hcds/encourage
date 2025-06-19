@@ -1,9 +1,8 @@
 """Module that defines the ResponseWrapper class."""
 
 import logging
-from typing import Iterator
+from typing import Iterator, Optional
 
-from git import Optional
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 from encourage.llm.response import Response

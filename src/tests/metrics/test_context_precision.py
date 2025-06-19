@@ -52,7 +52,6 @@ class TestContextPrecision(unittest.TestCase):
         self.assertEqual(result.raw, [])
         self.assertEqual(result.misc["labeled_contexts"], [])
 
-    # TODO: Uncomment and implement the test for calculate_metric
     def test_calculate_metric(self):
         self.runner.run.return_value = [
             MagicMock(verdict=1),
