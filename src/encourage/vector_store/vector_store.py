@@ -41,13 +41,15 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
-    def insert_documents(self, collection_name: str, vector_store_document: list[Document]) -> None:
+    def insert_documents(
+        self, collection_name: str, vector_store_document: list[Document], batch_size: int
+    ) -> None:
         """Insert documents."""
         pass
 
     @abstractmethod
     def query(
-        self, collection_name: str, query: list, top_k: int, **kwargs: Any
+        self, collection_name: str, query: list, top_k: int, batch_size: int, **kwargs: Any
     ) -> list[list[Document]]:
         """Query the collection."""
         pass

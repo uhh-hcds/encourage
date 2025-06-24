@@ -48,6 +48,9 @@ lint: uv
 tests: uv
 	pytest
 
+tests-last-failed: uv
+	pytest --lf
+
 licenses:
 	pip-licenses --from=mixed --order=license --summary
 
