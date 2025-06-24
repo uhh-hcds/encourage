@@ -1,7 +1,7 @@
 """Module that defines the ResponseWrapper class."""
 
 import logging
-from typing import Iterator
+from typing import Iterator, Optional
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
@@ -144,7 +144,7 @@ class ResponseWrapper:
         else:
             logger.error(f"No response found for Request ID: {request_id}")
 
-    def get_response_by_prompt_id(self, prompt_id: str) -> Response | None:
+    def get_response_by_prompt_id(self, prompt_id: str) -> Optional[Response]:
         """Return the response details for a specific prompt ID."""
         return self._find_response_by("prompt_id", prompt_id)
 

@@ -4,9 +4,8 @@ from contextlib import suppress
 
 from chromadb.errors import NotFoundError
 
-from encourage.prompts.context import Document
-from encourage.prompts.meta_data import MetaData
-from encourage.vector_store.chroma import ChromaClient
+from encourage.prompts import Document, MetaData
+from encourage.vector_store import ChromaClient
 
 
 class TestChromaClient(unittest.TestCase):

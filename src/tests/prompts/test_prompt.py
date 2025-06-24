@@ -1,12 +1,7 @@
 import json
 import unittest
-from unittest import mock
 
-from encourage.prompts.context import Context
-from encourage.prompts.meta_data import MetaData
-
-with mock.patch.dict("sys.modules", {"vllm": mock.MagicMock()}):
-    from encourage.prompts.prompt_collection import PromptCollection
+from encourage.prompts import Context, MetaData, PromptCollection
 
 
 class TestPromptCollection(unittest.TestCase):
@@ -18,7 +13,7 @@ class TestPromptCollection(unittest.TestCase):
             Context.from_prompt_vars({"info": "context2"}),
         ]
         self.meta_datas = [MetaData({"meta": "data1"}), MetaData({"meta": "data2"})]
-        self.template_name = "llama3_conv.j2"
+        self.template_name = "test_template.j2"
         self.reformated_prompt = [
             "Question: \nUser prompt 1\n\nAnswer: ",
             "Question: \nUser prompt 2\n\nAnswer: ",

@@ -8,7 +8,7 @@ import pytest
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import Document, MetaData
-from encourage.rag.hybrid_bm25 import HybridBM25RAG
+from encourage.rag import HybridBM25RAG
 
 
 # Create fixture for document UUIDs to make them accessible in tests

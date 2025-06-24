@@ -2,8 +2,7 @@ import unittest
 import uuid
 from unittest.mock import patch
 
-from encourage.llm.response import Response
-from encourage.llm.response_wrapper import ResponseWrapper
+from encourage.llm import ResponseWrapper
 from encourage.metrics import (
     BLEU,
     F1,
@@ -15,99 +14,66 @@ from encourage.metrics import (
     GeneratedAnswerLength,
     HitRateAtK,
     MeanReciprocalRank,
+    MetricOutput,
     RecallAtK,
     ReferenceAnswerLength,
 )
-from encourage.metrics.metric import MetricOutput
-from encourage.prompts.context import Context, Document
-from encourage.prompts.meta_data import MetaData
+from encourage.prompts import Document, MetaData
+from tests.fake_responses import create_responses
 
 
 class TestMetrics(unittest.TestCase):
     def setUp(self):
-        # Sample responses for testing
-        self.responses_mock = [
-            Response(
-                request_id="1",
-                prompt_id="p1",
-                sys_prompt="System prompt example.",
-                user_prompt="User prompt example.",
-                response="This is a generated answer.",
-                conversation_id=1,
-                meta_data=MetaData(
-                    tags={
-                        "reference_answer": "This is a generated answer.",
-                        "reference_document": Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
-                        ),
-                    }
+        responses_content_list = [
+            "This is a generated answer.",
+            "Another generated answer.",
+        ]
+        document_list = [
+            [
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"), content="Here is an example content"
                 ),
-                context=Context.from_documents(
-                    [
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
-                            content="Here is an example content",
-                            score=1.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
-                            content="Here is example content",
-                            score=0.5,
-                        ),
-                    ]
+                Document(id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content="Here is example content"),
+            ],
+            [
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"), content="Here is an example content"
                 ),
-                arrival_time=0.0,
-                finished_time=1.0,
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
+                    content="Here is an example content with extra",
+                ),
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
+                    content="Here is an example content with extra",
+                ),
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
+                    content="Here is an example content with extra",
+                ),
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
+                    content="Here is an example content with extra",
+                ),
+            ],
+        ]
+        meta_data_list = [
+            MetaData(
+                tags={
+                    "reference_answer": "This is a generated answer.",
+                    "reference_document": document_list[0][1],
+                }
             ),
-            Response(
-                request_id="2",
-                prompt_id="p2",
-                sys_prompt="Another system prompt.",
-                user_prompt="Another user prompt.",
-                response="Another generated answer.",
-                conversation_id=2,
-                meta_data=MetaData(
-                    tags={
-                        "reference_answer": "Another reference answer.",
-                        "reference_document": Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content=""
-                        ),
-                    }
-                ),
-                context=Context.from_documents(
-                    [
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"),
-                            content="Here is example content",
-                            score=1.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "4"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "3"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                        Document(
-                            id=uuid.uuid5(uuid.NAMESPACE_DNS, "5"),
-                            content="Here is an example content with extra",
-                            score=0.0,
-                        ),
-                    ]
-                ),
-                arrival_time=0.0,
-                finished_time=1.0,
+            MetaData(
+                tags={
+                    "reference_answer": "Another reference answer.",
+                    "reference_document": document_list[0][0],
+                }
             ),
         ]
-        self.responses = ResponseWrapper(self.responses_mock)  # Wrap the provided responses
+        self.responses = ResponseWrapper(
+            create_responses(2, responses_content_list, document_list, meta_data_list)
+        )
 
     def test_generated_answer_length(self):
         metric = GeneratedAnswerLength()
@@ -125,7 +91,7 @@ class TestMetrics(unittest.TestCase):
         metric = ContextLength()
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
-        self.assertAlmostEqual(output.score, 20.5)
+        self.assertAlmostEqual(output.score, 21.0)
 
     def test_bleu(self):
         metric = BLEU()
@@ -188,7 +154,7 @@ class TestMetrics(unittest.TestCase):
         output = metric(self.responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
-        self.assertAlmostEqual(output.score, 0.416, places=2)
+        self.assertAlmostEqual(output.score, 0.6, places=2)
 
     def test_recall(self):
         metric = RecallAtK(2)
