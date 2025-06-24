@@ -1,7 +1,6 @@
 """Module containing various RAG method implementations as classes."""
 
 import logging
-import os
 from typing import Any, override
 
 from chromadb.utils import embedding_functions
@@ -64,6 +63,8 @@ class BaseRAG(RAGMethodInterface):
         where: dict[str, str] | None = None,
         device: str = "cuda",
         template_name: str = "",
+        batch_size_insert: int = 2000,
+        batch_size_query: int = 200,
         **kwargs: Any,
     ) -> None:
         """Initialize RAG method with configuration."""
@@ -76,31 +77,34 @@ class BaseRAG(RAGMethodInterface):
         self.where = where
         self.template_name = template_name
         self.context_collection = self.filter_duplicates(context_collection)
+        self.batch_size_insert = batch_size_insert
+        self.batch_size_query = batch_size_query
         self.client = self.init_db()
 
     def get_embedding_model(self, name: str, device: str = "cuda") -> Any:
         """Return embedding model based on name."""
-        key_map = {
-            "Google": (
-                "GOOGLE_API_KEY",
-                embedding_functions.GoogleGenerativeAiEmbeddingFunction,
-                "models/text-embedding-004",
-            ),
-            "OpenAI": (
-                "OPENAI_API_KEY",
-                embedding_functions.OpenAIEmbeddingFunction,
-                "text-embedding-3-large",
-            ),
-        }
+        # TODO: Add support for other embedding models in the future.
+        # key_map = {
+        #     "Google": (
+        #         "GOOGLE_API_KEY",
+        #         embedding_functions.GoogleGenerativeAiEmbeddingFunction,
+        #         "models/text-embedding-004",
+        #     ),
+        #     "OpenAI": (
+        #         "OPENAI_API_KEY",
+        #         embedding_functions.OpenAIEmbeddingFunction,
+        #         "text-embedding-3-large",
+        #     ),
+        # }
 
-        if name in key_map:
-            env_var, fn, model = key_map[name]
-            key = os.getenv(env_var)
-            if not key:
-                raise ValueError(f"{env_var} not set.")
-            self.check_quota = True
-            return fn(api_key=key, model_name=model)
-        self.check_quota = False
+        # if name in key_map:
+        #     env_var, fn, model = key_map[name]
+        #     key = os.getenv(env_var)
+        #     if not key:
+        #         raise ValueError(f"{env_var} not set.")
+        #     self.check_quota = True
+        #     return fn(api_key=key, model_name=model)
+        # self.check_quota = False
         return embedding_functions.SentenceTransformerEmbeddingFunction(name, device=device)
 
     def filter_duplicates(self, context_collection: list[Document]) -> list[Document]:
@@ -125,7 +129,7 @@ class BaseRAG(RAGMethodInterface):
             collection_name=self.collection_name,
             documents=self.context_collection,
             embedding_function=self.embedding_function,
-            quota=self.check_quota,
+            batch_size=self.batch_size_insert,
         )
         logger.info("Database initialized.")
         return chroma_client
@@ -142,7 +146,7 @@ class BaseRAG(RAGMethodInterface):
             top_k=self.top_k,
             embedding_function=self.embedding_function,
             where=self.where if self.where else None,
-            quota=self.check_quota,
+            batch_size=self.batch_size_query,
         )
 
     @override
