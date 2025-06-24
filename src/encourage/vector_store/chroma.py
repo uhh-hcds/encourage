@@ -1,7 +1,6 @@
 """Chroma vector store implementation."""
 
 import logging
-import time
 import uuid
 from contextlib import suppress
 from typing import Any, Sequence, cast
@@ -53,7 +52,7 @@ class ChromaClient(VectorStore):
         collection_name: str,
         documents: list[Document],
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
-        quota: bool = False,
+        batch_size: int = 2000,
     ) -> None:
         """Insert documents."""
         collection = self.client.get_collection(
@@ -68,14 +67,11 @@ class ChromaClient(VectorStore):
         ]
         ids = [str(document.id) for document in documents]
 
-        batch_size = 40 if quota else 2000
         for i in tqdm(range(0, len(document_content), batch_size), desc="Inserting documents"):
             batch_documents = document_content[i : i + batch_size]
             batch_metadatas = meta_data[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
             collection.add(documents=batch_documents, metadatas=batch_metadatas, ids=batch_ids)  # type: ignore
-            if quota:
-                time.sleep(60)
 
     def count_documents(
         self,
@@ -100,7 +96,7 @@ class ChromaClient(VectorStore):
         top_k: int,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
         where: dict[str, str] | None = None,
-        quota: bool = False,
+        batch_size: int = 200,
         **kwargs: Any,
     ) -> list[list[Document]]:
         """Query the collection with a list of queries.
@@ -111,7 +107,7 @@ class ChromaClient(VectorStore):
             top_k: The number of results to return per query
             embedding_function: The embedding function to use
             where: Optional metadata filtering condition in the form {"key": "value"}
-            quota: If True, will check for quota limits and sleep if necessary
+            batch_size: The number of queries to process in a single batch
             **kwargs: Additional parameters to pass to the query
 
         Returns:
@@ -128,7 +124,6 @@ class ChromaClient(VectorStore):
         where_chromadb = cast(Where, where)
         # Batch processing for queries larger than a certain size
         keys = ["ids", "documents", "metadatas", "distances"]
-        batch_size = 40 if quota else 200
         all_results: dict[Any, Any] = {key: [] for key in keys}
 
         for i in tqdm(range(0, len(query), batch_size), desc="Querying documents"):
@@ -141,8 +136,6 @@ class ChromaClient(VectorStore):
             for key, values in batch_result.items():
                 if key in all_results:
                     all_results[key].extend(values)
-            if quota:
-                time.sleep(60)
 
         result = all_results
 
