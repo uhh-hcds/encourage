@@ -24,26 +24,26 @@ from encourage.llm import BatchInferenceRunner
 runner = BatchInferenceRunner(sampling_params, model_name=model_name)
 ```
 
+
+
 To create a `PromptCollection`, you need to include a list of `Prompt` objects.
 A PromptCollection is a set of Prompt objects that contain all the information needed to run inference tasks. Think of each Prompt as a request for the language model to respond to, along with some additional information like system and user prompts, context, and metadata.
 
-Each Prompt object has the following attributes:
+Each `Prompt` contains:
 
-```python
-@dataclass
-class Prompt:
-    """Prompt dataclass to store prompt information."""
-    
-    sys_prompt: str         # The system's instruction (e.g., how the AI should behave)
-    user_prompt: str        # The user's question or request
-    id: str                 # A unique identifier for each prompt
-    conversation_id: int    # An identifier for tracking conversations
-    context: list[Context]     # A list of dictionaries with additional context information
-    meta_data: list[MetaData]   # A list of dictionaries with metadata related to the prompt
-    reformated: str         # Reformatted prompt data (used internally)
-```
+- `id`: unique identifier (auto-generated)
+- `conversation`: stores dialog turns between user and system
+- `context`: structured background info (`Context`)
+- `meta_data`: tags or attributes for filtering (`MetaData`)
 
-You can create a PromptCollection with the `create_prompts()` method:
+> ✅ `Prompt` objects support serialization via `.to_json()` and deserialization with `Prompt.from_json()`.
+
+---
+
+You typically don’t need to create `Prompt` objects manually.  
+Use `PromptCollection.create_prompts()` to generate them easily from lists of inputs:
+
+
 
 ```python
 # Define the system prompt (AI behavior or persona)

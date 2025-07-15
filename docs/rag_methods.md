@@ -61,15 +61,18 @@ You can select and instantiate a RAG method using the `RAGMethod` enum:
 ```python
 from encourage.rag import RAGMethod
 
-# Get the class for a specific RAG method
-rag_class = RAGMethod.Hyde.get_class()
-
-# Instantiate the RAG method
-rag_instance = rag_class(
+# Create config for a specific RAG method
+config = HydeRAGConfig(
     context_collection=documents,
     collection_name="my_collection",
     embedding_function="sentence-transformers/all-mpnet-base-v2",
     top_k=5
+)
+
+# Use factory to instantiate the RAG method
+rag_instance = RAGFactory.create(
+    name=RAGMethod.Hyde,
+    config=config
 )
 
 # Use the RAG instance for retrieval and generation
@@ -79,5 +82,3 @@ response = rag_instance.run(
     user_prompts=["What is RAG?"]
 )
 ```
-
-Refer to the API documentation of each method for specific parameters and customization options.

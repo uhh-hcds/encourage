@@ -1,8 +1,8 @@
 [project]
 
 description = "ENCOURAGE"
-name = "encourage"
-version = "0.3.1"
+name = "encourage-rag"
+version = "0.3.2"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [{ name = "dida Datenschmiede GmbH", email = "info@dida.do" }]

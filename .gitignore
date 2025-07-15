@@ -33,3 +33,4 @@ test.ipynb
 tes
 
 coverage.*
+dist/*
