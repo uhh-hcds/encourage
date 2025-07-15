@@ -17,16 +17,7 @@ class RAGMethodInterface(ABC):
     @abstractmethod
     def __init__(
         self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int,
-        retrieval_only: bool = False,
-        runner: BatchInferenceRunner | None = None,
-        additional_prompt: str = "",
-        template_name: str = "",
-        device: str = "cuda",
-        where: dict[str, str] | None = None,
+        config: BaseModel,
         **kwargs: Any,
     ) -> None:
         """Initialize RAG method with required configuration."""

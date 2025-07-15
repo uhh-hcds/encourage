@@ -1,40 +1,33 @@
 """Module containing various RAG method implementations as classes."""
 
-from typing import Any, override
+from typing import override
 
 from pydantic import BaseModel
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
-from encourage.prompts.context import Context, Document
+from encourage.prompts.context import Context
 from encourage.prompts.meta_data import MetaData
+from encourage.rag.base.config import KnownContextConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
 
+@RAGFactory.register(RAGMethod.KnownContext, KnownContextConfig)
 class KnownContext(BaseRAG):
-    """Class for known context."""
+    """RAG implementation for known context retrieval."""
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        template_name: str,
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int,
-        device: str = "cuda",
-        runner: BatchInferenceRunner | None = None,
-        where: dict[str, str] | None = None,
-        retrieval_only: bool = False,
-        additional_prompt: str = "",
-        **kwargs: Any,
-    ) -> None:
-        """Initialize known context with context and metadata."""
-        # Call parent's init with interface parameters
-        self.context_collection = context_collection
-        self.template_name = template_name
-        self.collection_name = collection_name
-        self.retrieval_only = retrieval_only
+    def __init__(self, config: KnownContextConfig) -> None:
+        """Initialize KnownContext with provided configuration.
+
+        Args:
+            config (KnownContextConfig): Configuration object with parameters.
+            **kwargs: Additional arguments passed to BaseRAG.
+
+        """
+        super().__init__(config)
 
     @override
     def run(

@@ -9,6 +9,7 @@ import pytest
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import Document, MetaData
 from encourage.rag import HybridBM25RAG
+from encourage.rag.base.config import HybridBM25RAGConfig
 
 
 # Create fixture for document UUIDs to make them accessible in tests
@@ -100,7 +101,7 @@ def hybrid_rag(sample_documents: list[Document], mock_embedding_function: str) -
         chroma_instance.query.side_effect = mock_query
 
         # Create the HybridBM25RAG instance
-        hybrid_rag = HybridBM25RAG(
+        config = HybridBM25RAGConfig(
             context_collection=sample_documents,
             collection_name="test_collection",
             embedding_function=mock_embedding_function,
@@ -109,7 +110,7 @@ def hybrid_rag(sample_documents: list[Document], mock_embedding_function: str) -
             beta=0.4,
         )
 
-        return hybrid_rag
+        return HybridBM25RAG(config=config)
 
 
 class TestHybridBM25RAG:
@@ -131,7 +132,7 @@ class TestHybridBM25RAG:
             chroma_instance.insert_documents.return_value = None
 
             # Create a HybridBM25RAG instance
-            rag = HybridBM25RAG(
+            config = HybridBM25RAGConfig(
                 context_collection=sample_documents,
                 collection_name="test_collection",
                 embedding_function=mock_embedding_function,
@@ -139,6 +140,7 @@ class TestHybridBM25RAG:
                 alpha=0.6,
                 beta=0.4,
             )
+            rag: HybridBM25RAG = HybridBM25RAG(config=config)
 
             # Verify that BM25 index was created
             assert hasattr(rag, "bm25_index")
@@ -159,7 +161,7 @@ class TestHybridBM25RAG:
         ):
             # Alpha + Beta != 1
             with pytest.raises(AssertionError):
-                HybridBM25RAG(
+                config = HybridBM25RAGConfig(
                     context_collection=sample_documents,
                     collection_name="test_collection",
                     embedding_function=mock_embedding_function,
@@ -167,17 +169,19 @@ class TestHybridBM25RAG:
                     alpha=0.3,
                     beta=0.3,
                 )
+                HybridBM25RAG(config=config)
 
             # Alpha outside [0,1]
             with pytest.raises(AssertionError):
-                HybridBM25RAG(
+                config = HybridBM25RAGConfig(
                     context_collection=sample_documents,
                     collection_name="test_collection",
                     embedding_function=mock_embedding_function,
                     top_k=3,
-                    alpha=1.5,
-                    beta=-0.5,
+                    alpha=1.3,
+                    beta=0.3,
                 )
+                HybridBM25RAG(config=config)
 
     def test_retrieve_contexts(
         self, hybrid_rag: HybridBM25RAG, doc_uuids: dict[str, uuid.UUID]

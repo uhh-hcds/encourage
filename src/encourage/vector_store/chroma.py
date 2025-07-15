@@ -51,8 +51,8 @@ class ChromaClient(VectorStore):
         self,
         collection_name: str,
         documents: list[Document],
-        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
         batch_size: int = 2000,
+        embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
     ) -> None:
         """Insert documents."""
         collection = self.client.get_collection(

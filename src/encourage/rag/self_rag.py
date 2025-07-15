@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, List, Tuple, override
+from typing import List, Tuple, override
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,9 @@ from encourage.llm import BatchInferenceRunner, Response, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
+from encourage.rag.base.config import SelfRAGConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
@@ -51,51 +54,22 @@ class UtilityResponse(BaseModel):
     response: int = Field(..., ge=1, le=5)
 
 
+@RAGFactory.register(RAGMethod.SelfRAG, SelfRAGConfig)
 class SelfRAG(BaseRAG):
     """Self‑RAG pipeline (retrieval ➜ relevance check ➜ generation ➜ support check ➜ utility)."""
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int = 3,
-        retrieval_only: bool = False,
-        runner: BatchInferenceRunner | None = None,
-        additional_prompt: str = "",
-        where: dict[str, str] | None = None,
-        device: str = "cuda",
-        template_name: str = "",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(
-            context_collection=context_collection,
-            collection_name=collection_name,
-            embedding_function=embedding_function,
-            top_k=top_k,
-            retrieval_only=retrieval_only,
-            where=where,
-            runner=runner,
-            template_name=template_name,
-            additional_prompt=additional_prompt,
-        )
+    def __init__(self, config: SelfRAGConfig) -> None:
+        """Initialize SelfRAG from BaseRAGConfig.
 
-        # System prompts for each step
-        self._relevance_sys = """
-        You are a critical evaluator employed by a RAG system. Analyze the retrieved context for
-        factuality, relevance, coherence, and information completeness. Identify any hallucinations
-        or missing important information from the retrieved context.
-        Relevant or Irrelevant? Answer with one of those two words only.
+        Args:
+            config: BaseRAGConfig instance with core config.
+
         """
-        self._support_sys = """
-        Given the response and the context, determine if the response is supported by the context.
-        Label as Fully supported, Partially supported or No support – output exactly one of
-        those only.
-        """
-        self._utility_sys = """
-        Given the query and the response, rate the utility of the response from 1 to 5. Output the
-        number only.
-        """
+        super().__init__(config)
+
+        self._relevance_sys = config.relevance_sys_prompt
+        self._support_sys = config.support_sys_prompt
+        self._utility_sys = config.utility_sys_prompt
 
     @override
     def run(

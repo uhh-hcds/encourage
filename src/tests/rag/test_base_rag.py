@@ -5,6 +5,7 @@ from unittest.mock import create_autospec
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import Document, MetaData
 from encourage.rag import BaseRAG
+from encourage.rag.base.config import BaseRAGConfig
 from tests.fake_responses import create_responses
 
 
@@ -72,7 +73,7 @@ class TestBaseRAGIntegration(unittest.TestCase):
         ]
 
         # Initialize RAG with the new interface
-        self.rag = BaseRAG(
+        config = BaseRAGConfig(
             context_collection=self.documents,
             template_name="test_template.j2",
             collection_name=self.collection_name,
@@ -80,6 +81,8 @@ class TestBaseRAGIntegration(unittest.TestCase):
             embedding_function="all-MiniLM-L6-v2",
             device="cpu",
         )
+
+        self.rag = BaseRAG(config)
 
         # Keep a reference to the original queries for testing
         self.queries = ["What is AI?", "Define ML"]

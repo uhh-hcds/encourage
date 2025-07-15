@@ -6,42 +6,34 @@ from typing import Any, override
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Document
+from encourage.rag.base.config import SummarizationContextRAGConfig, SummarizationRAGConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
 
 logger = logging.getLogger(__name__)
 
 
+@RAGFactory.register(RAGMethod.Summarization, SummarizationRAGConfig)
 class SummarizationRAG(BaseRAG):
     """Implementation of RAG for summarization."""
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: str,
-        top_k: int,
-        runner: BatchInferenceRunner,
-        retrieval_only: bool = False,
-        where: dict[str, str] | None = None,
-        additional_prompt: str = "",
-        template_name: str = "",
-        **kwargs: Any,
-    ):
+    def __init__(self, config: SummarizationRAGConfig) -> None:
+        """Initialize KnownContext with provided configuration.
+
+        Args:
+            config (KnownContextConfig): Configuration object with parameters.
+            **kwargs: Additional arguments passed to BaseRAG.
+
+        """
         """Initialize RAG method with configuration."""
-        self.template_name = template_name
-        context_collection = super().filter_duplicates(context_collection)
-        summaries = self.create_summaries(runner, additional_prompt, context_collection)
-        super().__init__(
-            context_collection=summaries,
-            template_name=template_name,
-            collection_name=collection_name,
-            top_k=top_k,
-            embedding_function=embedding_function,
-            where=where,
-            retrieval_only=retrieval_only,
-            runner=runner,
-            additional_prompt=additional_prompt,
+        context_collection = super().filter_duplicates(self.context_collection)
+        if not isinstance(config.runner, BatchInferenceRunner):
+            raise TypeError("config.runner must be an instance of BatchInferenceRunner")
+        summaries = self.create_summaries(
+            config.runner, config.additional_prompt, context_collection
         )
+        super().__init__(config.model_copy(update={"context_collection": summaries}))
 
     def create_summaries(
         self,
@@ -73,34 +65,14 @@ class SummarizationRAG(BaseRAG):
         return summarized_documents
 
 
+@RAGFactory.register(RAGMethod.SummarizationContextRAG, SummarizationContextRAGConfig)
 class SummarizationContextRAG(SummarizationRAG):
     """Implementation of RAG with context preserving summarization."""
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: str,
-        top_k: int,
-        runner: BatchInferenceRunner,
-        where: dict[str, str] | None = None,
-        retrieval_only: bool = False,
-        additional_prompt: str = "",
-        template_name: str = "",
-    ):
+    def __init__(self, config: SummarizationContextRAGConfig):
         """Initialize RAG method with configuration."""
-        self.original_context = context_collection
-        super().__init__(
-            context_collection=context_collection,
-            template_name=template_name,
-            collection_name=collection_name,
-            top_k=top_k,
-            embedding_function=embedding_function,
-            where=where,
-            retrieval_only=retrieval_only,
-            runner=runner,
-            additional_prompt=additional_prompt,
-        )
+        self.original_context = config.context_collection
+        super().__init__(config)
 
     @override
     def retrieve_contexts(

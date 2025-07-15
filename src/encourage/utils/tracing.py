@@ -32,7 +32,7 @@ def enable_tracing(span_name: str | None = None) -> Callable:
             func_input = args
             func_return = func(*args, **kwargs)
 
-            with mlflow.start_span(current_span_name) as span:
+            with mlflow.start_span(str(current_span_name)) as span:
                 if trace_logic is not None and callable(trace_logic):
                     trace_logic(span, func_input, func_return)
 

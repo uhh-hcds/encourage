@@ -2,7 +2,7 @@
 
 description = "ENCOURAGE"
 name = "encourage"
-version = "0.3.0"
+version = "0.3.1"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [{ name = "dida Datenschmiede GmbH", email = "info@dida.do" }]
