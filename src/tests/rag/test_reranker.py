@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, create_autospec, patch
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import Document, MetaData
 from encourage.rag import BaseRAG, RerankerRAG
+from encourage.rag.base.config import RerankerRAGConfig
 from tests.fake_responses import create_responses
 
 
@@ -94,16 +95,17 @@ class TestRerankerRAG(unittest.TestCase):
         mock_cross_encoder.return_value = MagicMock()
 
         # Initialize RerankerRAG
-        reranker_rag = RerankerRAG(
+        config = RerankerRAGConfig(
             context_collection=self.documents,
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
             top_k=2,
             reranker_model="cross-encoder/ms-marco-MiniLM-L-6-v2",
-            rerank_ratio=2.0,
             template_name="llama3_conv.j2",
+            rerank_ratio=2.0,
             device="cpu",
         )
+        reranker_rag = RerankerRAG(config=config)
 
         # Verify CrossEncoder was initialized with correct arguments
         mock_cross_encoder.assert_called_once_with(
@@ -125,7 +127,7 @@ class TestRerankerRAG(unittest.TestCase):
         mock_instance.predict.return_value = [0.9, 0.3, 0.8, 0.2]
 
         # Initialize RerankerRAG with rerank_ratio=2.0, so it retrieves twice top_k documents
-        self.rag = RerankerRAG(
+        config = RerankerRAGConfig(
             context_collection=self.documents,
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
@@ -135,6 +137,7 @@ class TestRerankerRAG(unittest.TestCase):
             rerank_ratio=2.0,
             device="cpu",
         )
+        self.rag = RerankerRAG(config=config)
 
         # Test retrieval with reranking
         query = ["What is AI?"]
@@ -161,7 +164,7 @@ class TestRerankerRAG(unittest.TestCase):
         runner.run.return_value = self.responses
 
         # Initialize RerankerRAG
-        self.rag = RerankerRAG(
+        config = RerankerRAGConfig(
             context_collection=self.documents,
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
@@ -170,6 +173,7 @@ class TestRerankerRAG(unittest.TestCase):
             template_name="llama3_conv.j2",
             device="cpu",
         )
+        self.rag = RerankerRAG(config=config)
 
         # Test run method
         result = self.rag.run(
@@ -194,7 +198,7 @@ class TestRerankerRAG(unittest.TestCase):
         mock_instance.predict.return_value = []
 
         # Initialize RerankerRAG
-        self.rag = RerankerRAG(
+        config = RerankerRAGConfig(
             context_collection=self.documents,
             collection_name=self.collection_name,
             embedding_function="all-MiniLM-L6-v2",
@@ -203,6 +207,7 @@ class TestRerankerRAG(unittest.TestCase):
             template_name="llama3_conv.j2",
             device="cpu",
         )
+        self.rag = RerankerRAG(config=config)
 
         # Patch the super().retrieve_contexts to return empty results
         with patch.object(BaseRAG, "retrieve_contexts", return_value=[[]]):

@@ -41,9 +41,7 @@ class InferenceRunner(ABC):
             raise ValueError("API key cannot be empty")
 
     @abstractmethod
-    def run(
-        self, *args: Any, **kwargs: Any
-    ) -> ChatCompletion | ResponseWrapper | list[ResponseWrapper]:
+    def run(self, *args: Any, **kwargs: Any) -> ChatCompletion | ResponseWrapper:
         """Abstract method to run the model with the given inputs."""
         pass
 

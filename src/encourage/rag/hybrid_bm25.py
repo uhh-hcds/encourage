@@ -7,68 +7,42 @@ from typing import Any, Dict, List, Tuple, override
 import numpy as np
 from rank_bm25 import BM25Okapi
 
-from encourage.llm import BatchInferenceRunner
 from encourage.prompts.context import Document
+from encourage.rag.base.config import HybridBM25RAGConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
 
 logger = logging.getLogger(__name__)
 
 
+@RAGFactory.register(RAGMethod.HybridBM25, HybridBM25RAGConfig)
 class HybridBM25RAG(BaseRAG):
     """Hybrid RAG combining dense embeddings with sparse lexical search.
 
-    Combines semantic search (dense embeddings) with lexical search (sparse BM25).
+    This class integrates semantic search (dense embeddings) and lexical search
+    (sparse BM25) retrieval methods, allowing configurable weighting of each
+    method's contribution.
 
     Attributes:
-        alpha: Weight for dense retrieval scores (0-1)
-        beta: Weight for sparse retrieval scores (0-1)
-        bm25_index: BM25 index for lexical search
-        document_texts: Preprocessed document texts
-        document_map: Maps document text to Document objects
+        alpha (float): Weight for dense retrieval scores (0-1).
+        beta (float): Weight for sparse retrieval scores (0-1).
 
     """
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int,
-        retrieval_only: bool = False,
-        runner: BatchInferenceRunner | None = None,
-        additional_prompt: str = "",
-        template_name: str = "",
-        alpha: float = 0.5,  # Dense retrieval weight
-        beta: float = 0.5,  # Sparse retrieval weight
-        device: str = "cuda",
-        where: dict[str, str] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        """Initialize HybridBM25RAG with configuration."""
-        super().__init__(
-            context_collection=context_collection,
-            collection_name=collection_name,
-            embedding_function=embedding_function,
-            top_k=top_k,
-            retrieval_only=retrieval_only,
-            runner=runner,
-            additional_prompt=additional_prompt,
-            template_name=template_name,
-            device=device,
-            where=where,
-            **kwargs,
-        )
+    def __init__(self, config: HybridBM25RAGConfig, **kwargs: Any) -> None:
+        self.alpha = config.alpha
+        self.beta = config.beta
+        # Call base __init__ with all base config fields only
+        super().__init__(config)
 
         # Validate weights
-        assert 0 <= alpha <= 1, "Alpha must be between 0 and 1"
-        assert 0 <= beta <= 1, "Beta must be between 0 and 1"
-        assert abs(alpha + beta - 1.0) < 1e-6, "Alpha and beta must sum to 1"
-
-        self.alpha = alpha
-        self.beta = beta
+        assert 0 <= self.alpha <= 1, "Alpha must be between 0 and 1"
+        assert 0 <= self.beta <= 1, "Beta must be between 0 and 1"
+        assert abs(self.alpha + self.beta - 1.0) < 1e-6, "Alpha and beta must sum to 1"
 
         # Create BM25 index
-        self._create_bm25_index(context_collection)
+        self._create_bm25_index(self.context_collection)
 
     def _create_bm25_index(self, context_collection: list[Document]) -> None:
         """Create a BM25 index from the documents."""

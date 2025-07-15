@@ -9,6 +9,9 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
+from encourage.rag.base.config import RerankerRAGConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
 from encourage.rag.reranker_base import Reranker
 from encourage.utils.llm_mock import create_mock_response_wrapper
@@ -16,71 +19,34 @@ from encourage.utils.llm_mock import create_mock_response_wrapper
 logger = logging.getLogger(__name__)
 
 
+@RAGFactory.register(RAGMethod.Reranker, RerankerRAGConfig)
 class RerankerRAG(BaseRAG):
-    """RAG implementation that uses a reranker model to improve retrieval quality.
-
-    This implementation extends BaseRAG by adding a reranking step after the initial
-    vector search retrieval. The reranker refines the documents based on relevance
-    scoring using a cross-encoder model.
-    """
+    """RAG implementation using a reranker model to improve retrieval quality."""
 
     def __init__(
         self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int,
-        reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        rerank_ratio: float = 3.0,
-        retrieval_only: bool = False,
-        runner: BatchInferenceRunner | None = None,
-        additional_prompt: str = "",
-        where: dict[str, str] | None = None,
-        device: str = "cuda",
-        template_name: str = "",
+        config: RerankerRAGConfig,
         **kwargs: Any,
     ) -> None:
-        """Initialize RerankerRAG with configuration.
+        """Initialize RerankerRAG using BaseRAGConfig and reranker-specific params.
 
         Args:
-            context_collection: Collection of documents to use as context
-            collection_name: Name of the collection in the vector database
-            embedding_function: Function to create embeddings for vector search
-            top_k: Number of documents to return (same meaning as in BaseRAG)
-            reranker_model: Name or path of the cross-encoder reranker model
-            rerank_ratio: How many times more documents to retrieve initially for reranking
-                (e.g., 3.0 means retrieve 3*top_k documents initially)
-            retrieval_only: If True, only retrieval is performed (no LLM inference)
-            runner: Inference runner for LLM
-            additional_prompt: Additional text to add to the prompt
-            where: Optional filter for vector search
-            device: Device to use for embeddings and reranking
-            template_name: Name of the prompt template to use
-            **kwargs: Additional arguments
+            config: BaseRAGConfig instance with core configuration.
+            **kwargs: Additional arguments.
 
         """
-        # Create the reranker
+        # Create reranker instance
         self.reranker_instance = Reranker(
-            reranker_model=reranker_model, rerank_ratio=rerank_ratio, device=device
+            reranker_model=config.reranker_model,
+            rerank_ratio=config.rerank_ratio,
+            device=config.device,
         )
 
-        # Calculate how many documents to retrieve for reranking
-        self.initial_top_k = self.reranker_instance.calculate_initial_top_k(top_k)
+        # Calculate how many docs to initially retrieve for reranking
+        self.initial_top_k = self.reranker_instance.calculate_initial_top_k(config.top_k)
 
-        # Initialize the parent class with the same top_k as requested
-        super().__init__(
-            context_collection=context_collection,
-            collection_name=collection_name,
-            embedding_function=embedding_function,
-            top_k=top_k,  # Keep original top_k to maintain LSP
-            retrieval_only=retrieval_only,
-            runner=runner,
-            additional_prompt=additional_prompt,
-            where=where,
-            device=device,
-            template_name=template_name,
-            **kwargs,
-        )
+        # Initialize parent with config parameters via dict unpacking
+        super().__init__(config=config)
 
     @override
     def retrieve_contexts(

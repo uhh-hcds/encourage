@@ -10,13 +10,17 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
-from encourage.rag.base.rag_interface import RAGMethodInterface
+from encourage.rag.base.config import BaseRAGConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
+from encourage.rag.base.interface import RAGMethodInterface
 from encourage.utils.llm_mock import create_mock_response_wrapper
 from encourage.vector_store import ChromaClient, VectorStore
 
 logger = logging.getLogger(__name__)
 
 
+@RAGFactory.register(RAGMethod.Base, BaseRAGConfig)
 class BaseRAG(RAGMethodInterface):
     """Base implementation of RAG.
 
@@ -36,10 +40,6 @@ class BaseRAG(RAGMethodInterface):
         client (VectorStore): The vector database client for context retrieval.
 
     Methods:
-        __init__(context_collection, template_name, collection_name, embedding_function,
-                 top_k, device="cuda", where=None, retrieval_only=False, runner=None,
-                 additional_prompt="", **kwargs):
-            Initializes the BaseRAG instance with the provided configuration.
         init_db(context_collection) -> VectorStore:
             Initializes the vector database with the provided context collection.
         retrieve_contexts(query_list, **kwargs) -> list[list[Document]]:
@@ -51,34 +51,21 @@ class BaseRAG(RAGMethodInterface):
 
     """
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int,
-        retrieval_only: bool = False,
-        runner: BatchInferenceRunner | None = None,
-        additional_prompt: str = "",
-        where: dict[str, str] | None = None,
-        device: str = "cuda",
-        template_name: str = "",
-        batch_size_insert: int = 2000,
-        batch_size_query: int = 200,
-        **kwargs: Any,
-    ) -> None:
-        """Initialize RAG method with configuration."""
-        self.collection_name = collection_name
-        self.top_k = top_k
-        self.embedding_function = self.get_embedding_model(embedding_function, device=device)
-        self.retrieval_only = retrieval_only
-        self.runner = runner
-        self.additional_prompt = additional_prompt
-        self.where = where
-        self.template_name = template_name
-        self.context_collection = self.filter_duplicates(context_collection)
-        self.batch_size_insert = batch_size_insert
-        self.batch_size_query = batch_size_query
+    def __init__(self, config: BaseRAGConfig, **kwargs: Any) -> None:
+        """Initialize BaseRAG from BaseRAGConfig."""
+        self.collection_name = config.collection_name
+        self.top_k = config.top_k
+        self.embedding_function = self.get_embedding_model(
+            config.embedding_function, device=config.device
+        )
+        self.retrieval_only = config.retrieval_only
+        self.runner = config.runner
+        self.additional_prompt = config.additional_prompt
+        self.where = config.where
+        self.template_name = config.template_name
+        self.context_collection = self.filter_duplicates(config.context_collection)
+        self.batch_size_insert = config.batch_size_insert
+        self.batch_size_query = config.batch_size_query
         self.client = self.init_db()
 
     def get_embedding_model(self, name: str, device: str = "cuda") -> Any:

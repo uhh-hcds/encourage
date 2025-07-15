@@ -16,62 +16,35 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
+from encourage.rag.base.config import HydeRAGConfig
+from encourage.rag.base.enum import RAGMethod
+from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
 logger = logging.getLogger(__name__)
 
 
+@RAGFactory.register(RAGMethod.Hyde, HydeRAGConfig)
 class HydeRAG(BaseRAG):
     """HYDE (Hypothetical Document Embeddings) implementation of RAG.
 
-    HYDE generates hypothetical answers to queries and uses those answers as the search vector
-    for retrieving relevant documents.
+    HYDE generates hypothetical answers to queries and uses those
+    answers as the search vectors for retrieving relevant documents.
+
+    Args:
+        config (HydeRAGConfig): Configuration dataclass for HYDE RAG.
+        **kwargs: Additional keyword arguments for BaseRAG.
+
     """
 
-    def __init__(
-        self,
-        context_collection: list[Document],
-        collection_name: str,
-        embedding_function: Any,
-        top_k: int,
-        retrieval_only: bool = False,
-        device: str = "cuda",
-        where: dict[str, str] | None = None,
-        runner: BatchInferenceRunner | None = None,
-        additional_prompt: str = "",
-        template_name: str = "",
-        **kwargs: Any,
-    ) -> None:
-        """Initialize HYDE RAG method with configuration.
+    def __init__(self, config: HydeRAGConfig) -> None:
+        """Initialize HYDE RAG with config.
 
-        Args:
-            context_collection: List of Document objects representing the context collection
-            template_name: Name of the template to use for prompt formatting
-            collection_name: Name of the vector store collection
-            embedding_function: Function to compute embeddings for queries and documents
-            top_k: Number of top documents to retrieve
-            device: Device to use for embedding computations ("cuda" or "cpu")
-            where: Optional filter criteria for document retrieval
-            retrieval_only: If True, only perform retrieval without LLM inference
-            runner: Optional BatchInferenceRunner for generating hypothetical answers
-            additional_prompt: Additional prompt text to include in hypothetical answers
-            **kwargs: Additional parameters for customization
-
+        Passes configuration parameters to BaseRAG initializer and performs
+        any HYDE-specific initialization.
         """
-        # Initialize the parent class first
-        super().__init__(
-            context_collection=context_collection,
-            collection_name=collection_name,
-            embedding_function=embedding_function,
-            top_k=top_k,
-            retrieval_only=retrieval_only,
-            device=device,
-            where=where,
-            runner=runner,
-            additional_prompt=additional_prompt,
-            template_name=template_name,
-        )
+        super().__init__(config)
 
     def generate_hypothetical_answer(self, query_list: list[str]) -> ResponseWrapper:
         """Generate a hypothetical answer to the query using the LLM."""
@@ -86,7 +59,10 @@ class HydeRAG(BaseRAG):
             raise ValueError("No LLM runner provided for generating hypothetical answers.")
 
         # Get the response from the LLM using the main runner
-        return self.runner.run(prompt_collection)
+        result = self.runner.run(prompt_collection)
+        if not isinstance(result, ResponseWrapper):
+            raise TypeError("Expected result to be a ResponseWrapper, got {}".format(type(result)))
+        return result
 
     @override
     def retrieve_contexts(
