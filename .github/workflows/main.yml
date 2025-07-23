@@ -26,15 +26,19 @@ jobs:
           activate-environment: true
       - run: uv pip install pip
       
+
       - name: Install dependencies
         run: |
           uv pip install pytest pytest-md pytest-emoji
           uv sync --all-extras 
-      - uses: pavelzw/pytest-action@v2
-        with:
-          emoji: false
-          verbose: false
-          job-summary: true
+
+      - name: Test with pytest  
+        run: |  
+          coverage run -m pytest  -v -s  
+      - name: Generate Coverage Report  
+        run: |  
+          coverage report -m
+
           
       - name: ruff-action
         uses: astral-sh/ruff-action@v3.5.0
