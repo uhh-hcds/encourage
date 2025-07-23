@@ -39,12 +39,34 @@ jobs:
           name: release-dists
           path: dist/
 
-  pypi-publish:
+  testpypi-publish:
     runs-on: ubuntu-latest
     needs: release-build
 
     permissions:
-      id-token: write  # required for trusted publishing
+      id-token: write
+
+    environment:
+      name: testpypi
+
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  pypi-publish:
+    runs-on: ubuntu-latest
+    needs: [release-build, testpypi-publish]
+
+    permissions:
+      id-token: write
 
     environment:
       name: pypi
