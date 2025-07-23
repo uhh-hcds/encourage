@@ -1,0 +1,49 @@
+name: Lint and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/pip
+            .cache/uv
+          key: ${{ runner.os }}-python-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Setup virtualenv and deps
+        run: make venv
+
+      - name: Lint
+        run: make lint
+
+      - name: Run Tests
+        env:
+          PYTEST_ADDOPTS: "--cov-report=xml --cov-report=term"
+        run: make tests
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
