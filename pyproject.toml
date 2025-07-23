@@ -82,7 +82,7 @@ filterwarnings = [
     "ignore:.*Mean of empty slice.*:RuntimeWarning",
     "ignore:.*invalid value encountered in scalar divide.*:RuntimeWarning",
 ]
-addopts = "-v -ra --cov=encourage"
+addopts = "-v -ra"
 pythonpath = ["."]
 
 
