@@ -36,6 +36,8 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           uv sync --extra ci
+      - name: Lint Make
+        run: make lint
 
       - name: Lint
         run: |
