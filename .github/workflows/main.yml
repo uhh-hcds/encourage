@@ -10,31 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: szenius/set-timezone@v1.2
         with:
-          python-version: '3.12'
-
-      - name: Set up cache
-        uses: actions/cache@v4
+          timezoneLinux: "Europe/Berlin"
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          path: |
-            .cache/pip
-            .cache/uv
-          key: ${{ runner.os }}-python-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-python-
-
-      - name: Install uv
-        run: pip install uv
-
-
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install pytest pytest-md pytest-emoji
+      - uses: pavelzw/pytest-action@v2
+        with:
+          emoji: false
+          verbose: false
+          job-summary: true
+          
       - name: ruff-action
         uses: astral-sh/ruff-action@v3.5.0
 
-      - name: Run pytest
-        uses: pavelzw/pytest-action@v2.2.0
 
