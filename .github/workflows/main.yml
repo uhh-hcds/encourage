@@ -8,12 +8,18 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
     
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           
@@ -21,22 +27,19 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           activate-environment: true
-      - run: uv pip install pip
+          enable-cache: true
       
+      - name: Install dependencies
+        run: uv sync --all-extras 
+        
       - name: ruff-action
         uses: astral-sh/ruff-action@v3.5.0
-
-      - name: Install dependencies
-        run: |
-          uv pip install pytest pytest-md pytest-emoji
-          uv sync --all-extras 
-
+      
       - name: Test with pytest  
-        run: |  
-          coverage run -m pytest  -v -s  
+        run: uv run pytest
+        
       - name: Generate Coverage Report  
-        run: |  
-          coverage report -m
+        run: coverage report -m
 
 
 
