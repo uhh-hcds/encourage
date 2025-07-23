@@ -35,18 +35,17 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          uv sync
-
-      - name: Setup virtualenv and deps
-        run: make venv
+          uv sync --extra ci
 
       - name: Lint
-        run: make lint
+        run: |
+          ruff check src/encourage src/tests
+          uvx ty check 
 
       - name: Run Tests
         env:
           PYTEST_ADDOPTS: "--cov-report=xml --cov-report=term"
-        run: make tests
+        run: pytest
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
