@@ -19,7 +19,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install pytest pytest-md pytest-emoji
+        run: |
+          pip install uv pytest pytest-md pytest-emoji
+          uv sync --all-extras 
       - uses: pavelzw/pytest-action@v2
         with:
           emoji: false
