@@ -14,7 +14,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-                          
+          
+      - name: Install the latest version of uv and activate the environment
+        uses: astral-sh/setup-uv@v6
+        with:
+          activate-environment: true
+      - run: uv pip install pip
+      
       - name: ruff-action
         uses: astral-sh/ruff-action@v3.5.0
 
