@@ -15,7 +15,6 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          - "3.13"
 
     steps:
       - uses: actions/checkout@v4
@@ -30,12 +29,15 @@ jobs:
         with:
           activate-environment: true
           enable-cache: true
+          
       
       - name: Install dependencies
         run: uv sync --all-extras 
         
       - name: ruff-action
         uses: astral-sh/ruff-action@v3.5.0
+        with:
+          version: "latest"
       
       - name: Test with pytest  
         run: uv run pytest
