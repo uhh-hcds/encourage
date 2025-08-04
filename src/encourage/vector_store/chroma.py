@@ -94,9 +94,9 @@ class ChromaClient(VectorStore):
         collection_name: str,
         query: str | list[str],
         top_k: int,
+        batch_size: int = 200,
         embedding_function: EmbeddingFunction = DefaultEmbeddingFunction(),
         where: dict[str, str] | None = None,
-        batch_size: int = 200,
         **kwargs: Any,
     ) -> list[list[Document]]:
         """Query the collection with a list of queries.
