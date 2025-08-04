@@ -2,7 +2,7 @@
 
 description = "ENCOURAGE"
 name = "encourage-rag"
-version = "0.3.4"
+version = "0.3.4.1"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [
@@ -96,9 +96,7 @@ lint.ignore = [
     "B008", # Do not perform function calls in argument defaults
     "B905", # `zip()` without an explicit `strict=` parameter
 ]
-exclude = [
-    "docs"
-]
+exclude = ["docs"]
 
 [tool.ruff.format]
 exclude = ["*.ipynb"]
