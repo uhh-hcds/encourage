@@ -105,7 +105,7 @@ class TestRerankerRAG(unittest.TestCase):
             rerank_ratio=2.0,
             device="cpu",
         )
-        reranker_rag = RerankerRAG(config=config)
+        reranker_rag: RerankerRAG = RerankerRAG(config=config)
 
         # Verify CrossEncoder was initialized with correct arguments
         mock_cross_encoder.assert_called_once_with(
