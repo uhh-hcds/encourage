@@ -4,40 +4,33 @@ description = "ENCOURAGE"
 name = "encourage-rag"
 version = "0.3.2.2"
 readme = "README.md"
-requires-python = ">= 3.9"
+requires-python = ">= 3.12"
 authors = [
     { name = "Jan Strich & dida Datenschmiede GmbH", email = "jan.strich@uni-hamburg.de" },
 ]
 dependencies = [
-    "jinja2",
-    "PyYAML",
-    "httpx>=0.26.0",
-    "httpcore>=0.15.0",
-    "tomlkit>=0.13.0",
-    "llama-index-vector-stores-qdrant",
-    "llama-index-vector-stores-chroma>=0.4.1",
-    "types-PyYAML",
-    "types-requests",
-    "tqdm==4.66.4",
-    "pre-commit",
-    "qdrant-client",
-    "uv==0.4.28",
-    "vllm>=0.8.4",
-    "tornado>=6.4.1",
-    "pydantic>=2.9.2",
-    "sentence-transformers>=3.2.1",
+    "bert-score>=0.3.13",
+    "chromadb>=1.0.10",
     "evaluate>=0.4.3",
     "ir-measures>=0.3.4",
-    "rouge-score>=0.1.2",
-    "nltk>=3.9.1",
-    "mlflow>=2.18.0",
-    "chromadb>=1.0.10",
+    "jinja2",
     "litellm>=1.53.3",
-    "accelerate",
-    "datasets>=3.5.0",
-    "rank-bm25>=0.2.2",
-    "smolagents>=1.14.0",
+    "mlflow>=2.18.0",
+    "msgspec==0.19.0",
+    "nltk>=3.9.1",
     "opentelemetry-exporter-otlp-proto-grpc==1.26.0",
+    "pre-commit",
+    "pydantic>=2.9.2",
+    "PyYAML",
+    "qdrant-client",
+    "rank-bm25>=0.2.2",
+    "rouge-score>=0.1.2",
+    "sentence-transformers>=3.2.1",
+    "tomlkit>=0.13.0",
+    "tornado>=6.4.1",
+    "tqdm==4.66.4",
+    "types-PyYAML",
+    "uv==0.4.28",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +40,7 @@ dev = [
     "notebook>=7.4.2",
     "matplotlib>=3.9.1",
     "ipywidgets>=8.1.5",
+    "tuna==0.5.11",
 ]
 ci = [
     "ruff",
