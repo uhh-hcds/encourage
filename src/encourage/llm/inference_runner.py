@@ -3,7 +3,7 @@
 import json
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, Type
+from typing import Any, Callable, Type
 
 from openai import OpenAI
 from openai.types.chat.chat_completion import (
@@ -16,11 +16,9 @@ from pydantic import BaseModel
 from tqdm import tqdm
 
 from encourage.llm.response_wrapper import ResponseWrapper
+from encourage.llm.sampling_params import SamplingParams
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
-
-if TYPE_CHECKING:
-    from vllm import SamplingParams
 
 
 class InferenceRunner(ABC):
@@ -28,7 +26,7 @@ class InferenceRunner(ABC):
 
     def __init__(
         self,
-        sampling_parameters: "SamplingParams",
+        sampling_parameters: SamplingParams,
         model_name: str,
         base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
@@ -51,7 +49,7 @@ class ChatInferenceRunner(InferenceRunner):
 
     def __init__(
         self,
-        sampling_parameters: "SamplingParams",
+        sampling_parameters: SamplingParams,
         model_name: str,
         base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
@@ -210,7 +208,7 @@ class OpenAIChatInferenceRunner(InferenceRunner):
 
     def __init__(
         self,
-        sampling_parameters: "SamplingParams",
+        sampling_parameters: SamplingParams,
         model_name: str,
     ):
         env_var_name = "OPENAI_API_KEY"
