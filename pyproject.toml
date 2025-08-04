@@ -82,7 +82,7 @@ filterwarnings = [
     "ignore:.*Mean of empty slice.*:RuntimeWarning",
     "ignore:.*invalid value encountered in scalar divide.*:RuntimeWarning",
 ]
-addopts = "-v -ra --cov=encourage"
+addopts = "-v -ra"
 pythonpath = ["."]
 
 
@@ -106,6 +106,9 @@ lint.ignore = [
     "B008", # Do not perform function calls in argument defaults
     "B905", # `zip()` without an explicit `strict=` parameter
 ]
+exclude = [
+    "docs"
+]
 
 [tool.ruff.format]
 exclude = ["*.ipynb"]
@@ -114,6 +117,11 @@ exclude = ["*.ipynb"]
 "test_*.py" = ["D", "E402"]
 "__init__.py" = ["D"]
 
-
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+[tool.coverage.run]
+omit = [
+    # omit pytorch-generated files in /tmp
+    "/tmp/*",
+]
