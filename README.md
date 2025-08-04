@@ -120,6 +120,10 @@ We welcome and value any contributions and collaborations. Please check out [Con
 
 This project is developed as cooperation project by the [HCDS](https://www.hcds.uni-hamburg.de) at the University of Hamburg and [dida GmbH](https://www.dida.do/).
 
+The research and development project is funded by the Federal Ministry of Research, Technology and Space (BMFTR) and supervised by the German Aerospace Center (DLR). 
+
+Funding code of the University of Hamburg: 01IS24044B
+
 <p align="center">
   <span style="margin-right: 100px;">
     <picture>
@@ -127,6 +131,7 @@ This project is developed as cooperation project by the [HCDS](https://www.hcds.
     <img alt="HCDS Logo" src="https://github.com/uhh-hcds/encourage/raw/main/assets/hcds_logo.png" width=20%>
   </picture>
   </span>
+  <span style="display:inline-block; width: 40px;"></span>
   <span style="margin-left: 100px;">
     <picture>
       <img alt="dida Logo" src="https://github.com/uhh-hcds/encourage/raw/main/assets/dida_logo.svg" width=20%>
