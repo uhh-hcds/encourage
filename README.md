@@ -1,7 +1,11 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Encourage Logo" width="140" /><br />
+  <picture>
+    <img alt="encourage" src="https://github.com/uhh-hcds/encourage/raw/main/assets/logo.png" width=20%>
+  </picture>
+  <br />
   <span style="font-size: 2em; font-weight: bold;">EncouRAGe</span>
 </p>
+
 <p align="center">
   <b>the all-in one solution for evaluate RAG methods</b>. <br /> <br />
   <img src="https://img.shields.io/github/last-commit/uhh-hcds/encourage" />
@@ -21,31 +25,36 @@ This repository provides a flexible library for running Retrieval-Augmented Gene
 It is designed to be modular and extensible, allowing users to easily integrate their own data and test them on RAG methods and calculate metrics.
 
 <p align="center">
-  <img src="assets/overview.png" alt="Encourage Logo" width="800px" /><br />
+  <picture>
+    <img alt="encourage" src="https://github.com/uhh-hcds/encourage/raw/main/assets/overview.png" width=100%>
+  </picture>
 </p>
 
+---
 
---- 
 ## Overview
-
 
 The following libraries are used to provide the core functionality:
 
 For Inference Runners:
+
 - 🏃 **[vllm](https://github.com/vllm-project/vllm)**
   - A fast and flexible framework for LLM inference.
 - 🚈 **[litellm](https://github.com/huggingface/transformers)**
   - A popular library for LLM proxy and inference.
 
 For Templates:
+
 - ⚙️ **[jinja2](https://github.com/pallets/jinja)**
   - Offers a template engine for dynamic prompt generation.
 
 For Evaluation Metrics:
+
 - 📊 **[evaluate](https://github.com/huggingface/evaluate)**
   - A library for easily accessing and computing a wide range of evaluation metrics.
 
 For Vector Databases:
+
 - 🔄 **[chroma](https://github.com/chroma-core/chroma)**
   - Strong in-memory vector database for efficient data retrieval.
 - 🧭 **[qdrant](https://github.com/qdrant/qdrant)**
@@ -64,12 +73,12 @@ To initialize the environment using `uv`, run the following command:
 ```bash
 uv sync
 ```
---- 
+
+---
 
 ### ⚡ Usage Inference Runners
 
 For understanding how to use the inference runners, refer to the following tutorials:
-
 
 - [BatchInferenceRunner](./docs/batch_inference.md)
 
@@ -100,6 +109,7 @@ For tracking the model performance, use the following commands:
 - [Track the model](./docs/mlflow.md)
 
 ---
+
 ### Contributing
 
 We welcome and value any contributions and collaborations. Please check out [Contributing to encourage](https://docs.vllm.ai/en/latest/contributing/index.html) for how to get involved.
@@ -112,9 +122,14 @@ This project is developed as cooperation project by the [HCDS](https://www.hcds.
 
 <p align="center">
   <span style="margin-right: 100px;">
-    <img src="assets/hcds_logo.png" alt="HCDS Logo" width="200" />
+    <picture>
+     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/uhh-hcds/encourage/raw/main/assets/hcds_logo_w.png" width=20%>
+    <img alt="HCDS Logo" src="https://github.com/uhh-hcds/encourage/raw/main/assets/hcds_logo.png" width=20%>
+  </picture>
   </span>
-  <span>
-    <img src="assets/dida_logo.svg" alt="Dida Logo" width="180" />
+  <span style="margin-left: 100px;">
+    <picture>
+      <img alt="dida Logo" src="https://github.com/uhh-hcds/encourage/raw/main/assets/dida_logo.svg" width=20%>
+    </picture>
   </span>
 </p>
