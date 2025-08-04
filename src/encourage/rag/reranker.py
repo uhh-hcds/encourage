@@ -35,6 +35,9 @@ class RerankerRAG(BaseRAG):
             **kwargs: Additional arguments.
 
         """
+        # Initialize parent with config parameters via dict unpacking
+        super().__init__(config=config)
+
         # Create reranker instance
         self.reranker_instance = Reranker(
             reranker_model=config.reranker_model,
@@ -44,9 +47,6 @@ class RerankerRAG(BaseRAG):
 
         # Calculate how many docs to initially retrieve for reranking
         self.initial_top_k = self.reranker_instance.calculate_initial_top_k(config.top_k)
-
-        # Initialize parent with config parameters via dict unpacking
-        super().__init__(config=config)
 
     @override
     def retrieve_contexts(
