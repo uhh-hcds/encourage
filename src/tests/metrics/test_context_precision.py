@@ -29,7 +29,7 @@ class TestContextPrecision(unittest.TestCase):
         mock_prompt_collection = mock_prompt_collection.return_value
         mock_prompt_collection.create_prompts.return_value = ["mock_prompt"] * len(self.responses)
 
-        self.runner.run.return_value = [
+        self.runner.run.return_value = [  # pyright: ignore[reportAttributeAccessIssue]
             MagicMock(verdict=1),
             MagicMock(verdict=0),
             MagicMock(verdict=1),
@@ -53,7 +53,7 @@ class TestContextPrecision(unittest.TestCase):
         self.assertEqual(result.misc["labeled_contexts"], [])
 
     def test_calculate_metric(self):
-        self.runner.run.return_value = [
+        self.runner.run.return_value = [  # pyright: ignore[reportAttributeAccessIssue]
             MagicMock(verdict=1),
             MagicMock(verdict=1),
             MagicMock(verdict=0),

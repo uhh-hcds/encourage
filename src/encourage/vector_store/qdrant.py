@@ -55,9 +55,12 @@ class QdrantCustomClient(VectorStore):
         self,
         collection_name: str,
         documents: list[Document],
+        batch_size: int = 2000,
         overwrite: bool = False,
     ) -> None:
         """Insert documents from a JSON file."""
+        logger.warning("Batch size is not implemented. All documents will be inserted at once.")
+
         if not self.client.collection_exists(collection_name):
             raise ValueError(f"Collection {collection_name} does not exist.")
 
@@ -87,6 +90,14 @@ class QdrantCustomClient(VectorStore):
         """Delete a Qdrant collection."""
         self.client.delete_collection(collection_name)
 
-    def query(self, collection_name: str, query: list, top_k: int = 10, **kwargs: Any) -> list:
+    def query(
+        self,
+        collection_name: str,
+        query: list,
+        top_k: int = 10,
+        batch_size: int = 2000,
+        **kwargs: Any,
+    ) -> list:
         """Query a Qdrant collection."""
+        logger.warning("Batch size is not implemented. All queries will be executed at once.")
         return self.client.search(collection_name, query, limit=top_k, **kwargs)

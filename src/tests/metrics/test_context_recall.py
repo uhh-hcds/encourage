@@ -10,7 +10,7 @@ class TestContextRecall(unittest.TestCase):
     def setUp(self) -> None:
         self.responses: ResponseWrapper = ResponseWrapper(create_responses(2))
         self.runner: BatchInferenceRunner = create_autospec(BatchInferenceRunner)
-        self.runner.run.return_value = ResponseWrapper(
+        self.runner.run.return_value = ResponseWrapper(  # pyright: ignore[reportAttributeAccessIssue]
             [
                 Response(
                     request_id="1",
@@ -65,7 +65,7 @@ class TestContextRecall(unittest.TestCase):
 
     def test_empty_responses(self) -> None:
         metric = ContextRecall(runner=self.runner)
-        self.runner.run.return_value = ResponseWrapper([])
+        self.runner.run.return_value = ResponseWrapper([])  # pyright: ignore[reportAttributeAccessIssue]
         empty_responses = ResponseWrapper([])
 
         result = metric(empty_responses)
@@ -78,7 +78,7 @@ class TestContextRecall(unittest.TestCase):
 
     def test_no_attributed_sentences(self) -> None:
         metric = ContextRecall(runner=self.runner)
-        self.runner.run.return_value = ResponseWrapper(
+        self.runner.run.return_value = ResponseWrapper(  # pyright: ignore[reportAttributeAccessIssue]
             [
                 Response(
                     request_id="1",

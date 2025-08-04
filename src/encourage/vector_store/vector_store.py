@@ -42,7 +42,7 @@ class VectorStore(ABC):
 
     @abstractmethod
     def insert_documents(
-        self, collection_name: str, vector_store_document: list[Document], batch_size: int
+        self, collection_name: str, documents: list[Document], batch_size: int
     ) -> None:
         """Insert documents."""
         pass
