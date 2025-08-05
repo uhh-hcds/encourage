@@ -361,7 +361,7 @@ class DropF1(Metric):
 
         scores: list[float] = []
         for r in responses:
-            prediction: str = r.response
+            prediction: str = str(r.response)
             references: Union[str, list[str]] = str(r.meta_data["reference_answer"]) or []
             if isinstance(references, str):
                 references = [references]
