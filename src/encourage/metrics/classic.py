@@ -1,5 +1,6 @@
 """Classic metrics for evaluating RAG."""
 
+import re
 from functools import cached_property
 from typing import Any, Union
 
@@ -95,8 +96,8 @@ class BLEU(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         output = self.metric.compute(
-            predictions=[r.response for r in responses],
-            references=[[r.meta_data["reference_answer"]] for r in responses],
+            predictions=[str(r.response) for r in responses],
+            references=[[str(r.meta_data["reference_answer"])] for r in responses],
             max_order=self.n_grams,
         )
 
@@ -123,8 +124,8 @@ class GLEU(Metric):
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Calls the metric calculation."""
         output = self.metric.compute(
-            predictions=[r.response for r in responses],
-            references=[r.meta_data["reference_answer"] for r in responses],
+            predictions=[str(r.response) for r in responses],
+            references=[str(r.meta_data["reference_answer"]) for r in responses],
         )
         if output is None or "google_bleu" not in output:
             return MetricOutput(score=0.0, raw=[])
@@ -158,9 +159,9 @@ class ROUGE(Metric):
         self.validate_nested_keys(responses)
 
         output = self.metric.compute(
-            predictions=[r.response for r in responses if "reference_answer" in r.meta_data],
+            predictions=[str(r.response) for r in responses if "reference_answer" in r.meta_data],
             references=[
-                r.meta_data["reference_answer"]
+                str(r.meta_data["reference_answer"])
                 for r in responses
                 if "reference_answer" in r.meta_data
             ],
@@ -200,8 +201,8 @@ class ROUGEDetailed(Metric):
         recall = []
         f1 = []
         for ref, pred in zip(
-            [r.meta_data["reference_answer"] for r in responses],
-            [r.response for r in responses],
+            [str(r.meta_data["reference_answer"]) for r in responses],
+            [str(r.response) for r in responses],
         ):
             score = self.scorer.score(ref or "", pred)
             precision.append(score[self.rouge_type].precision)
@@ -238,7 +239,7 @@ class BERTScore(Metric):
         self.validate_nested_keys(responses)
         result = self.metric.compute(
             predictions=[r.response for r in responses],
-            references=[r.meta_data["reference_answer"] for r in responses],
+            references=[str(r.meta_data["reference_answer"]) for r in responses],
             **self.metric_args,
         )
         if result is None or "f1" not in result:
@@ -289,7 +290,7 @@ class F1(Metric):
             formatted_references.append(
                 {
                     "id": str(i),
-                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
+                    "answers": [{"text": str(r.meta_data["reference_answer"]), "answer_start": 0}],
                 }
             )
 
@@ -323,7 +324,6 @@ class DropF1(Metric):
 
         def normalize_answer(s: str) -> str:
             """Lower text and remove punctuation, articles, and extra whitespace."""
-            import re
             import string
 
             def remove_articles(text: str) -> str:
@@ -362,7 +362,7 @@ class DropF1(Metric):
         scores: list[float] = []
         for r in responses:
             prediction: str = r.response
-            references: Union[str, list[str]] = r.meta_data["reference_answer"] or []
+            references: Union[str, list[str]] = str(r.meta_data["reference_answer"]) or []
             if isinstance(references, str):
                 references = [references]
             f1_scores = [compute_f1(ref, prediction) for ref in references]
@@ -402,14 +402,14 @@ class ExactMatch(Metric):
             formatted_predictions.append(
                 {
                     "id": str(i),
-                    "prediction_text": r.response,
+                    "prediction_text": str(r.response),
                     "no_answer_probability": 0.0,
                 }
             )
             formatted_references.append(
                 {
                     "id": str(i),
-                    "answers": [{"text": r.meta_data["reference_answer"], "answer_start": 0}],
+                    "answers": [{"text": str(r.meta_data["reference_answer"]), "answer_start": 0}],
                 }
             )
 
