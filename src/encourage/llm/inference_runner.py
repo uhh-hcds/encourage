@@ -221,13 +221,21 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         response_format: Type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Run the model with the given query."""
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=prompt.conversation.dialog,  # type: ignore
-            max_tokens=self.sampling_parameters.max_tokens,
-            temperature=self.sampling_parameters.temperature,
-            response_format=response_format,  # type: ignore
-        )
+        if response_format:
+            response = self.client.chat.completions.parse(
+                model=self.model_name,
+                messages=prompt.conversation.dialog,  # type: ignore
+                max_tokens=self.sampling_parameters.max_tokens,
+                temperature=self.sampling_parameters.temperature,
+                response_format=response_format,  # type: ignore
+            )
+        else:
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=prompt.conversation.dialog,  # type: ignore
+                max_tokens=self.sampling_parameters.max_tokens,
+                temperature=self.sampling_parameters.temperature,
+            )
         return ResponseWrapper.from_prompt_collection(
             [response], PromptCollection.from_prompts([prompt])
         )
