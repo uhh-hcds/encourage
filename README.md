@@ -40,8 +40,6 @@ For Inference Runners:
 
 - 🏃 **[vllm](https://github.com/vllm-project/vllm)**
   - A fast and flexible framework for LLM inference.
-- 🚈 **[litellm](https://github.com/huggingface/transformers)**
-  - A popular library for LLM proxy and inference.
 
 For Templates:
 
