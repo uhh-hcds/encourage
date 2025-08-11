@@ -51,6 +51,7 @@ def process_batches(
             results.append(future.result())
 
         except Exception as exc:
+            logging.error(f"Exception occurred while processing future: {exc}", exc_info=True)
             results.append(exc)
 
     return results
