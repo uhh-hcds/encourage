@@ -1,5 +1,6 @@
 """Batch processing handler for OpenAI completions."""
 
+import logging
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Any
 
