@@ -166,7 +166,7 @@ class BatchInferenceRunner(InferenceRunner):
         if response_format:
             if isinstance(response_format, type) and issubclass(response_format, BaseModel):
                 extra_body = {"guided_json": response_format.model_json_schema()}
-            elif isinstance(response_format, str):
+            if isinstance(response_format, str):
                 extra_body = {"guided_json": response_format}  # type: ignore
 
         all_messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
