@@ -21,7 +21,7 @@ def process_batches(
         max_workers (int): Number of threads for the executor.
 
     Returns:
-        list: List of futures for the submitted tasks.
+        list: List of completion results or exceptions for the submitted tasks.
 
     """
     from typing import Iterator
