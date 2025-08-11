@@ -238,7 +238,7 @@ class BERTScore(Metric):
         """Calls the metric calculation."""
         self.validate_nested_keys(responses)
         result = self.metric.compute(
-            predictions=[r.response for r in responses],
+            predictions=[str(r.response) for r in responses],
             references=[str(r.meta_data["reference_answer"]) for r in responses],
             **self.metric_args,
         )
@@ -361,7 +361,7 @@ class DropF1(Metric):
 
         scores: list[float] = []
         for r in responses:
-            prediction: str = r.response
+            prediction: str = str(r.response)
             references: Union[str, list[str]] = str(r.meta_data["reference_answer"]) or []
             if isinstance(references, str):
                 references = [references]
