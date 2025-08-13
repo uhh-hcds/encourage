@@ -24,7 +24,6 @@ class Conversation:
     def __init__(
         self, sys_prompt: str = "", user_prompt: str | Sequence[Collection[Any]] = ""
     ) -> None:
-        self.dialog = []
         self.sys_prompt = sys_prompt
         if sys_prompt != "":
             self.dialog = [
