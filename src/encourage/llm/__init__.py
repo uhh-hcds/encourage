@@ -6,7 +6,7 @@ from encourage.llm.inference_runner import (
 )
 from encourage.llm.response import Response
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.llm.sampling_params import SamplingParams
+from encourage.llm.vllm_classes import SamplingParams
 
 __all__ = [
     "BatchInferenceRunner",

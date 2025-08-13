@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from encourage.llm.batch_handler import process_batches
 from encourage.llm.response_wrapper import ResponseWrapper
-from encourage.llm.sampling_params import SamplingParams
+from encourage.llm.vllm_classes import SamplingParams
 from encourage.prompts.prompt import Prompt
 from encourage.prompts.prompt_collection import PromptCollection
 
@@ -160,6 +160,7 @@ class BatchInferenceRunner(InferenceRunner):
         prompt_collection: PromptCollection,
         response_format: Type[BaseModel] | str | None = None,
         max_workers: int = 100,
+        batch_size: int = 50,
     ) -> ResponseWrapper:
         """Run the model with the given queries."""
         extra_body: dict[str, Any] = {}
@@ -168,8 +169,6 @@ class BatchInferenceRunner(InferenceRunner):
                 extra_body = {"guided_json": response_format.model_json_schema()}
             if isinstance(response_format, str):
                 extra_body = {"guided_json": response_format}  # type: ignore
-
-        all_messages = [prompt.conversation.dialog for prompt in prompt_collection.prompts]
 
         # Prepare args for process_batches
         args: dict[str, Any] = {
@@ -183,9 +182,10 @@ class BatchInferenceRunner(InferenceRunner):
 
         all_responses = process_batches(
             client=self.client,
-            batch_messages=all_messages,
+            prompt_collection=prompt_collection,
             args=args,
             max_workers=max_workers,
+            batch_size=batch_size,
         )
         return ResponseWrapper.from_prompt_collection(all_responses, prompt_collection)
 
