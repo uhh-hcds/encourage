@@ -9,6 +9,7 @@ from openai.types.chat.chat_completion import ChatCompletion, Choice
 from openai.types.chat.chat_completion_message import ChatCompletionMessage
 
 from encourage.llm import Response, ResponseWrapper
+from encourage.llm.vllm_classes import CompletionOutput, RequestOutput
 from encourage.prompts import Context, Document, MetaData, PromptCollection
 
 fake: Faker = Faker()
@@ -179,6 +180,39 @@ def create_mock_chatcompletions(
         completions.append(chat_completion)
 
     return completions
+
+
+def create_mock_request_outputs(
+    n: int = 2,
+    contents: Optional[list[str]] = None,
+) -> list[RequestOutput]:
+    """Generate n mock RequestOutput objects."""
+    completion_outputs: list[CompletionOutput] = []
+    completion_outputs = [
+        CompletionOutput(
+            i,
+            text=contents[i] if contents and i < len(contents) else f"Response {i + 1}",
+            token_ids=[1, 2, 3],
+            cumulative_logprob=None,
+            logprobs=None,
+        )
+        for i in range(n)
+    ]
+
+    request_outputs: list[RequestOutput] = []
+
+    for i in range(n):
+        request_output: RequestOutput = RequestOutput(
+            request_id=str(uuid.uuid4()),
+            prompt="",
+            prompt_token_ids=[],
+            prompt_logprobs=[],
+            finished=True,
+            outputs=[completion_outputs[i]],
+        )
+        request_outputs.append(request_output)
+
+    return request_outputs
 
 
 def create_response_wrapper(prompt_response_pairs: int) -> ResponseWrapper:
