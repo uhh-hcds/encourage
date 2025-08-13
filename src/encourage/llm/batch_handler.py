@@ -56,7 +56,7 @@ def process_batches(
 
             completions: list[Future] = []
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                for sub_batch in chunks(batch_messages, 100):
+                for sub_batch in chunks(batch_messages, batch_size):
                     for message_list in sub_batch:
                         kwargs_modified = args.copy()
                         kwargs_modified.pop("max_workers", None)
