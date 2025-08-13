@@ -126,7 +126,7 @@ class ResponseWrapper:
         request_outputs: list[RequestOutput],
         collection: PromptCollection,
     ) -> "ResponseWrapper":
-        """Create ResponseWrapper from ChatCompletion and PromptCollection or Conversation."""
+        """Create ResponseWrapper from RequestOutput and PromptCollection."""
         if len(request_outputs) != len(collection.prompts):
             raise ValueError("The number of request outputs does not match the number of prompts.")
 
