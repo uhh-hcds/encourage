@@ -2,9 +2,10 @@
 
 import copy
 import logging
+from dataclasses import dataclass
 from enum import IntEnum
 from functools import cached_property
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 import msgspec
 
@@ -418,3 +419,133 @@ class SamplingParams(
             f"{self.spaces_between_special_tokens}, "
             f"extra_args={self.extra_args})"
         )
+
+
+@dataclass
+class CompletionOutput:
+    """The output data of one completion output of a request.
+
+    Args:
+        index: The index of the output in the request.
+        text: The generated output text.
+        token_ids: The token IDs of the generated output text.
+        cumulative_logprob: The cumulative log probability of the generated
+            output text.
+        logprobs: The log probabilities of the top probability words at each
+            position if the logprobs are requested.
+        finish_reason: The reason why the sequence is finished.
+        stop_reason: The stop string or token id that caused the completion
+            to stop, None if the completion finished for some other reason
+            including encountering the EOS token.
+        lora_request: The LoRA request that was used to generate the output.
+
+    """
+
+    index: int
+    text: str
+    token_ids: Sequence[int]
+    cumulative_logprob: Optional[float]
+    logprobs: Optional[Any]
+    finish_reason: Optional[str] = None
+    stop_reason: Union[int, str, None] = None
+    lora_request: Optional[Any] = None
+
+    def finished(self) -> bool:
+        """Check if the completion is finished."""
+        return self.finish_reason is not None
+
+    def __repr__(self) -> str:
+        return (
+            f"CompletionOutput(index={self.index}, "
+            f"text={self.text!r}, "
+            f"token_ids={self.token_ids}, "
+            f"cumulative_logprob={self.cumulative_logprob}, "
+            f"logprobs={self.logprobs}, "
+            f"finish_reason={self.finish_reason}, "
+            f"stop_reason={self.stop_reason})"
+        )
+
+
+@dataclass
+class RequestMetrics:
+    """Metrics associated with a request.
+
+    Attributes:
+        arrival_time: The time when the request arrived.
+        first_scheduled_time: The time when the request was first scheduled.
+        first_token_time: The time when the first token was generated.
+        time_in_queue: The time the request spent in the queue.
+        finished_time: The time when the request was finished.
+        scheduler_time: The time spent in the scheduler when this request was
+                        being considered by the scheduler.
+        model_forward_time: The time spent in the model forward pass when this
+                            request was in the batch.
+        model_execute_time: The time spent in the model execute function. This
+                            will include model forward, block/sync across
+                            workers, cpu-gpu sync time and sampling time.
+
+    """
+
+    arrival_time: float
+    last_token_time: float
+    first_scheduled_time: Optional[float]
+    first_token_time: Optional[float]
+    time_in_queue: Optional[float]
+    finished_time: Optional[float] = None
+    scheduler_time: Optional[float] = None
+    model_forward_time: Optional[float] = None
+    model_execute_time: Optional[float] = None
+
+
+class RequestOutput:
+    """The output data of a completion request to the LLM.
+
+    Args:
+        request_id: The unique ID of the request.
+        prompt: The prompt string of the request.
+                For encoder/decoder models, this is the
+                decoder input prompt.
+        prompt_token_ids: The token IDs of the prompt.
+                          For encoder/decoder models, this is the
+                          decoder input prompt token ids.
+        prompt_logprobs: The log probabilities to return per prompt token.
+        outputs: The output sequences of the request.
+        finished: Whether the whole request is finished.
+        metrics: Metrics associated with the request.
+        lora_request: The LoRA request that was used to generate the output.
+        encoder_prompt: The encoder prompt string of the request.
+                        None if decoder-only.
+        encoder_prompt_token_ids: The token IDs of the encoder prompt.
+                                  None if decoder-only.
+        num_cached_tokens: The number of tokens with prefix cache hit.
+
+    """
+
+    def __init__(
+        self,
+        request_id: str,
+        prompt: Optional[str],
+        prompt_token_ids: Optional[list[int]],
+        prompt_logprobs: Optional[Any],
+        outputs: list[CompletionOutput],
+        finished: bool,
+        metrics: Optional[RequestMetrics] = None,
+        lora_request: Optional[Any] = None,
+        encoder_prompt: Optional[str] = None,
+        encoder_prompt_token_ids: Optional[list[int]] = None,
+        num_cached_tokens: Optional[int] = None,
+        *,
+        multi_modal_placeholders: Optional[Any] = None,
+    ) -> None:
+        self.request_id = request_id
+        self.prompt = prompt
+        self.prompt_token_ids = prompt_token_ids
+        self.multi_modal_placeholders = multi_modal_placeholders or {}
+        self.prompt_logprobs = prompt_logprobs
+        self.outputs = outputs
+        self.finished = finished
+        self.metrics = metrics
+        self.lora_request = lora_request
+        self.encoder_prompt = encoder_prompt
+        self.encoder_prompt_token_ids = encoder_prompt_token_ids
+        self.num_cached_tokens = num_cached_tokens

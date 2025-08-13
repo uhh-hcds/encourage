@@ -4,7 +4,11 @@ from typing import Optional
 from encourage.llm import ResponseWrapper
 from encourage.llm.response import Response
 from encourage.prompts.prompt_collection import PromptCollection
-from tests.fake_responses import create_mock_chatcompletions, create_prompt_collection
+from tests.fake_responses import (
+    create_mock_chatcompletions,
+    create_mock_request_outputs,
+    create_prompt_collection,
+)
 
 
 class TestResponseWrapper(unittest.TestCase):
@@ -20,8 +24,11 @@ class TestResponseWrapper(unittest.TestCase):
             "What would a pirate drink?",
             "What would a pirate wear?",
         ]
+        self.chat_completions = create_mock_chatcompletions(5, content)
+        self.request_outputs = create_mock_request_outputs(5, content)
+
         self.response_wrapper: ResponseWrapper = ResponseWrapper.from_prompt_collection(
-            create_mock_chatcompletions(5, content),
+            self.chat_completions,
             self.prompt_collection,
         )
 
@@ -35,6 +42,15 @@ class TestResponseWrapper(unittest.TestCase):
         response = self.response_wrapper.response_data[1]
         self.assertEqual(response.prompt_id, str(self.prompt_collection.prompts[1].id))
         self.assertEqual(response.response, "What would a pirate do?")
+
+    def test_from_request_outputs(self):
+        """Test creation of ResponseWrapper from RequestOutput."""
+        response_wrapper: ResponseWrapper = ResponseWrapper.from_request_output(
+            self.request_outputs,
+            self.prompt_collection,
+        )
+        self.assertIsInstance(response_wrapper, ResponseWrapper)
+        self.assertEqual(len(response_wrapper.response_data), len(self.request_outputs))
 
     def test_get_response_by_prompt_id(self):
         """Test get_response_by_prompt_id method."""

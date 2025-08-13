@@ -6,6 +6,7 @@ from typing import Iterator, Optional
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
 
 from encourage.llm.response import Response
+from encourage.llm.vllm_classes import RequestOutput
 from encourage.prompts.context import Context
 from encourage.prompts.conversation import Conversation, Role
 from encourage.prompts.meta_data import MetaData
@@ -116,6 +117,42 @@ class ResponseWrapper:
             context=context,
             meta_data=meta_data,
             arrival_time=(chat_completion.created if chat_completion.created is not None else 0.0),
+            finished_time=0.0,
+        )
+
+    @classmethod
+    def from_request_output(
+        cls,
+        request_outputs: list[RequestOutput],
+        collection: PromptCollection,
+    ) -> "ResponseWrapper":
+        """Create ResponseWrapper from ChatCompletion and PromptCollection or Conversation."""
+        if len(request_outputs) != len(collection.prompts):
+            raise ValueError("The number of request outputs does not match the number of prompts.")
+
+        # Create responses for each chat_completion and its corresponding prompt
+        responses = [
+            cls.handle_request_outputs(request_output, prompt)
+            for request_output, prompt in zip(request_outputs, collection.prompts)
+        ]
+        return cls(responses)
+
+    @staticmethod
+    def handle_request_outputs(
+        request_output: RequestOutput,
+        prompt: Prompt,
+    ) -> Response:
+        """Handle a single request output and its corresponding prompt."""
+        return Response(
+            request_id=request_output.request_id,
+            prompt_id=str(prompt.id),
+            conversation_id=0,
+            sys_prompt=prompt.conversation.sys_prompt,
+            user_prompt=prompt.conversation.get_last_message_by_user(),
+            response=request_output.outputs[0].text if request_output.outputs else "No response",
+            meta_data=prompt.meta_data,
+            context=prompt.context,
+            arrival_time=0.0,
             finished_time=0.0,
         )
 
