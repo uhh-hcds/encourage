@@ -143,13 +143,21 @@ class ResponseWrapper:
         prompt: Prompt,
     ) -> Response:
         """Handle a single request output and its corresponding prompt."""
+        # Store a list of output texts in the response
+        if not request_output.outputs:
+            response_texts = "No response"
+        elif len(request_output.outputs) == 1:
+            response_texts = request_output.outputs[0].text
+        else:
+            response_texts = [o.text for o in request_output.outputs]
+
         return Response(
             request_id=request_output.request_id,
             prompt_id=str(prompt.id),
             conversation_id=0,
             sys_prompt=prompt.conversation.sys_prompt,
             user_prompt=prompt.conversation.get_last_message_by_user(),
-            response=request_output.outputs[0].text if request_output.outputs else "No response",
+            response=response_texts,
             meta_data=prompt.meta_data,
             context=prompt.context,
             arrival_time=0.0,
