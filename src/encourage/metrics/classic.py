@@ -251,8 +251,8 @@ class BERTScore(Metric):
         )
 
 
-@register_metric("F1SQuAD_v2")
-class F1SQuAD_v2(Metric):
+@register_metric("F1SquadV2")
+class F1SquadV2(Metric):
     """Computes the F1 score for the generated answers."""
 
     def __init__(self) -> None:
@@ -621,8 +621,6 @@ class ExactMatch(Metric):
                     "answers": [{"text": str(r.meta_data["reference_answer"]), "answer_start": 0}],
                 }
             )
-        print(formatted_predictions)
-        print(formatted_references)
         # Call the compute function with formatted data
         output = self.metric.compute(
             predictions=formatted_predictions,

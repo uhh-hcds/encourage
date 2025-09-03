@@ -2,22 +2,22 @@ from encourage.metrics.answer_faithfulness import AnswerFaithfulness
 from encourage.metrics.answer_relevance import AnswerRelevance
 from encourage.metrics.answer_similarity import AnswerSimilarity
 from encourage.metrics.classic import (
+    BLEU,
+    F1,
+    GLEU,
+    ROUGE,
     Accuracy,
     BERTScore,
-    BLEU,
     ContextLength,
     ExactMatch,
-    F1,
-    F1SQuAD_v2,
+    F1SquadV2,
     GeneratedAnswerLength,
-    GLEU,
     HitRateAtK,
     MeanReciprocalRank,
     Precision,
     Recall,
     RecallAtK,
     ReferenceAnswerLength,
-    ROUGE,
     ROUGEDetailed,
 )
 from encourage.metrics.context_precision import ContextPrecision
@@ -43,7 +43,7 @@ __all__ = [
     "ContextRecall",
     "ExactMatch",
     "F1",
-    "F1SQuAD_v2"
+    "F1SquadV2",
     "GeneratedAnswerLength",
     "get_metric_from_registry",
     "GLEU",
