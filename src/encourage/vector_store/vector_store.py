@@ -48,6 +48,22 @@ class VectorStore(ABC):
         pass
 
     @abstractmethod
+    def get_collection(self, collection_name: str) -> Any:
+        """Get a collection by name.
+
+        Args:
+            collection_name: The name of the collection to retrieve
+
+        Returns:
+            Collection object (implementation-specific type)
+
+        Raises:
+            ValueError: If the collection does not exist
+
+        """
+        pass
+
+    @abstractmethod
     def query(
         self, collection_name: str, query: list, top_k: int, batch_size: int, **kwargs: Any
     ) -> list[list[Document]]:

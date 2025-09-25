@@ -85,6 +85,27 @@ class ChromaClient(VectorStore):
         )
         return collection.count()
 
+    def get_collection(
+        self,
+        collection_name: str,
+    ) -> chromadb.Collection:
+        """Get a collection by name.
+
+        Args:
+            collection_name: The name of the collection to retrieve
+
+        Returns:
+            ChromaDB Collection object
+
+        Raises:
+            NotFoundError: If the collection does not exist
+
+        """
+        try:
+            return self.client.get_collection(name=collection_name)
+        except NotFoundError as e:
+            raise ValueError(f"Collection '{collection_name}' does not exist.") from e
+
     def list_collections(self) -> Sequence[Collection]:
         """Get the list of collections."""
         return self.client.list_collections()
