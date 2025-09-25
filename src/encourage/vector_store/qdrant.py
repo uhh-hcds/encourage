@@ -80,6 +80,22 @@ class QdrantCustomClient(VectorStore):
         )
         logger.info(f"{len(documents)} documents inserted into collection {collection_name}.")
 
+    def get_collection(self, collection_name: str) -> common_types.CollectionInfo:
+        """Get a Qdrant collection.
+
+        Args:
+            collection_name: The name of the collection to retrieve
+
+        Returns:
+            Qdrant CollectionInfo object containing collection metadata
+
+        Raises:
+            ValueError: If the collection does not exist
+        """
+        if not self.client.collection_exists(collection_name):
+            raise ValueError(f"Collection {collection_name} does not exist.")
+        return self.client.get_collection(collection_name)
+
     def get_or_create_collection(self, collection_name: str) -> common_types.CollectionInfo:
         """Get or create a Qdrant collection."""
         if not self.client.collection_exists(collection_name):
