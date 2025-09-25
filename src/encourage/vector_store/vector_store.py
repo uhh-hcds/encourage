@@ -59,6 +59,7 @@ class VectorStore(ABC):
 
         Raises:
             ValueError: If the collection does not exist
+
         """
         pass
 

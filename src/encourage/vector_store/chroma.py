@@ -99,11 +99,10 @@ class ChromaClient(VectorStore):
 
         Raises:
             NotFoundError: If the collection does not exist
+
         """
         try:
-            return self.client.get_collection(
-            name=collection_name
-        )
+            return self.client.get_collection(name=collection_name)
         except NotFoundError as e:
             raise ValueError(f"Collection '{collection_name}' does not exist.") from e
 

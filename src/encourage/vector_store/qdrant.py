@@ -91,6 +91,7 @@ class QdrantCustomClient(VectorStore):
 
         Raises:
             ValueError: If the collection does not exist
+
         """
         if not self.client.collection_exists(collection_name):
             raise ValueError(f"Collection {collection_name} does not exist.")
