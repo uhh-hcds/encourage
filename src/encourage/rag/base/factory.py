@@ -34,7 +34,13 @@ class RAGFactory:
         """Instantiate the correct RAG subclass using the registry and config."""
         if "method" not in cfg:
             raise KeyError('Missing required "method" key in config.')
-        method = RAGMethod[cfg["method"]]
+        try:
+            method = RAGMethod[cfg["method"]]
+        except KeyError:
+            valid_methods = ", ".join(RAGMethod.__members__.keys())
+            raise ValueError(
+                f"Invalid RAG method '{cfg['method']}'. Valid methods are: {valid_methods}"
+            )
         if method not in cls.registry:
             raise KeyError(f"RAG method '{method}' is not registered.")
         config_cls, rag_cls = cls.registry[method]
