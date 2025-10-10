@@ -33,7 +33,7 @@ class RAGFactory:
     def create(cls, cfg: dict) -> RAGType:  # pyright: ignore[reportInvalidTypeVarUse]
         """Instantiate the correct RAG subclass using the registry and config."""
         if "method" not in cfg:
-            raise KeyError("RAG method 'method' is not specified in the config.")
+            raise KeyError('Missing required "method" key in config.')
         method = RAGMethod[cfg["method"]]
         if method not in cls.registry:
             raise KeyError(f"RAG method '{method}' is not registered.")
