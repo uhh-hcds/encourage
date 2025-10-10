@@ -2,7 +2,7 @@
 
 description = "ENCOURAGE"
 name = "encourage-rag"
-version = "0.3.5.2"
+version = "0.3.5.3"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [
@@ -30,7 +30,7 @@ dependencies = [
     "tornado>=6.4.1",
     "tqdm==4.66.4",
     "types-PyYAML",
-    "uv==0.4.28",
+    "uv>=0.4.28",
 ]
 
 [project.optional-dependencies]

@@ -127,6 +127,19 @@ class TestChromaClient(unittest.TestCase):
 
         print("Query for multiple documents executed successfully.")
 
+    def test_get_collection(self):
+        """Test getting a collection."""
+        collection = self.chroma_client.get_collection("test_collection")
+        self.assertIsNotNone(collection)
+        self.assertEqual(collection.name, "test_collection")
+        print("Collection retrieved successfully.")
+
+    def test_get_collection_not_found(self):
+        """Test getting a non-existent collection."""
+        with self.assertRaises(ValueError):
+            self.chroma_client.get_collection("non_existent_collection")
+        print("Non-existent collection handling tested successfully.")
+
     def test_delete_collection(self):
         """Test deleting a collection."""
 

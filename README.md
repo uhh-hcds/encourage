@@ -110,7 +110,7 @@ For tracking the model performance, use the following commands:
 
 ### Contributing
 
-We welcome and value any contributions and collaborations. Please check out [Contributing to encourage](https://docs.vllm.ai/en/latest/contributing/index.html) for how to get involved.
+We welcome and value any contributions and collaborations. Please check out [Contributing to encourage](./CONTRIBUTING.md) for how to get involved.
 
 ---
 
