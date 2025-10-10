@@ -257,8 +257,8 @@ class F1(Metric):
 
     def __init__(self) -> None:
         super().__init__(
-            name="f1",
-            description="F1 score for the generated answers",
+            name="f1squad",
+            description="Squad score for the generated answers",
             required_meta_data=["reference_answer"],
         )
 
@@ -266,7 +266,7 @@ class F1(Metric):
 
     @cached_property
     def load_metric(self) -> Any:
-        """Loads the F1 metric."""
+        """Loads the F1 SQuAD v2 metric."""
         from evaluate import load
 
         return load("squad_v2")
@@ -304,6 +304,216 @@ class F1(Metric):
             return MetricOutput(score=0.0, raw=[])
         return MetricOutput(
             score=float(np.mean(output["f1"]) / 100), raw=output["f1"], misc={"output": output}
+        )
+
+
+@register_metric("F1Classification")
+class F1Classification(Metric):
+    """Computes the F1 score for the generated answers."""
+
+    def __init__(self, average="binary", pos_label="True") -> None:
+        super().__init__(
+            name="f1",
+            description="F1 score for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.average = average
+        self.metric = self.load_metric
+        self.pos_label = pos_label
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the F1 metric."""
+        from evaluate import load
+
+        return load("f1")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        # Initialize empty lists for formatted predictions and references
+        formatted_predictions = []
+        formatted_references = []
+
+        # Iterate over predictions and references
+        for r in responses:
+            formatted_predictions.append(1 if str(r.response) == self.pos_label else 0)
+            formatted_references.append(
+                1 if str(r.meta_data["reference_answer"]) == self.pos_label else 0
+            )
+        print(formatted_predictions, formatted_references)
+
+        # Call the compute function with formatted data
+        output = self.metric.compute(
+            predictions=formatted_predictions,
+            references=formatted_references,
+            average=self.average,
+            pos_label=1,
+        )
+        if output is None or "f1" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=output["f1"],
+            raw=output["f1"],
+            misc={
+                "average": self.average,
+                "pos_label": self.pos_label,
+                "predictions": str(formatted_predictions),
+                "references": str(formatted_references),
+            },
+        )
+
+
+@register_metric("Precision")
+class Precision(Metric):
+    """Computes the Precision score for the generated answers."""
+
+    def __init__(self, average="binary") -> None:
+        super().__init__(
+            name="precision",
+            description="Precision score for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.average = average
+        self.metric = self.load_metric
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the Precision metric."""
+        from evaluate import load
+
+        return load("precision")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        # Initialize empty lists for formatted predictions and references
+        formatted_predictions = []
+        formatted_references = []
+
+        # Use zip to iterate over predictions and references
+        for r in responses:
+            formatted_predictions.append(1 if str(r.response).lower() == "true" else 0)
+            formatted_references.append(
+                1 if str(r.meta_data["reference_answer"]).lower() == "true" else 0
+            )
+
+        # Call the compute function with formatted data
+        output = self.metric.compute(
+            predictions=formatted_predictions, references=formatted_references, average=self.average
+        )
+        if output is None or "precision" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=output["precision"],
+            raw=output["precision"],
+            misc={
+                "average": self.average,
+                "predictions": str(formatted_predictions),
+                "references": str(formatted_references),
+            },
+        )
+
+
+@register_metric("Recall")
+class Recall(Metric):
+    """Computes the Recall score for the generated answers."""
+
+    def __init__(self, average="binary") -> None:
+        super().__init__(
+            name="recall",
+            description="Recall score for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.average = average
+        self.metric = self.load_metric
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the Recall metric."""
+        from evaluate import load
+
+        return load("recall")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        # Initialize empty lists for formatted predictions and references
+        formatted_predictions = []
+        formatted_references = []
+
+        # Use zip to iterate over predictions and references
+        for r in responses:
+            formatted_predictions.append(1 if str(r.response).lower() == "true" else 0)
+            formatted_references.append(
+                1 if str(r.meta_data["reference_answer"]).lower() == "true" else 0
+            )
+
+        # Call the compute function with formatted data
+        output = self.metric.compute(
+            predictions=formatted_predictions, references=formatted_references, average=self.average
+        )
+        if output is None or "recall" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=output["recall"],
+            raw=output["recall"],
+            misc={
+                "average": self.average,
+                "predictions": str(formatted_predictions),
+                "references": str(formatted_references),
+            },
+        )
+
+
+@register_metric("Accuracy")
+class Accuracy(Metric):
+    """Computes the Accuracy score."""
+
+    def __init__(self, average="binary") -> None:
+        super().__init__(
+            name="accuracy",
+            description="Accuracy for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+        self.average = average
+        self.metric = self.load_metric
+
+    @cached_property
+    def load_metric(self) -> Any:
+        """Loads the Accuracy metric."""
+        from evaluate import load
+
+        return load("accuracy")
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        # Initialize empty lists for formatted predictions and references
+        formatted_predictions = []
+        formatted_references = []
+
+        # Use zip to iterate over predictions and references
+        for r in responses:
+            formatted_predictions.append(1 if str(r.response).lower() == "true" else 0)
+            formatted_references.append(
+                1 if str(r.meta_data["reference_answer"]).lower() == "true" else 0
+            )
+
+        # Call the compute function with formatted data
+        output = self.metric.compute(
+            predictions=formatted_predictions,
+            references=formatted_references,
+        )
+        if output is None or "accuracy" not in output:
+            return MetricOutput(score=0.0, raw=[])
+        return MetricOutput(
+            score=output["accuracy"],
+            raw=output["accuracy"],
+            misc={
+                "predictions": str(formatted_predictions),
+                "references": str(formatted_references),
+            },
         )
 
 
@@ -412,7 +622,6 @@ class ExactMatch(Metric):
                     "answers": [{"text": str(r.meta_data["reference_answer"]), "answer_start": 0}],
                 }
             )
-
         # Call the compute function with formatted data
         output = self.metric.compute(
             predictions=formatted_predictions,
