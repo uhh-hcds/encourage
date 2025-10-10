@@ -30,13 +30,10 @@ class RAGFactory:
         return decorator  # pyright: ignore[reportReturnType]
 
     @classmethod
-    def create(cls, name: RAGMethod, config: ConfigType) -> RAGType:  # pyright: ignore[reportInvalidTypeVarUse]
+    def create(cls, name: RAGMethod, cfg: dict) -> RAGType:  # pyright: ignore[reportInvalidTypeVarUse]
         """Instantiate the correct RAG subclass using the registry and config."""
         if name not in cls.registry:
             raise KeyError(f"RAG method '{name}' is not registered.")
         config_cls, rag_cls = cls.registry[name]
-        if not isinstance(config, config_cls):
-            raise TypeError(
-                f"Expected config of type {config_cls.__name__}, got {type(config).__name__}"
-            )
+        config = config_cls(**cfg)
         return cast(RAGType, rag_cls(config))
