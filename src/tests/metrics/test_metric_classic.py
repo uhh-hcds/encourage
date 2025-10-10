@@ -5,7 +5,6 @@ from unittest.mock import patch
 from encourage.llm import ResponseWrapper
 from encourage.metrics import (
     BLEU,
-    F1,
     GLEU,
     ROUGE,
     BERTScore,
@@ -18,6 +17,7 @@ from encourage.metrics import (
     RecallAtK,
     ReferenceAnswerLength,
 )
+from encourage.metrics.classic import F1, F1Classification
 from encourage.prompts import Document, MetaData
 from tests.fake_responses import create_responses
 
@@ -141,6 +141,41 @@ class TestMetrics(unittest.TestCase):
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
         self.assertAlmostEqual(output.score, 0.83, places=2)
+
+    def test_f1_classification(self):
+        metric = F1Classification(average="binary", pos_label="True")
+        meta_data_list = [
+            MetaData(
+                tags={
+                    "reference_answer": "True",
+                }
+            ),
+            MetaData(
+                tags={
+                    "reference_answer": "False",
+                }
+            ),
+            MetaData(
+                tags={
+                    "reference_answer": "True",
+                }
+            ),
+            MetaData(
+                tags={
+                    "reference_answer": "False",
+                }
+            ),
+        ]
+        output = metric(
+            ResponseWrapper(
+                create_responses(
+                    4, ["True", "False", "False", "True"], meta_data_list=meta_data_list
+                )
+            )
+        )
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.5, places=2)
 
     def test_exact_match(self):
         metric = ExactMatch()

@@ -6,7 +6,10 @@ from typing import Any, override
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Document
-from encourage.rag.base.config import SummarizationContextRAGConfig, SummarizationRAGConfig
+from encourage.rag.base.config import (
+    SummarizationContextRAGConfig,
+    SummarizationRAGConfig,
+)
 from encourage.rag.base.enum import RAGMethod
 from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG

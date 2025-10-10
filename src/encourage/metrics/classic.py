@@ -251,8 +251,8 @@ class BERTScore(Metric):
         )
 
 
-@register_metric("F1SquadV2")
-class F1SquadV2(Metric):
+@register_metric("F1")
+class F1(Metric):
     """Computes the F1 score for the generated answers."""
 
     def __init__(self) -> None:
@@ -307,8 +307,8 @@ class F1SquadV2(Metric):
         )
 
 
-@register_metric("F1")
-class F1(Metric):
+@register_metric("F1Classification")
+class F1Classification(Metric):
     """Computes the F1 score for the generated answers."""
 
     def __init__(self, average="binary", pos_label="True") -> None:
@@ -341,13 +341,14 @@ class F1(Metric):
             formatted_references.append(
                 1 if str(r.meta_data["reference_answer"]) == self.pos_label else 0
             )
+        print(formatted_predictions, formatted_references)
 
         # Call the compute function with formatted data
         output = self.metric.compute(
             predictions=formatted_predictions,
             references=formatted_references,
             average=self.average,
-            pos_label=self.pos_label,
+            pos_label=1,
         )
         if output is None or "f1" not in output:
             return MetricOutput(score=0.0, raw=[])
