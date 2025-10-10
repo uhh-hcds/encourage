@@ -30,11 +30,11 @@ class SummarizationRAG(BaseRAG):
 
         """
         """Initialize RAG method with configuration."""
-        context_collection = super().filter_duplicates(self.context_collection)
+        context_collection = super().filter_duplicates(config.context_collection)
         if not isinstance(config.runner, BatchInferenceRunner):
             raise TypeError("config.runner must be an instance of BatchInferenceRunner")
         summaries = self.create_summaries(
-            config.runner, config.additional_prompt, context_collection
+            config.runner, config.additional_prompt, context_collection, config.template_name
         )
         super().__init__(config.model_copy(update={"context_collection": summaries}))
 
@@ -43,13 +43,14 @@ class SummarizationRAG(BaseRAG):
         runner: BatchInferenceRunner,
         additional_prompt: str,
         context_collection: list[Document],
+        template_name: str,
     ) -> list[Document]:
         """Create summary from the QA dataset."""
         user_prompts = [context.content for context in context_collection]
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=additional_prompt,
             user_prompts=user_prompts,
-            template_name=self.template_name,
+            template_name=template_name,
         )
         responses = runner.run(prompt_collection)
         sum_mapping = {

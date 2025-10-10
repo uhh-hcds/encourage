@@ -17,7 +17,7 @@ from encourage.metrics import (
     RecallAtK,
     ReferenceAnswerLength,
 )
-from encourage.metrics.classic import F1, F1Classification
+from encourage.metrics.classic import F1, NDCG, F1Classification, MeanAveragePrecision
 from encourage.prompts import Document, MetaData
 from tests.fake_responses import create_responses
 
@@ -190,6 +190,20 @@ class TestMetrics(unittest.TestCase):
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
         self.assertAlmostEqual(output.score, 0.6, places=2)
+
+    def test_mean_average_precision(self):
+        metric = MeanAveragePrecision()
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.6, places=2)
+
+    def test_normalized_discounted_cumulative_gain(self):
+        metric = NDCG()
+        output = metric(self.responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertIsInstance(output.score, float)
+        self.assertAlmostEqual(output.score, 0.693, places=2)
 
     def test_recall(self):
         metric = RecallAtK(2)
