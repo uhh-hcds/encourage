@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Type, TypeVar, cast
 from encourage.rag.base.enum import RAGMethod
 
 if TYPE_CHECKING:
-    from encourage.rag.base.config import BaseRAGConfig  # Adjust if needed
+    from encourage.rag.base.config import BaseRAGConfig
     from encourage.rag.base_impl import BaseRAG
 
 # Generic type vars
@@ -36,11 +36,11 @@ class RAGFactory:
             raise KeyError('Missing required "method" key in config.')
         try:
             method = RAGMethod[cfg["method"]]
-        except KeyError:
+        except KeyError as err:
             valid_methods = ", ".join(RAGMethod.__members__.keys())
             raise ValueError(
                 f"Invalid RAG method '{cfg['method']}'. Valid methods are: {valid_methods}"
-            )
+            ) from err
         if method not in cls.registry:
             raise KeyError(f"RAG method '{method}' is not registered.")
         config_cls, rag_cls = cls.registry[method]
