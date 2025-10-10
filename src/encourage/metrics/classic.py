@@ -341,7 +341,6 @@ class F1Classification(Metric):
             formatted_references.append(
                 1 if str(r.meta_data["reference_answer"]) == self.pos_label else 0
             )
-        print(formatted_predictions, formatted_references)
 
         # Call the compute function with formatted data
         output = self.metric.compute(
@@ -671,6 +670,48 @@ class MeanReciprocalRank(RetrievalMetric):
         qrels, run = self.responses_to_trec(responses)
         mrr = ir_measures.MRR()
         scores = [score.value for score in mrr.iter_calc(qrels, run)]
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
+
+
+@register_metric("MeanAveragePrecision")
+class MeanAveragePrecision(RetrievalMetric):
+    """Computes the Mean Average Precision (MAP) for the responses."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="map",
+            description="Mean Average Precision (MAP) for the responses",
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        qrels, run = self.responses_to_trec(responses)
+        map_metric = ir_measures.AP()
+        scores = [score.value for score in map_metric.iter_calc(qrels, run)]
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
+
+
+@register_metric("NDCG")
+class NDCG(RetrievalMetric):
+    """Computes the Normalized Discounted Cumulative Gain (NDCG) for the responses."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="ndcg",
+            description="Normalized Discounted Cumulative Gain (NDCG) for the responses",
+            required_meta_data=["reference_document"],
+            required_documents=True,
+        )
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Calls the metric calculation."""
+        self.validate_nested_keys(responses)
+        qrels, run = self.responses_to_trec(responses)
+        ndcg_metric = ir_measures.NDCG()
+        scores = [score.value for score in ndcg_metric.iter_calc(qrels, run)]
         return MetricOutput(score=float(np.mean(scores)), raw=scores)
 
 
