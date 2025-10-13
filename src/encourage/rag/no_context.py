@@ -25,7 +25,9 @@ class NoContext(BaseRAG):
             config (KnownContextConfig): Configuration object with parameters.
 
         """
-        super().__init__(config)
+        self.template_name = config.template_name
+        self.collection_name = config.collection_name
+        self.retrieval_only = config.retrieval_only
 
     @override
     def run(
@@ -38,16 +40,12 @@ class NoContext(BaseRAG):
         response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Run inference on no context."""
-        # Use template_name from class instance
-
-        template_name = self.template_name
-
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             meta_datas=meta_datas,
-            template_name=template_name,
+            template_name=self.template_name,
         )
 
         if self.retrieval_only:

@@ -192,11 +192,46 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(output.score, 0.6, places=2)
 
     def test_mean_average_precision(self):
+        document_list = [
+            [
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"), content="Here is an example content"
+                ),
+            ],
+            [
+                Document(id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content="Here is example content"),
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"), content="Here is an example content"
+                ),
+            ],
+        ]
+        meta_data_list = [
+            MetaData(
+                tags={
+                    "reference_answer": "This is a generated answer.",
+                    "reference_document": document_list[0][:1],
+                }
+            ),
+            MetaData(
+                tags={
+                    "reference_answer": "Another reference answer.",
+                    "reference_document": document_list[1][1:],
+                }
+            ),
+        ]
+        responses = ResponseWrapper(
+            create_responses(
+                2,
+                ["This is a generated answer.", "Another generated answer."],
+                document_list,
+                meta_data_list,
+            )
+        )
         metric = MeanAveragePrecision()
-        output = metric(self.responses)
+        output = metric(responses)
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
-        self.assertAlmostEqual(output.score, 0.6, places=2)
+        self.assertAlmostEqual(output.score, 0.75, places=2)
 
     def test_normalized_discounted_cumulative_gain(self):
         metric = NDCG()
