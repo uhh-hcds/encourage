@@ -1,6 +1,7 @@
 """Classic metrics for evaluating RAG."""
 
 import re
+import uuid
 from functools import cached_property
 from typing import Any, Union
 
@@ -10,6 +11,7 @@ import numpy as np
 from encourage.llm.response_wrapper import ResponseWrapper
 from encourage.metrics.metric import Metric, MetricOutput
 from encourage.metrics.registry import register_metric
+from encourage.prompts.context import Document
 
 
 @register_metric("GeneratedAnswerLength")
@@ -643,7 +645,15 @@ class RetrievalMetric(Metric):
         qrels, run = {}, {}
         for response in responses:
             query_id = response.request_id
-            relevant = {str(response.meta_data["reference_document"].id): 1}  # type: ignore
+            ref_doc = response.meta_data["reference_document"]
+            if ref_doc is None:
+                ref_doc = Document(id=uuid.UUID(int=0), content="")
+            if isinstance(ref_doc, list):
+                relevant = {str(doc.id): 1 for doc in ref_doc}  # type: ignore
+            elif isinstance(ref_doc, Document):
+                relevant = {str(ref_doc.id): 1}
+            else:
+                raise ValueError("reference_document must be a Document or list of Documents")
             retrieved = {
                 str(document.id): document.score for document in response.context.documents
             }

@@ -27,7 +27,10 @@ class KnownContext(BaseRAG):
             **kwargs: Additional arguments passed to BaseRAG.
 
         """
-        super().__init__(config)
+        self.context_collection = config.context_collection
+        self.template_name = config.template_name
+        self.collection_name = config.collection_name
+        self.retrieval_only = config.retrieval_only
 
     @override
     def run(
@@ -44,16 +47,13 @@ class KnownContext(BaseRAG):
         # instead of retrieving based on instructions
         self.contexts = [Context.from_documents([doc]) for doc in self.context_collection]
 
-        # Use template_name from class instance
-        template_name = self.template_name
-
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
             contexts=self.contexts,
             meta_datas=meta_datas,
-            template_name=template_name,
+            template_name=self.template_name,
         )
 
         if self.retrieval_only:
