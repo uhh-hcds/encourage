@@ -12,6 +12,7 @@ from encourage.rag.base.enum import RAGMethod
 from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base.interface import RAGMethodInterface
 from encourage.rag.base_impl import BaseRAG
+from encourage.rag.bm25 import BM25RAG
 from encourage.rag.hybrid_bm25 import HybridBM25RAG
 from encourage.rag.hyde import HydeRAG
 from encourage.rag.known_context import KnownContext
@@ -31,6 +32,7 @@ __all__ = [
     "SummarizationContextRAG",
     "RerankerRAG",
     "HybridBM25RAG",
+    "BM25RAG",
     "SelfRAG",
     "BaseRAGConfig",
     "HydeRAGConfig",
