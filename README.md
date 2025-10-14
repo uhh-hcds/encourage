@@ -120,7 +120,7 @@ This project is developed as cooperation project by the [HCDS](https://www.hcds.
 
 The research and development project is funded by the Federal Ministry of Research, Technology and Space (BMFTR) and supervised by the German Aerospace Center (DLR). 
 
-Funding code of the University of Hamburg: 01IS24044B
+Funding code of the University of Hamburg: 16IS24044B
 
 <p align="center">
   <span style="margin-right: 100px;">
