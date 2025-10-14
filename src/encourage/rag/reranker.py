@@ -99,12 +99,13 @@ class RerankerRAG(BaseRAG):
         """Execute the complete RAG pipeline with reranking and return responses."""
         # Generate queries and retrieve contexts with reranking
         if retrieval_queries:
+            user_prompts = retrieval_queries
             logger.info(f"Generating {len(retrieval_queries)} retrieval queries.")
-            retrieved_documents = self.retrieve_contexts(retrieval_queries)
-            self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
             logger.info(f"Using {len(user_prompts)} user prompts for retrieval.")
-            retrieved_documents = self.retrieve_contexts(user_prompts)
+
+        retrieved_documents = self.retrieve_contexts(user_prompts)
+        self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
 
         # Create prompt collection with template_name from class
         prompt_collection = PromptCollection.create_prompts(
