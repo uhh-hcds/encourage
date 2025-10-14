@@ -46,7 +46,7 @@ class BM25RAG(BaseRAG):
         sparse_docs = [self.documents[i] for i in top_indices]
 
         # Normalize scores to [0,1]
-        max_score = max(bm25_scores) if bm25_scores.any() else 1.0
+        max_score = max(bm25_scores) if len(bm25_scores) > 0 else 1.0
         if max_score > 0:
             normalized = {
                 self.documents[i].id: float(score) / float(max_score)
