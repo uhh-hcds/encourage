@@ -18,4 +18,5 @@ class RAGMethod(Enum):
     Reranker = "Reranker"
     HydeReranker = "HydeReranker"
     HybridBM25 = "HybridBM25"
+    BM25 = "BM25"
     SelfRAG = "SelfRAG"

@@ -54,6 +54,15 @@ class HybridBM25RAGConfig(BaseRAGConfig):
     beta: float = 0.5
 
 
+class BM25RAGConfig(BaseRAGConfig):
+    """Configuration for a BM25-only RAG method.
+
+    This inherits all base config fields and does not add new params.
+    """
+
+    pass
+
+
 class RerankerRAGConfig(BaseRAGConfig):
     """Configuration for RerankerRAG method extending BaseRAGConfig.
 
