@@ -70,7 +70,7 @@ class JinaV3(Reranker):
             logger.warning(f"No documents to rerank for query: '{query}'")
             return []
 
-        # Get only top 3 results
+        # Get only top_k results
         document_contents = [doc.content for doc in documents]
         scores = self.reranker_model.rerank(query, document_contents, top_n=top_k)
         scored_documents = sorted(zip(scores, documents), key=lambda pair: pair[0], reverse=True)
