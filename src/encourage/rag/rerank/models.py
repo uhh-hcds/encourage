@@ -53,6 +53,7 @@ class JinaV3(Reranker):
             trust_remote_code=True,
         )
 
+    @override
     def rerank_documents(self, query: str, documents: list[Document], top_k: int) -> list[Document]:
         """Rerank documents based on relevance to the query.
 
