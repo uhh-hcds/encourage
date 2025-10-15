@@ -13,7 +13,7 @@ from encourage.rag.base.config import RerankerRAGConfig
 from encourage.rag.base.enum import RAGMethod
 from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base_impl import BaseRAG
-from encourage.rag.reranker_base import Reranker
+from encourage.rag.rerank.factory import RerankerFactory
 from encourage.utils.llm_mock import create_mock_response_wrapper
 
 logger = logging.getLogger(__name__)
@@ -39,9 +39,9 @@ class RerankerRAG(BaseRAG):
         super().__init__(config=config)
 
         # Create reranker instance
-        self.reranker_instance = Reranker(
-            reranker_model=config.reranker_model,
+        self.reranker_instance = RerankerFactory.create(
             rerank_ratio=config.rerank_ratio,
+            model=config.reranker_model,
             device=config.device,
         )
 
