@@ -1,10 +1,19 @@
 """Module implementing a reranker that uses a cross-encoder model to improve retrieval quality."""
 
 import logging
+from abc import abstractmethod
+from enum import Enum
 
 from encourage.prompts.context import Document
 
 logger = logging.getLogger(__name__)
+
+
+class RerankerModel(str, Enum):
+    """Predefined reranker model names."""
+
+    MS_MARCO = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    JINA_V3 = "jinaai/jina-reranker-v3"
 
 
 class Reranker:
@@ -24,7 +33,6 @@ class Reranker:
 
     def __init__(
         self,
-        reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
         rerank_ratio: float = 3.0,
         device: str = "cuda",
     ) -> None:
@@ -37,38 +45,14 @@ class Reranker:
             device: Device to use for reranker model
 
         """
-        from sentence_transformers import CrossEncoder
-
-        self.reranker_model = reranker_model
         self.rerank_ratio = rerank_ratio
         self.device = device
-
-        # Load the reranker model
-        logger.info(f"Loading reranker model: {reranker_model}")
-
-        self.reranker = CrossEncoder(reranker_model, device=device)
 
     def calculate_initial_top_k(self, top_k: int) -> int:
         """Calculate how many documents to retrieve initially for reranking."""
         return max(int(top_k * self.rerank_ratio), top_k + 2)
 
+    @abstractmethod
     def rerank_documents(self, query: str, documents: list[Document], top_k: int) -> list[Document]:
-        """Rerank documents based on relevance to the query.
-
-        Args:
-            query: The query to rank documents against
-            documents: list of documents to rerank
-            top_k: Number of documents to return after reranking
-
-        Returns:
-            list of documents reranked by relevance
-
-        """
-        if not documents:
-            logger.warning(f"No documents to rerank for query: '{query}'")
-            return []
-
-        scores = self.reranker.predict([(query, doc.content) for doc in documents])
-        scored_documents = sorted(zip(scores, documents), key=lambda pair: pair[0], reverse=True)
-        top_documents = [doc for _, doc in scored_documents[:top_k]]
-        return top_documents
+        """Rerank documents based on relevance to the query."""
+        pass

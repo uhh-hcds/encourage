@@ -89,7 +89,7 @@ class TestRerankerRAG(unittest.TestCase):
         if hasattr(self, "rag") and hasattr(self.rag, "client"):
             self.rag.client.delete_collection(self.collection_name)
 
-    @patch("sentence_transformers.CrossEncoder")
+    @patch("encourage.rag.rerank.models.CrossEncoder")
     def test_reranker_initialization(self, mock_cross_encoder):
         # Setup mock for CrossEncoder
         mock_cross_encoder.return_value = MagicMock()
@@ -116,7 +116,7 @@ class TestRerankerRAG(unittest.TestCase):
         self.assertEqual(reranker_rag.initial_top_k, 4)  # top_k * rerank_ratio = 2 * 2.0
         self.assertEqual(reranker_rag.top_k, 2)  # Original top_k preserved
 
-    @patch("sentence_transformers.CrossEncoder")
+    @patch("encourage.rag.rerank.models.CrossEncoder")
     def test_retrieve_contexts_with_reranking(self, mock_cross_encoder):
         # Setup the mock for CrossEncoder
         mock_instance = MagicMock()
@@ -153,7 +153,7 @@ class TestRerankerRAG(unittest.TestCase):
         # Note: since the reranking scores are mocked, we're not testing the actual order,
         # just that the right number of documents is returned
 
-    @patch("sentence_transformers.CrossEncoder")
+    @patch("encourage.rag.rerank.models.CrossEncoder")
     def test_run_with_mocked_runner(self, mock_cross_encoder):
         # Setup CrossEncoder mock
         mock_cross_encoder.return_value = MagicMock()
@@ -190,7 +190,7 @@ class TestRerankerRAG(unittest.TestCase):
         self.assertIsInstance(result, ResponseWrapper)
         self.assertEqual(result.response_data, self.responses.response_data)
 
-    @patch("sentence_transformers.CrossEncoder")
+    @patch("encourage.rag.rerank.models.CrossEncoder")
     def test_reranker_edge_case_empty_documents(self, mock_cross_encoder):
         # Setup CrossEncoder mock
         mock_instance = MagicMock()
