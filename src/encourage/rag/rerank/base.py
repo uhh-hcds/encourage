@@ -33,7 +33,7 @@ class Reranker:
 
     def __init__(
         self,
-        rerank_ratio: float = 3.0,
+        rerank_ratio: float = 1.0,
         device: str = "cuda",
     ) -> None:
         """Initialize a Reranker with configuration.
@@ -41,7 +41,7 @@ class Reranker:
         Args:
             reranker_model: Name or path of the cross-encoder reranker model
             rerank_ratio: How many times more documents to retrieve initially for reranking
-                (e.g., 3.0 means retrieve 3*top_k documents initially)
+                (e.g., 1.0 means retrieve 1*top_k documents initially)
             device: Device to use for reranker model
 
         """
@@ -50,7 +50,7 @@ class Reranker:
 
     def calculate_initial_top_k(self, top_k: int) -> int:
         """Calculate how many documents to retrieve initially for reranking."""
-        return max(int(top_k * self.rerank_ratio), top_k + 2)
+        return max(int(top_k * self.rerank_ratio), top_k)
 
     @abstractmethod
     def rerank_documents(self, query: str, documents: list[Document], top_k: int) -> list[Document]:

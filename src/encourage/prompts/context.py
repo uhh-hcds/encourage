@@ -30,7 +30,7 @@ class Document:
         return {
             "content": self.content if not truncated else self.content[:100],
             "score": self.score,
-            "distance": self.distance,
+            "distance": str(self.distance) if self.distance is not None else None,
             "id": str(self.id),
             "meta_data": self.meta_data.to_dict(),
         }
