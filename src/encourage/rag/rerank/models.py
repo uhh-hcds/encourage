@@ -3,6 +3,7 @@
 import logging
 from typing import override
 
+import torch
 from sentence_transformers import CrossEncoder
 from transformers import AutoModel
 
@@ -49,7 +50,7 @@ class JinaV3(Reranker):
         super().__init__(rerank_ratio=rerank_ratio, device=device)
         self.reranker_model = AutoModel.from_pretrained(
             "jinaai/jina-reranker-v3",
-            dtype="auto",
+            torch_dtype=torch.float16,
             trust_remote_code=True,
         )
 
@@ -72,7 +73,12 @@ class JinaV3(Reranker):
 
         # Get only top_k results
         document_contents = [doc.content for doc in documents]
-        scores = self.reranker_model.rerank(query, document_contents, top_n=top_k)
-        scored_documents = sorted(zip(scores, documents), key=lambda pair: pair[0], reverse=True)
-        top_documents = [doc for _, doc in scored_documents[:top_k]]
+        results = self.reranker_model.rerank(query, document_contents, top_n=top_k)
+
+        top_documents = []
+        for result in results:
+            original_doc = documents[result["index"]]
+            original_doc.distance = result["relevance_score"]
+            top_documents.append(original_doc)
+
         return top_documents

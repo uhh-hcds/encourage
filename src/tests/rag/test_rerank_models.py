@@ -39,7 +39,10 @@ class TestRerankModels(unittest.TestCase):
         # Create a mock model that has rerank method
         model_instance = MagicMock()
         # Suppose rerank returns scores aligned with documents
-        model_instance.rerank.return_value = [0.7, 0.2]
+        model_instance.rerank.return_value = [
+            {"document": "Doc B", "index": 1, "relevance_score": 0.95},
+            {"document": "Doc A", "index": 0, "relevance_score": 0.85},
+        ]
         mock_auto_model.from_pretrained.return_value = model_instance
 
         reranker = JinaV3(rerank_ratio=2.0, device="cpu")
