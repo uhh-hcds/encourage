@@ -78,9 +78,7 @@ class RerankerRAG(BaseRAG):
 
         reranked_results: list[list[Document]] = []
 
-        for _, (query, documents) in enumerate(
-            tqdm(zip(query_list, initial_results), desc="Reranking", total=len(query_list))
-        ):
+        for query, documents in tqdm(zip(query_list, initial_results), desc="Reranking", total=len(query_list)):
             # Rerank documents using the reranker
             print(len(documents))
             reranked_documents = self.reranker_instance.rerank_documents(
