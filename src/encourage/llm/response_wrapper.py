@@ -1,9 +1,10 @@
 """Module that defines the ResponseWrapper class."""
 
 import logging
-from typing import Iterator, Optional
+from typing import Any, Iterator, Optional
 
 from openai.types.chat import ChatCompletion, ChatCompletionMessage
+from openai.types.chat.chat_completion import Choice
 
 from encourage.llm.response import Response
 from encourage.llm.vllm_classes import RequestOutput
@@ -43,6 +44,7 @@ class ResponseWrapper:
     def handle_prompt_response(cls, chat_completion: ChatCompletion, prompt: Prompt) -> Response:
         """Create a Response object from a ChatCompletion and Prompt."""
         prompt.conversation = transform_chat_completion_to_conversation(prompt.conversation)
+        chat_completion = handle_errors_in_chat_completion(chat_completion)
 
         return Response(
             request_id=chat_completion.id,
@@ -237,3 +239,29 @@ def transform_chat_completion_to_conversation(conversation: Conversation) -> Con
         new_dialog.append(message)
     conversation.dialog = new_dialog
     return conversation
+
+
+def handle_errors_in_chat_completion(chat_completion: Any) -> ChatCompletion:
+    """Handles errors in ChatCompletion objects."""
+    if isinstance(chat_completion, Exception):
+        logger.error(f"Error in chat completion: {chat_completion}")
+
+        return ChatCompletion(
+            id="error",
+            object="chat.completion",
+            created=0,
+            model="unknown",
+            choices=[
+                Choice(
+                    index=0,
+                    message=ChatCompletionMessage(
+                        role="assistant",
+                        content=f"Error: {str(chat_completion)}",
+                    ),
+                    finish_reason="stop",
+                )
+            ],
+            usage=None,
+        )
+    else:
+        return chat_completion
