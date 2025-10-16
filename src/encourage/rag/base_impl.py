@@ -98,6 +98,9 @@ class BaseRAG(RAGMethodInterface):
         self, context_collection: list[Document] | list[Context]
     ) -> list[Document]:
         """Filter out duplicate documents from the context collection."""
+        if not context_collection:
+            return []
+
         documents = (
             [d for c in context_collection for d in c.documents]  # type: ignore
             if isinstance(context_collection[0], Context)

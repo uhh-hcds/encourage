@@ -80,7 +80,6 @@ class RerankerRAG(BaseRAG):
 
         for query, documents in tqdm(zip(query_list, initial_results), desc="Reranking", total=len(query_list)):
             # Rerank documents using the reranker
-            print(len(documents))
             reranked_documents = self.reranker_instance.rerank_documents(
                 query=query, documents=documents, top_k=original_top_k
             )
