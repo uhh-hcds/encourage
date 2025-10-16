@@ -44,8 +44,10 @@ class KnownContext(BaseRAG):
     ) -> ResponseWrapper:
         """Run inference on known context."""
         # For KnownContext, we always use the predefined context collection
-        # instead of retrieving based on instructions
-        self.contexts = [Context.from_documents([doc]) for doc in self.context_collection]
+        if not isinstance(self.context_collection[0], Context):
+            self.contexts = [Context.from_documents([doc]) for doc in self.context_collection]
+        else:
+            self.contexts = self.context_collection
 
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(

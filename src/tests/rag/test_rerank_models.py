@@ -43,6 +43,7 @@ class TestRerankModels(unittest.TestCase):
             {"document": "Doc B", "index": 1, "relevance_score": 0.95},
             {"document": "Doc A", "index": 0, "relevance_score": 0.85},
         ]
+        model_instance.to.return_value = model_instance  # Mock the .to(device) call
         mock_auto_model.from_pretrained.return_value = model_instance
 
         reranker = JinaV3(rerank_ratio=2.0, device="cpu")
