@@ -94,12 +94,23 @@ class BaseRAG(RAGMethodInterface):
         # self.check_quota = False
         return embedding_functions.SentenceTransformerEmbeddingFunction(name, device=device)
 
-    def filter_duplicates(self, context_collection: list[Document]) -> list[Document]:
+    def filter_duplicates(
+        self, context_collection: list[Document] | list[Context]
+    ) -> list[Document]:
         """Filter out duplicate documents from the context collection."""
+        if not context_collection:
+            return []
+
+        documents = (
+            [d for c in context_collection for d in c.documents]  # type: ignore
+            if isinstance(context_collection[0], Context)
+            else context_collection
+        )
+
         unique_documents = {}
-        for document in context_collection:
-            if document.id not in unique_documents:
-                unique_documents[document.id] = document
+        for document in documents:
+            if document.id not in unique_documents:  # type: ignore
+                unique_documents[document.id] = document  # type: ignore
         return list(unique_documents.values())
 
     def init_db(

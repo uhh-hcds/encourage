@@ -4,6 +4,7 @@ import logging
 from typing import Any, override
 
 from pydantic import BaseModel
+from tqdm import tqdm
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
@@ -77,7 +78,9 @@ class RerankerRAG(BaseRAG):
 
         reranked_results: list[list[Document]] = []
 
-        for _, (query, documents) in enumerate(zip(query_list, initial_results)):
+        for query, documents in tqdm(
+            zip(query_list, initial_results), desc="Reranking", total=len(query_list)
+        ):
             # Rerank documents using the reranker
             reranked_documents = self.reranker_instance.rerank_documents(
                 query=query, documents=documents, top_k=original_top_k

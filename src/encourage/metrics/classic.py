@@ -648,8 +648,8 @@ class RetrievalMetric(Metric):
             ref_doc = response.meta_data["reference_document"]
             if ref_doc is None:
                 ref_doc = Document(id=uuid.UUID(int=0), content="")
-            if isinstance(ref_doc, list):
-                relevant = {str(doc.id): 1 for doc in ref_doc}  # type: ignore
+            elif isinstance(ref_doc, list):
+                relevant = {str(doc.id if hasattr(doc, "id") else doc["id"]): 1 for doc in ref_doc}  # type: ignore
             elif isinstance(ref_doc, Document):
                 relevant = {str(ref_doc.id): 1}
             else:

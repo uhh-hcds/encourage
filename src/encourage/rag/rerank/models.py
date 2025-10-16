@@ -52,7 +52,7 @@ class JinaV3(Reranker):
             "jinaai/jina-reranker-v3",
             torch_dtype=torch.float16,
             trust_remote_code=True,
-        )
+        ).to(device)
 
     @override
     def rerank_documents(self, query: str, documents: list[Document], top_k: int) -> list[Document]:
