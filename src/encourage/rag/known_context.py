@@ -44,7 +44,9 @@ class KnownContext(BaseRAG):
     ) -> ResponseWrapper:
         """Run inference on known context."""
         # For KnownContext, we always use the predefined context collection
-        if not isinstance(self.context_collection[0], Context):
+        if not self.context_collection:
+            self.contexts = []
+        elif not isinstance(self.context_collection[0], Context):
             self.contexts = [Context.from_documents([doc]) for doc in self.context_collection]
         else:
             self.contexts = self.context_collection
