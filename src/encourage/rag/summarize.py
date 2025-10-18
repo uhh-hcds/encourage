@@ -75,8 +75,7 @@ class SummarizationContextRAG(SummarizationRAG):
 
     def __init__(self, config: SummarizationContextRAGConfig):
         """Initialize RAG method with configuration."""
-        self.original_context = config.context_collection
-        self.original_context = self.transform_contexts_to_documents(self.original_context)
+        self.original_context = self.transform_contexts_to_documents(config.context_collection)
         super().__init__(config)
 
     @override
