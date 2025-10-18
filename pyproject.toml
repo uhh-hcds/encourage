@@ -2,7 +2,7 @@
 
 description = "ENCOURAGE"
 name = "encourage-rag"
-version = "0.3.6"
+version = "0.3.6.dev0"
 readme = "README.md"
 requires-python = ">= 3.12"
 authors = [
