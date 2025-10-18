@@ -5,7 +5,7 @@ from typing import Any, override
 
 from encourage.llm import BatchInferenceRunner
 from encourage.prompts import PromptCollection
-from encourage.prompts.context import Document
+from encourage.prompts.context import Context, Document
 from encourage.rag.base.config import (
     SummarizationContextRAGConfig,
     SummarizationRAGConfig,
@@ -76,6 +76,7 @@ class SummarizationContextRAG(SummarizationRAG):
     def __init__(self, config: SummarizationContextRAGConfig):
         """Initialize RAG method with configuration."""
         self.original_context = config.context_collection
+        self.original_context = self.transform_contexts_to_documents(self.original_context)
         super().__init__(config)
 
     @override
@@ -107,3 +108,11 @@ class SummarizationContextRAG(SummarizationRAG):
                     doc.meta_data = original.meta_data
 
         return document_lists
+
+    def transform_contexts_to_documents(self, contexts: list[Context]) -> list[Document]:
+        """Transform Context objects to Document objects."""
+        documents = []
+        for context in contexts:
+            for doc in context.documents:
+                documents.append(doc)
+        return documents
