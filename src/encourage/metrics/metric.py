@@ -102,10 +102,6 @@ class Metric(ABC):
                 )
 
             for doc in response.context.documents:
-                if not doc.content:
-                    raise ValueError(
-                        f"Each document must contain 'content' for {self._name} metric."
-                    )
                 if doc.score is not None and not isinstance(doc.score, (int, float)):
                     raise ValueError(
                         f"Document score must be a number or None for {self._name} metric."
