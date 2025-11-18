@@ -769,7 +769,7 @@ wheels = [
 
 [[package]]
 name = "encourage-rag"
-version = "0.3.6"
+version = "0.3.7"
 source = { editable = "." }
 dependencies = [
     { name = "bert-score" },
