@@ -44,18 +44,19 @@ class KnownContext(BaseRAG):
     ) -> ResponseWrapper:
         """Run inference on known context."""
         # For KnownContext, we always use the predefined context collection
+        contexts: list[Context]
         if not self.context_collection:
-            self.contexts = []
+            contexts = []
         elif not isinstance(self.context_collection[0], Context):
-            self.contexts = [Context.from_documents([doc]) for doc in self.context_collection]
+            contexts = [Context.from_documents([doc]) for doc in self.context_collection]
         else:
-            self.contexts = self.context_collection
+            contexts = self.context_collection  # type: ignore[assignment]
 
         # Create prompt collection
         prompt_collection = PromptCollection.create_prompts(
             sys_prompts=sys_prompt,
             user_prompts=user_prompts,
-            contexts=self.contexts,
+            contexts=contexts,
             meta_datas=meta_datas,
             template_name=self.template_name,
         )

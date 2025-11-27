@@ -11,7 +11,7 @@ class TestNonAnswerCritic(unittest.TestCase):
         self.responses = ResponseWrapper(create_responses(n=2))
         self.runner = create_autospec(BatchInferenceRunner)
         self.non_answer_critic = NonAnswerCritic(self.runner)
-        self.non_answer_critic._runner.run = MagicMock(return_value=[])
+        self.non_answer_critic._runner.run = MagicMock(return_value=[])  # type: ignore[assignment]
 
     @patch("encourage.prompts.prompt_collection.PromptCollection", autospec=True)
     def test_call_with_responses(self, mock_prompt_collection):
