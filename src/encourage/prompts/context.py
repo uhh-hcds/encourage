@@ -42,7 +42,9 @@ class Document:
             content=doc_dict["content"],
             score=doc_dict["score"],
             distance=doc_dict["distance"],
-            id=uuid.UUID(doc_dict["id"]),
+            id=doc_dict["id"]
+            if isinstance(doc_dict["id"], uuid.UUID)
+            else uuid.UUID(str(doc_dict["id"])),
             meta_data=MetaData.from_dict(doc_dict["meta_data"]),
         )
 
