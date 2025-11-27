@@ -42,7 +42,9 @@ class Document:
             content=doc_dict["content"],
             score=doc_dict["score"],
             distance=doc_dict["distance"],
-            id=uuid.UUID(doc_dict["id"]),
+            id=doc_dict["id"]
+            if isinstance(doc_dict["id"], uuid.UUID)
+            else uuid.UUID(str(doc_dict["id"])),
             meta_data=MetaData.from_dict(doc_dict["meta_data"]),
         )
 
@@ -112,14 +114,14 @@ class Context:
 
     @staticmethod
     def _process_single_document(
-        document: Document | str,
+        document: Document | str | dict[str, Any],
         meta_data: MetaData = MetaData(),
         doc_id: uuid.UUID | None = None,
     ) -> Document:
         """Process a single document, converting it to a Document instance if needed.
 
         Args:
-            document (Document | str): The document to process.
+            document (Document | str | dict[str, Any]): The document to process.
             Can be:
             - A string: Converted to a Document with default score.
             - A dict: Converted to a Document using 'content' and 'score' keys.
@@ -134,10 +136,12 @@ class Context:
         if doc_id is None:
             doc_id = uuid.uuid4()
 
-        if isinstance(document, str):
+        if isinstance(document, Document):
+            return document
+        elif isinstance(document, str):
             return Document(content=document, score=0.0, id=doc_id, meta_data=meta_data)
         elif isinstance(document, dict):
-            document_dict: dict[str, Any] = dict(document)
+            document_dict: dict[str, Any] = document
             doc_id_value = document_dict.get("id")
             if doc_id_value is None:
                 doc_id_value = uuid.uuid4()
@@ -153,7 +157,8 @@ class Context:
                 meta_data=meta_data,
                 distance=document_dict.get("distance"),
             )
-        return document
+        else:
+            raise TypeError(f"Unsupported document type: {type(document)}")
 
     @classmethod
     def _process_documents(
