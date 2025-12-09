@@ -17,7 +17,13 @@ from encourage.metrics import (
     RecallAtK,
     ReferenceAnswerLength,
 )
-from encourage.metrics.classic import F1, NDCG, F1Classification, MeanAveragePrecision
+from encourage.metrics.classic import (
+    F1,
+    NDCG,
+    F1Classification,
+    MeanAveragePrecision,
+    SubstringEM,
+)
 from encourage.prompts import Document, MetaData
 from tests.fake_responses import create_responses
 
@@ -253,6 +259,126 @@ class TestMetrics(unittest.TestCase):
         self.assertIsInstance(output, MetricOutput)
         self.assertIsInstance(output.score, float)
         self.assertAlmostEqual(output.score, 0.5)
+
+    def test_substring_em_exact_match(self):
+        """Test SubstringEM when prediction exactly matches reference."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": "Paris"}),
+            MetaData(tags={"reference_answer": "London"}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["Paris", "London"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertAlmostEqual(output.score, 1.0)
+        self.assertEqual(output.raw, [1, 1])
+
+    def test_substring_em_substring_match(self):
+        """Test SubstringEM when reference is a substring of prediction."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": "Paris"}),
+            MetaData(tags={"reference_answer": "42"}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(
+                2,
+                ["The capital of France is Paris.", "The answer is 42 degrees."],
+                meta_data_list=meta_data_list,
+            )
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertAlmostEqual(output.score, 1.0)
+        self.assertEqual(output.raw, [1, 1])
+
+    def test_substring_em_no_match(self):
+        """Test SubstringEM when there is no match."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": "Paris"}),
+            MetaData(tags={"reference_answer": "Berlin"}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["London", "Madrid"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertAlmostEqual(output.score, 0.0)
+        self.assertEqual(output.raw, [0, 0])
+
+    def test_substring_em_normalization(self):
+        """Test SubstringEM with normalization (case, punctuation, articles)."""
+        metric = SubstringEM()
+        meta_data_list = [
+            # Case insensitivity
+            MetaData(tags={"reference_answer": "PARIS"}),
+            # Punctuation removal
+            MetaData(tags={"reference_answer": "hello, world!"}),
+            # Article removal
+            MetaData(tags={"reference_answer": "the quick fox"}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(
+                3,
+                ["paris", "Hello World", "A quick fox jumps"],
+                meta_data_list=meta_data_list,
+            )
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertAlmostEqual(output.score, 1.0)
+        self.assertEqual(output.raw, [1, 1, 1])
+
+    def test_substring_em_multiple_ground_truths(self):
+        """Test SubstringEM with multiple valid ground truths (list)."""
+        metric = SubstringEM()
+        meta_data_list = [
+            # Multiple valid answers, one matches
+            MetaData(tags={"reference_answer": ["Paris", "City of Light"]}),
+            # Multiple valid answers, none match
+            MetaData(tags={"reference_answer": ["Berlin", "Munich"]}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(
+                2,
+                ["The answer is Paris", "The answer is London"],
+                meta_data_list=meta_data_list,
+            )
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        self.assertAlmostEqual(output.score, 0.5)
+        self.assertEqual(output.raw, [1, 0])
+
+    def test_substring_em_partial_match(self):
+        """Test SubstringEM with mixed results."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": "correct"}),
+            MetaData(tags={"reference_answer": "wrong"}),
+            MetaData(tags={"reference_answer": "another"}),
+            MetaData(tags={"reference_answer": "test"}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(
+                4,
+                [
+                    "This is correct answer",
+                    "This is incorrect",
+                    "Something else",
+                    "This is a test case",
+                ],
+                meta_data_list=meta_data_list,
+            )
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # 2 matches out of 4: "correct" in response 1, "test" in response 4
+        self.assertAlmostEqual(output.score, 0.5)
+        self.assertEqual(output.raw, [1, 0, 0, 1])
 
 
 if __name__ == "__main__":

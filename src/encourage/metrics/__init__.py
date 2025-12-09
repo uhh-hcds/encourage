@@ -19,6 +19,7 @@ from encourage.metrics.classic import (
     RecallAtK,
     ReferenceAnswerLength,
     ROUGEDetailed,
+    SubstringEM,
 )
 from encourage.metrics.context_precision import ContextPrecision
 from encourage.metrics.context_recall import ContextRecall
@@ -61,4 +62,5 @@ __all__ = [
     "register_metric",
     "ROUGE",
     "ROUGEDetailed",
+    "SubstringEM",
 ]

@@ -1,6 +1,6 @@
 """Factory for creating RAG pipeline instances."""
 
-from typing import TYPE_CHECKING, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, Type, TypeVar, cast
 
 from encourage.rag.base.enum import RAGMethod
 
@@ -20,14 +20,16 @@ class RAGFactory:
     registry: dict[RAGMethod, tuple[Type[ConfigType], Type[RAGType]]] = {}  # pyright: ignore[reportGeneralTypeIssues]
 
     @classmethod
-    def register(cls, name: RAGMethod, config_cls: Type[ConfigType]) -> Type[RAGType]:  # pyright: ignore[reportInvalidTypeVarUse]
+    def register(
+        cls, name: RAGMethod, config_cls: Type[ConfigType]
+    ) -> Callable[[Type[RAGType]], Type[RAGType]]:  # pyright: ignore[reportInvalidTypeVarUse]
         """Decorator to register a RAG class with its config type."""
 
         def decorator(rag_cls: Type[RAGType]) -> Type[RAGType]:
             cls.registry[name] = (config_cls, rag_cls)
             return rag_cls
 
-        return decorator  # pyright: ignore[reportReturnType]
+        return decorator
 
     @classmethod
     def create(cls, cfg: dict) -> RAGType:  # pyright: ignore[reportInvalidTypeVarUse]
