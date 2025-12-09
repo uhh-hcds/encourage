@@ -778,8 +778,8 @@ class HitRateAtK(RetrievalMetric):
 class SubstringEM(Metric):
     """Computes the Substring Exact Match (EM) for the generated answers.
 
-    This metric checks whether the normalized prediction is a substring of
-    the normalized reference answer. Normalization includes lowercasing,
+    This metric checks whether the normalized reference answer (ground truth) is a
+    substring of the normalized prediction. Normalization includes lowercasing,
     removing punctuation, removing articles (a, an, the), and fixing whitespace.
 
     Supports single reference answers as well as multiple valid ground truths
@@ -847,7 +847,7 @@ class SubstringEM(Metric):
             ground_truths = [gt for gt_list in ground_truths for gt in gt_list]
 
         # Filter out empty strings to avoid false matches
-        ground_truths = [gt for gt in ground_truths if gt and str(gt).strip()]
+        ground_truths = [gt for gt in ground_truths if str(gt).strip()]
 
         # Return max score across all ground truths
         scores = [self._is_substring_match(prediction, gt) for gt in ground_truths]
