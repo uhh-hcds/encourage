@@ -1,6 +1,7 @@
 """Classic metrics for evaluating RAG."""
 
 import re
+import string
 import uuid
 from functools import cached_property
 from typing import Any, Union
@@ -778,8 +779,8 @@ class HitRateAtK(RetrievalMetric):
 class SubstringEM(Metric):
     """Computes the Substring Exact Match (EM) for the generated answers.
 
-    This metric checks whether the normalized reference answer is a substring of
-    the normalized prediction. Normalization includes lowercasing,
+    This metric checks whether the normalized prediction is a substring of
+    the normalized reference answer. Normalization includes lowercasing,
     removing punctuation, removing articles (a, an, the), and fixing whitespace.
 
     Supports single reference answers as well as multiple valid ground truths
@@ -810,8 +811,6 @@ class SubstringEM(Metric):
 
     def _normalize_answer(self, text: str) -> str:
         """Normalizes text for fuzzy matching."""
-        import string
-
         # Lowercase
         text = text.lower()
         # Remove punctuation
