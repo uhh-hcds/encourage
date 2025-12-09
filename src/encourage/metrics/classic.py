@@ -1,6 +1,7 @@
 """Classic metrics for evaluating RAG."""
 
 import re
+import string
 import uuid
 from functools import cached_property
 from typing import Any, Union
@@ -810,8 +811,6 @@ class SubstringEM(Metric):
 
     def _normalize_answer(self, text: str) -> str:
         """Normalizes text for fuzzy matching."""
-        import string
-
         # Lowercase
         text = text.lower()
         # Remove punctuation
