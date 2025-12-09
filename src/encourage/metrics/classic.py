@@ -778,8 +778,8 @@ class HitRateAtK(RetrievalMetric):
 class SubstringEM(Metric):
     """Computes the Substring Exact Match (EM) for the generated answers.
 
-    This metric checks whether the normalized prediction is a substring of
-    the normalized reference answer. Normalization includes lowercasing,
+    This metric checks whether the normalized reference answer is a substring of
+    the normalized prediction. Normalization includes lowercasing,
     removing punctuation, removing articles (a, an, the), and fixing whitespace.
 
     Supports single reference answers as well as multiple valid ground truths
