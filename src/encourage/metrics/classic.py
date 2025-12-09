@@ -800,7 +800,13 @@ class SubstringEM(Metric):
         scores: list[int] = []
         for r in responses:
             prediction = str(r.response)
-            ground_truths = r.meta_data["reference_answer"] or ""
+            ground_truths = r.meta_data["reference_answer"]
+            
+            # Handle None, empty string, and empty list explicitly
+            if ground_truths is None or ground_truths == "" or ground_truths == []:
+                # No valid reference answer means no match possible
+                scores.append(0)
+                continue
 
             # Compute the best score across all valid ground truths
             score = self._max_score_over_ground_truths(prediction, ground_truths)
@@ -839,6 +845,9 @@ class SubstringEM(Metric):
         elif ground_truths and isinstance(ground_truths[0], list):
             # Flatten nested lists
             ground_truths = [gt for gt_list in ground_truths for gt in gt_list]
+
+        # Filter out empty strings to avoid false matches
+        ground_truths = [gt for gt in ground_truths if gt and str(gt).strip()]
 
         # Return max score across all ground truths
         scores = [self._is_substring_match(prediction, gt) for gt in ground_truths]

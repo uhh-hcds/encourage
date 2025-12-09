@@ -380,6 +380,72 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(output.score, 0.5)
         self.assertEqual(output.raw, [1, 0, 0, 1])
 
+    def test_substring_em_none_reference(self):
+        """Test SubstringEM when reference_answer is None."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": None}),
+            MetaData(tags={"reference_answer": None}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["Paris", "London"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # No valid reference answer, so score should be 0
+        self.assertAlmostEqual(output.score, 0.0)
+        self.assertEqual(output.raw, [0, 0])
+
+    def test_substring_em_empty_string_reference(self):
+        """Test SubstringEM when reference_answer is an empty string."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": ""}),
+            MetaData(tags={"reference_answer": ""}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["Paris", ""], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # Empty string reference should not match anything
+        self.assertAlmostEqual(output.score, 0.0)
+        self.assertEqual(output.raw, [0, 0])
+
+    def test_substring_em_empty_list_reference(self):
+        """Test SubstringEM when reference_answer is an empty list."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": []}),
+            MetaData(tags={"reference_answer": []}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["Paris", "London"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # Empty list reference should not match anything
+        self.assertAlmostEqual(output.score, 0.0)
+        self.assertEqual(output.raw, [0, 0])
+
+    def test_substring_em_list_with_empty_strings(self):
+        """Test SubstringEM when reference_answer list contains empty strings."""
+        metric = SubstringEM()
+        meta_data_list = [
+            # List with valid and empty strings - should only use valid ones
+            MetaData(tags={"reference_answer": ["Paris", "", "   "]}),
+            # List with only empty strings - should not match anything
+            MetaData(tags={"reference_answer": ["", "   "]}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["Paris", "London"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # First should match "Paris", second should not match
+        self.assertAlmostEqual(output.score, 0.5)
+        self.assertEqual(output.raw, [1, 0])
+
 
 if __name__ == "__main__":
     unittest.main()
