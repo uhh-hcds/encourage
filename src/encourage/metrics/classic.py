@@ -772,3 +772,74 @@ class HitRateAtK(RetrievalMetric):
         hit_rate = ir_measures.Success(cutoff=self.k)
         scores = [score.value for score in hit_rate.iter_calc(qrels, run)]
         return MetricOutput(score=float(np.mean(scores)), raw=scores)
+
+
+@register_metric("SubstringEM")
+class SubstringEM(Metric):
+    """Computes the Substring Exact Match (EM) for the generated answers.
+
+    This metric checks whether the normalized reference answer is a substring of
+    the normalized prediction. Normalization includes lowercasing,
+    removing punctuation, removing articles (a, an, the), and fixing whitespace.
+
+    Supports single reference answers as well as multiple valid ground truths
+    (as a list), returning the maximum score across all ground truths.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="substring_em",
+            description="Substring Exact Match for the generated answers",
+            required_meta_data=["reference_answer"],
+        )
+
+    def __call__(self, responses: ResponseWrapper) -> MetricOutput:
+        """Computes the substring exact match score for all responses."""
+        self.validate_nested_keys(responses)
+
+        scores: list[int] = []
+        for r in responses:
+            prediction = str(r.response)
+            ground_truths = r.meta_data["reference_answer"] or ""
+
+            # Compute the best score across all valid ground truths
+            score = self._max_score_over_ground_truths(prediction, ground_truths)
+            scores.append(score)
+
+        return MetricOutput(score=float(np.mean(scores)), raw=scores)
+
+    def _normalize_answer(self, text: str) -> str:
+        """Normalizes text for fuzzy matching."""
+        import string
+
+        # Lowercase
+        text = text.lower()
+        # Remove punctuation
+        text = "".join(ch for ch in text if ch not in set(string.punctuation))
+        # Remove articles
+        text = re.sub(r"\b(a|an|the)\b", " ", text)
+        # Fix whitespace
+        text = " ".join(text.split())
+
+        return text
+
+    def _is_substring_match(self, prediction: str, ground_truth: str) -> int:
+        """Checks if normalized ground truth is a substring of normalized prediction."""
+        normalized_pred = self._normalize_answer(prediction)
+        normalized_gt = self._normalize_answer(ground_truth)
+        return int(normalized_gt in normalized_pred)
+
+    def _max_score_over_ground_truths(
+        self, prediction: str, ground_truths: Union[str, list[str]]
+    ) -> int:
+        """Computes the maximum substring match score across all ground truths."""
+        # Normalize ground_truths to a flat list
+        if isinstance(ground_truths, str):
+            ground_truths = [ground_truths]
+        elif ground_truths and isinstance(ground_truths[0], list):
+            # Flatten nested lists
+            ground_truths = [gt for gt_list in ground_truths for gt in gt_list]
+
+        # Return max score across all ground truths
+        scores = [self._is_substring_match(prediction, gt) for gt in ground_truths]
+        return max(scores) if scores else 0
