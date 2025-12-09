@@ -380,6 +380,67 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(output.score, 0.5)
         self.assertEqual(output.raw, [1, 0, 0, 1])
 
+    def test_substring_em_none_reference(self):
+        """Test SubstringEM when reference_answer is None."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": None}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(1, ["Any prediction"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # None is converted to empty string "", and empty string is substring of any string
+        self.assertAlmostEqual(output.score, 1.0)
+        self.assertEqual(output.raw, [1])
+
+    def test_substring_em_empty_string_reference(self):
+        """Test SubstringEM when reference_answer is an empty string."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": ""}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(1, ["Any prediction"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # Empty string normalized is empty, which is substring of any normalized string
+        self.assertAlmostEqual(output.score, 1.0)
+        self.assertEqual(output.raw, [1])
+
+    def test_substring_em_empty_list_reference(self):
+        """Test SubstringEM when reference_answer is an empty list."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": []}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(1, ["Any prediction"], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # Empty list is falsy, converted to "", and empty string is substring of any string
+        self.assertAlmostEqual(output.score, 1.0)
+        self.assertEqual(output.raw, [1])
+
+    def test_substring_em_empty_prediction(self):
+        """Test SubstringEM when prediction is an empty string."""
+        metric = SubstringEM()
+        meta_data_list = [
+            MetaData(tags={"reference_answer": "Paris"}),
+            MetaData(tags={"reference_answer": ""}),
+        ]
+        responses = ResponseWrapper(
+            create_responses(2, ["", ""], meta_data_list=meta_data_list)
+        )
+        output = metric(responses)
+        self.assertIsInstance(output, MetricOutput)
+        # Empty prediction normalized is empty: "Paris" not in "" -> 0, "" in "" -> 1
+        self.assertAlmostEqual(output.score, 0.5)
+        self.assertEqual(output.raw, [0, 1])
+
 
 if __name__ == "__main__":
     unittest.main()
