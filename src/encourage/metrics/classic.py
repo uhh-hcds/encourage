@@ -811,6 +811,7 @@ class SubstringEM(Metric):
 
     def _normalize_answer(self, text: str) -> str:
         """Normalizes text for fuzzy matching."""
+        
         # Lowercase
         text = text.lower()
         # Remove punctuation
