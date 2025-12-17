@@ -6,9 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Type
 
 from openai import OpenAI
-from openai.types.chat.chat_completion import (
-    ChatCompletion,
-)
+from openai.types.chat.chat_completion import ChatCompletion
 from pydantic import BaseModel
 
 from encourage.llm.batch_handler import process_batches
@@ -66,7 +64,7 @@ class ChatInferenceRunner(InferenceRunner):
 
         extra_body = {}
         if response_format:
-            extra_body = {"guided_json": response_format.model_json_schema()}
+            extra_body = {"structured_outputs": {"json": response_format.model_json_schema()}}
 
         response = self.client.chat.completions.create(
             model=self.model_name,
@@ -166,9 +164,9 @@ class BatchInferenceRunner(InferenceRunner):
         extra_body: dict[str, Any] = {}
         if response_format:
             if isinstance(response_format, type) and issubclass(response_format, BaseModel):
-                extra_body = {"guided_json": response_format.model_json_schema()}
+                extra_body = {"structured_outputs": {"json": response_format.model_json_schema()}}
             if isinstance(response_format, str):
-                extra_body = {"guided_json": response_format}  # type: ignore
+                extra_body = {"structured_outputs": {"json": response_format}}  # type: ignore
 
         # Prepare args for process_batches
         args: dict[str, Any] = {
