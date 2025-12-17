@@ -17,7 +17,7 @@ dependencies = [
     "mlflow>=2.18.0",
     "msgspec==0.20.0",
     "nltk>=3.9.1",
-    "opentelemetry-exporter-otlp-proto-grpc==1.39.0",
+    "opentelemetry-exporter-otlp-proto-grpc==1.39.1",
     "openai>=1.98.0",
     "pre-commit",
     "pydantic>=2.9.2",
