@@ -82,8 +82,17 @@ class HydeRAGConfig(BaseRAGConfig):
     pass
 
 
+class HydeRerankerConfig(HydeRAGConfig, RerankerRAGConfig):
+    """Configuration for HydeRerankerRAG method extending RerankerRAGConfig.
+
+    Inherits all parameters from RerankerRAGConfig and BaseRAGConfig.
+    """
+
+    pass
+
+
 class NoContextConfig(BaseRAGConfig):
-    """Configuration class for NoContext RAG method,inheriting from BaseRAGConfig."""
+    """Configuration class for NoContext RAG method, inheriting from BaseRAGConfig."""
 
     pass
 
