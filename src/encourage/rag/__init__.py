@@ -15,6 +15,7 @@ from encourage.rag.base_impl import BaseRAG
 from encourage.rag.bm25 import BM25RAG
 from encourage.rag.hybrid_bm25 import HybridBM25RAG
 from encourage.rag.hyde import HydeRAG
+from encourage.rag.hyde_reranker import HydeRerankerRAG
 from encourage.rag.known_context import KnownContext
 from encourage.rag.no_context import NoContext
 from encourage.rag.reranker import RerankerRAG
@@ -43,4 +44,5 @@ __all__ = [
     "SummarizationContextRAGConfig",
     "SummarizationRAGConfig",
     "RAGFactory",
+    "HydeRerankerRAG",
 ]
