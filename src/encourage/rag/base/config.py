@@ -92,7 +92,7 @@ class HydeRerankerConfig(HydeRAGConfig, RerankerRAGConfig):
 
 
 class NoContextConfig(BaseRAGConfig):
-    """Configuration class for NoContext RAG method,inheriting from BaseRAGConfig."""
+    """Configuration class for NoContext RAG method, inheriting from BaseRAGConfig."""
 
     pass
 
