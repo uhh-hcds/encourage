@@ -169,7 +169,7 @@ src/
 
 ### Running Tests During Development
 - Use `make tests-last-failed` to only re-run previously failed tests
-- Tests must pass on all supported Python versions (3.9-3.12)
+- Tests must pass on all Python versions in the CI matrix (currently 3.9-3.12, though official requirement is 3.12+)
 - Check coverage with pytest-cov (included in CI extras)
 
 ## Validation Checklist
