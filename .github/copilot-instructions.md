@@ -2,7 +2,7 @@
 
 ## Repository Overview
 
-EncouRAGe is a Python library for running and evaluating Retrieval-Augmented Generation (RAG) methods. The library provides modular components for RAG pipelines including vector databases (ChromaDB, Qdrant), LLM inference (vLLM), template engines (Jinja2), and comprehensive evaluation metrics.
+EncouRAGe is a Python library for running and evaluating Retrieval-Augmented Generation (RAG) methods. The library provides modular components for RAG pipelines including vector databases (ChromaDB, Qdrant), LLM inference (OpenAI), template engines (Jinja2), and comprehensive evaluation metrics.
 
 **Repository Statistics:**
 - Languages: Python (3.12+)
@@ -124,7 +124,7 @@ src/
 ├── encourage/              # Main package
 │   ├── __init__.py
 │   ├── handler/           # Request/response handlers
-│   ├── llm/              # LLM inference (vLLM integration)
+│   ├── llm/              # LLM inference (OpenAI integration)
 │   ├── metrics/          # Evaluation metrics
 │   ├── prompts/          # Jinja2 templates
 │   ├── rag/              # RAG method implementations
@@ -148,7 +148,7 @@ src/
 - `.github/dependabot.yml` - Dependency update automation
 
 ### Key Dependencies
-- **LLM Inference:** vllm, openai (>=1.98.0)
+- **LLM Inference:** openai (>=1.98.0)
 - **Vector Databases:** chromadb (>=1.0.10), qdrant-client
 - **Evaluation:** evaluate (>=0.4.3), bert-score, rouge-score, ir-measures
 - **Templates:** jinja2
