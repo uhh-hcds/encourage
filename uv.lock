@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version < '3.13' and sys_platform == 'darwin'",
@@ -1021,40 +1021,40 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "bert-score", specifier = ">=0.3.13" },
-    { name = "chromadb", specifier = ">=1.0.10" },
+    { name = "chromadb", specifier = ">=1.4.1" },
     { name = "evaluate", specifier = ">=0.4.3" },
     { name = "faker", marker = "extra == 'ci'" },
     { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.1.5" },
-    { name = "ir-measures", specifier = ">=0.3.4" },
+    { name = "ir-measures", specifier = ">=0.3.7" },
     { name = "isort", marker = "extra == 'ci'" },
-    { name = "jinja2" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsondiff", marker = "extra == 'ci'" },
     { name = "jupyterlab", marker = "extra == 'dev'", specifier = ">=4.0" },
     { name = "jupytext", marker = "extra == 'dev'", specifier = ">=1.16.3" },
     { name = "matplotlib", marker = "extra == 'dev'", specifier = ">=3.9.1" },
-    { name = "mlflow", specifier = ">=2.18.0" },
+    { name = "mlflow", specifier = ">=3.5.0" },
     { name = "msgspec", specifier = "==0.20.0" },
     { name = "nltk", specifier = ">=3.9.1" },
     { name = "notebook", marker = "extra == 'dev'", specifier = ">=7.4.2" },
     { name = "openai", specifier = ">=1.98.0" },
     { name = "opentelemetry-exporter-otlp-proto-grpc", specifier = "==1.39.1" },
-    { name = "pre-commit" },
-    { name = "pydantic", specifier = ">=2.9.2" },
+    { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pytest", marker = "extra == 'ci'" },
     { name = "pytest-cov", marker = "extra == 'ci'", specifier = ">=5.0.0" },
     { name = "pytest-mock", marker = "extra == 'ci'" },
-    { name = "pyyaml" },
-    { name = "qdrant-client" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "qdrant-client", specifier = ">=1.14.2" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
     { name = "rouge-score", specifier = ">=0.1.2" },
     { name = "ruff", marker = "extra == 'ci'" },
-    { name = "sentence-transformers", specifier = ">=3.2.1" },
-    { name = "tomlkit", specifier = ">=0.13.0" },
-    { name = "tornado", specifier = ">=6.4.1" },
+    { name = "sentence-transformers", specifier = ">=4.1.0" },
+    { name = "tomlkit", specifier = ">=0.13.2" },
+    { name = "tornado", specifier = ">=6.5" },
     { name = "tqdm", specifier = "==4.67.1" },
     { name = "tuna", marker = "extra == 'dev'", specifier = "==0.5.11" },
-    { name = "types-pyyaml" },
-    { name = "uv", specifier = ">=0.4.28" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250516" },
+    { name = "uv", specifier = ">=0.9.6" },
 ]
 provides-extras = ["dev", "ci"]
 

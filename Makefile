@@ -25,9 +25,9 @@ uv:
 ifeq ($(UV_INSTALLED),)
 	echo "uv is not installed, installing it now"
 	pip install --upgrade pip
-	pip install uv==0.4.28
+	pip install uv==0.9.6
 else
-	uv pip install uv==0.4.28
+	uv pip install uv==0.9.6
 endif
 	uv sync --extra ci
 
