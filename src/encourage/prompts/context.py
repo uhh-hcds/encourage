@@ -187,7 +187,7 @@ class Context:
         if ids is None:
             ids = [uuid.uuid4() for _ in range(len(documents))]
         return [
-            cls._process_single_document(doc, meta, doc_id)  # type: ignore
+            cls._process_single_document(doc, meta, doc_id)
             for doc, meta, doc_id in zip(documents, meta_datas, ids)
         ]
 

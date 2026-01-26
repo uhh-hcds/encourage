@@ -178,7 +178,7 @@ class SelfRAG(BaseRAG):
         for (q_idx, d_idx), pred in zip(mapping, relevance_preds):
             try:
                 pred = json.loads(pred.response)
-                tag = pred["response"]  # type: ignore
+                tag = pred["response"]
             except json.JSONDecodeError:
                 logger.error(f"Failed to decode JSON response: {pred.response}")
                 tag = "Irrelevant"  # Default to Irrelevant if decoding fails

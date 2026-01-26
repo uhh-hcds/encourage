@@ -58,7 +58,7 @@ class ConversationHandler:
 
         self.conversation = conversation
         return ResponseWrapper.from_conversation(
-            request_outputs,  # type: ignore
+            request_outputs,
             conversation,
             self.contexts,
             self.meta_data,

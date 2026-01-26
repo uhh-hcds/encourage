@@ -124,7 +124,7 @@ class AnswerRelevance(Metric):
         for response in self.responses:
             question_list.append(GeneratedQuestion.model_validate_json(response.response))
         scores = [
-            self._question_similarity(response.meta_data["question"], generated.question)  # type: ignore
+            self._question_similarity(response.meta_data["question"], generated.question)
             for response, generated in zip(input_responses, question_list)
         ]
 

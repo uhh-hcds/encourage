@@ -22,10 +22,10 @@ class SamplingType(IntEnum):  # noqa: D101
 
 class SamplingParams(
     msgspec.Struct,
-    omit_defaults=True,  # type: ignore[call-arg]
+    omit_defaults=True,
     # required for @cached_property.
     dict=True,
-):  # type: ignore[call-arg]
+):
     """THIS IS A COPY OF THE CLASS FROM vLLM. IT IS JUST FOR TYPING PURPOSES.
     Sampling parameters for text generation.
 

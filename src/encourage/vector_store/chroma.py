@@ -71,7 +71,7 @@ class ChromaClient(VectorStore):
             batch_documents = document_content[i : i + batch_size]
             batch_metadatas = meta_data[i : i + batch_size]
             batch_ids = ids[i : i + batch_size]
-            collection.add(documents=batch_documents, metadatas=batch_metadatas, ids=batch_ids)  # type: ignore
+            collection.add(documents=batch_documents, metadatas=batch_metadatas, ids=batch_ids)
 
     def count_documents(
         self,
