@@ -30,7 +30,8 @@ class Conversation:
             self.dialog = [
                 {"role": Role.SYSTEM.value, "content": self.sys_prompt},
             ]
-        self.add_message(Role.USER.value, user_prompt)
+        if user_prompt != "" and user_prompt is not None:
+            self.add_message(Role.USER.value, user_prompt)
 
     def add_message(self, role: str, content: str | Sequence[Collection[Any]]) -> None:
         """Add a new message to the conversation."""
