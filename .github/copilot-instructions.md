@@ -107,7 +107,9 @@ uv run pytest
 5. Run ruff-action (linting)
 6. Run `uv run pytest` (testing)
 
-**Important:** All PRs must pass linting and tests on all Python versions.
+**Important:** All PRs must pass linting and tests on all Python versions in the CI matrix.
+
+**Note:** There's a discrepancy between the CI matrix (3.9-3.12) and pyproject.toml requirement (>=3.12). The package officially requires Python 3.12+, but CI currently tests older versions.
 
 ### Pre-commit Hooks
 - Configuration: `.pre-commit-config.yaml`
@@ -180,7 +182,7 @@ Before submitting a PR, ensure:
 - [ ] No relative imports used
 - [ ] Docstrings follow project conventions (except in tests and `__init__.py`)
 - [ ] Line length <= 100 characters
-- [ ] Changes work on Python 3.12+ (primary target)
+- [ ] Changes work on Python 3.12+ (official requirement per pyproject.toml)
 
 ## Additional Resources
 
