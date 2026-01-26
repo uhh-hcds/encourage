@@ -59,7 +59,7 @@ class ChatInferenceRunner(InferenceRunner):
         raw_output: bool = False,
     ) -> ChatCompletion | ResponseWrapper:
         """Run the model with the given query."""
-        if isinstance(prompt, PromptCollection):  # type: ignore
+        if isinstance(prompt, PromptCollection):
             raise ValueError("PromptCollection is not supported for single chat inference")
 
         extra_body = {}
@@ -68,7 +68,7 @@ class ChatInferenceRunner(InferenceRunner):
 
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=prompt.conversation.dialog,  # type: ignore
+            messages=prompt.conversation.dialog,
             max_tokens=self.sampling_parameters.max_tokens,
             temperature=self.sampling_parameters.temperature,
             top_p=self.sampling_parameters.top_p,
@@ -97,13 +97,13 @@ class ToolInferenceRunner(InferenceRunner):
         with mlflow.start_span("ToolChain", span_type=SpanType.TOOL):
             completion = client.chat.completions.create(
                 model=self.model_name,
-                messages=messages,  # type: ignore
+                messages=messages,
                 max_tokens=self.sampling_parameters.max_tokens,
                 temperature=self.sampling_parameters.temperature,
                 top_p=self.sampling_parameters.top_p,
-                tools=tool_json,  # type: ignore
+                tools=tool_json,
             )
-            tool_call = completion.choices[0].message.tool_calls[0]  # type: ignore
+            tool_call = completion.choices[0].message.tool_calls[0]
             args = json.loads(tool_call.function.arguments)
             matching_function = next(
                 (
@@ -119,7 +119,7 @@ class ToolInferenceRunner(InferenceRunner):
             else:
                 print(f"No matching function found for {tool_call.function.name}")
 
-            messages.append(completion.choices[0].message)  # type: ignore
+            messages.append(completion.choices[0].message)
             messages.append(
                 {
                     "role": "tool",
@@ -129,8 +129,8 @@ class ToolInferenceRunner(InferenceRunner):
             )
             completion_2 = client.chat.completions.create(
                 model=self.model_name,
-                messages=messages,  # type: ignore
-                tools=tool_json,  # type: ignore
+                messages=messages,
+                tools=tool_json,
                 max_tokens=self.sampling_parameters.max_tokens,
                 temperature=self.sampling_parameters.temperature,
                 top_p=self.sampling_parameters.top_p,
@@ -166,7 +166,7 @@ class BatchInferenceRunner(InferenceRunner):
             if isinstance(response_format, type) and issubclass(response_format, BaseModel):
                 extra_body = {"structured_outputs": {"json": response_format.model_json_schema()}}
             if isinstance(response_format, str):
-                extra_body = {"structured_outputs": {"json": response_format}}  # type: ignore
+                extra_body = {"structured_outputs": {"json": response_format}}
 
         # Prepare args for process_batches
         args: dict[str, Any] = {
@@ -208,10 +208,10 @@ class OpenAIChatInferenceRunner(InferenceRunner):
         """Run the model with the given query."""
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=prompt.conversation.dialog,  # type: ignore
+            messages=prompt.conversation.dialog,
             max_tokens=self.sampling_parameters.max_tokens,
             temperature=self.sampling_parameters.temperature,
-            response_format=response_format,  # type: ignore
+            response_format=response_format,
         )
         return ResponseWrapper.from_prompt_collection(
             [response], PromptCollection.from_prompts([prompt])

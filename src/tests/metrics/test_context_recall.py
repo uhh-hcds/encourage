@@ -10,7 +10,7 @@ class TestContextRecall(unittest.TestCase):
     def setUp(self) -> None:
         self.responses: ResponseWrapper = ResponseWrapper(create_responses(2))
         self.runner: BatchInferenceRunner = create_autospec(BatchInferenceRunner)
-        self.runner.run.return_value = ResponseWrapper(  # type: ignore[attr-defined]
+        self.runner.run.return_value = ResponseWrapper(
             [
                 Response(
                     request_id="1",

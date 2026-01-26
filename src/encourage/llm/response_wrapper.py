@@ -234,8 +234,8 @@ def transform_chat_completion_to_conversation(conversation: Conversation) -> Con
     # Create a new conversation object
     new_dialog = []
     for message in conversation.dialog:
-        if isinstance(message, ChatCompletionMessage):  # type: ignore
-            message = {"role": Role.TOOL, "content": message.tool_calls[0].function.arguments}  # type: ignore
+        if isinstance(message, ChatCompletionMessage):
+            message = {"role": Role.TOOL, "content": message.tool_calls[0].function.arguments}
         new_dialog.append(message)
     conversation.dialog = new_dialog
     return conversation
