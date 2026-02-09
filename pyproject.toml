@@ -28,7 +28,7 @@ dependencies = [
     "sentence-transformers>=4.1.0",
     "tomlkit>=0.13.2",
     "tornado>=6.5",
-    "tqdm==4.67.1",
+    "tqdm==4.67.3",
     "types-PyYAML>=6.0.12.20250516",
     "uv>=0.9.6",
 ]
