@@ -112,6 +112,9 @@ class SummarizationContextRAG(SummarizationRAG):
         """Transform Context objects to Document objects."""
         documents = []
         for context in contexts:
-            for doc in context.documents:
-                documents.append(doc)
+            if isinstance(context, Document):
+                documents.append(context)
+            else:
+                for doc in context.documents:
+                    documents.append(doc)
         return documents
