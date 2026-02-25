@@ -1,0 +1,9 @@
+{{user_prompt}}
+
+{% if documents %}
+Provided Documents:
+{% endif %}
+{% for document in documents %}
+-- Document {{loop.index}} --
+{{document.content}}
+{% endfor %}

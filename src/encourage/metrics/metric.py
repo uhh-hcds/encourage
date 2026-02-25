@@ -1,9 +1,14 @@
 """Base class for metric calculations."""
 
+import json
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from pydantic import BaseModel
+from pydantic.fields import FieldInfo
 
 from encourage.llm.inference_runner import BatchInferenceRunner
 from encourage.llm.response_wrapper import ResponseWrapper
@@ -110,3 +115,72 @@ class Metric(ABC):
     @abstractmethod
     def __call__(self, responses: ResponseWrapper) -> MetricOutput:
         """Abstract method to be implemented by subclasses."""
+
+
+def map_pydantic_field_to_response(
+    responses: ResponseWrapper,
+    model: type[BaseModel],
+    model_field: str | FieldInfo,
+) -> ResponseWrapper:
+    """Map one Pydantic field to ``response.response`` and move others to metadata.
+
+    Args:
+        responses: Wrapper containing response objects.
+        model: Pydantic model used to validate each ``response.response`` dictionary.
+        model_field: The model field that should remain in ``response.response``.
+            Can be the field name or the field definition from ``model.model_fields``.
+
+    Returns:
+        A new ``ResponseWrapper`` instance with transformed responses.
+
+    Raises:
+        ValueError: If ``model_field`` is invalid.
+
+    """
+    selected_field_name = _resolve_model_field_name(model, model_field)
+    transformed_responses = ResponseWrapper(deepcopy(responses.response_data))
+
+    for response in transformed_responses:
+        response_payload = response.response
+
+        try:
+            if isinstance(response_payload, model):
+                validated_payload = response_payload.model_dump()
+            elif isinstance(response_payload, dict):
+                validated_payload = model.model_validate(response_payload).model_dump()
+            elif isinstance(response_payload, str):
+                parsed_payload = json.loads(response_payload)
+                validated_payload = model.model_validate(parsed_payload).model_dump()
+            else:
+                raise ValueError(
+                    "response.response must be a dict, JSON string, or pydantic model instance."
+                )
+        except Exception:
+            response.response = ""
+            continue
+
+        if selected_field_name not in validated_payload:
+            response.response = ""
+            continue
+
+        response.response = validated_payload[selected_field_name]
+        additional_fields = {
+            key: value for key, value in validated_payload.items() if key != selected_field_name
+        }
+        response.meta_data.tags.update(additional_fields)
+
+    return transformed_responses
+
+
+def _resolve_model_field_name(model: type[BaseModel], model_field: str | FieldInfo) -> str:
+    """Resolve a model field name from a string or a Pydantic ``FieldInfo``."""
+    if isinstance(model_field, str):
+        if model_field not in model.model_fields:
+            raise ValueError(f"Field '{model_field}' does not exist in model {model.__name__}.")
+        return model_field
+
+    for field_name, field_info in model.model_fields.items():
+        if field_info is model_field:
+            return field_name
+
+    raise ValueError(f"The provided field does not belong to model {model.__name__}.")
