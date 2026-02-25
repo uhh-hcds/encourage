@@ -1,6 +1,6 @@
 import unittest
 import uuid
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, patch
 
 from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import Document, MetaData
@@ -117,6 +117,20 @@ class TestBaseRAGIntegration(unittest.TestCase):
         runner.run.assert_called_once()
         self.assertIsInstance(result, ResponseWrapper)
         self.assertEqual(result.response_data, self.responses.response_data)
+
+    def test_run_with_string_retrieval_query(self):
+        runner = create_autospec(BatchInferenceRunner)
+        runner.run.return_value = self.responses
+
+        with patch.object(self.rag, "retrieve_contexts", return_value=[[], []]) as retrieve_mock:
+            self.rag.run(
+                runner=runner,
+                sys_prompt="Answer precisely.",
+                user_prompts=self.queries,
+                retrieval_queries="What is AI?",
+            )
+
+        retrieve_mock.assert_called_once_with(["What is AI?", "What is AI?"])
 
 
 if __name__ == "__main__":

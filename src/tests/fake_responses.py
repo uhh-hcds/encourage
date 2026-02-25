@@ -17,7 +17,7 @@ fake: Faker = Faker()
 
 def create_responses(
     n: int = 1,
-    response_content_list: Optional[list[str]] = None,
+    response_content_list: Optional[list[str | dict]] = None,
     document_list: Optional[list[list[Document]]] = None,
     meta_data_list: Optional[list[MetaData]] = None,
 ) -> list[Response]:

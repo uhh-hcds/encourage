@@ -154,14 +154,19 @@ class BaseRAG(RAGMethodInterface):
         sys_prompt: str,
         user_prompts: list[str] = [],
         meta_datas: list[MetaData] = [],
-        retrieval_queries: list[str] = [],
+        retrieval_queries: list[str] | str | None = None,
         response_format: type[BaseModel] | str | None = None,
     ) -> ResponseWrapper:
         """Execute the complete RAG pipeline and return responses."""
+        if isinstance(retrieval_queries, str):
+            retrieval_queries_list = [retrieval_queries] * len(user_prompts)
+        else:
+            retrieval_queries_list = retrieval_queries or []
+
         # Generate queries and retrieve contexts
-        if retrieval_queries:
-            logger.info(f"Generating {len(retrieval_queries)} retrieval queries.")
-            retrieved_documents = self.retrieve_contexts(retrieval_queries)
+        if retrieval_queries_list:
+            logger.info(f"Generating {len(retrieval_queries_list)} retrieval queries.")
+            retrieved_documents = self.retrieve_contexts(retrieval_queries_list)
             self.contexts = [Context.from_documents(documents) for documents in retrieved_documents]
         else:
             logger.info("No context retrieval queries provided. Using no context.")

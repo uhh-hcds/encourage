@@ -170,10 +170,10 @@ class ResponseWrapper:
         """Return the list of actually text responses from the model."""
         return [response.response for response in self.response_data]
 
-    def print_response_summary(self) -> None:
+    def print_response_summary(self, truncated: bool = True) -> None:
         """Prints a summary of all responses."""
         for response in self.response_data:
-            response.print_response()
+            response.print_response(truncated=truncated)
 
     def print_response_by_prompt_id(self, prompt_id: str) -> None:
         """Print the response details for a specific prompt ID."""

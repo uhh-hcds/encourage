@@ -1,7 +1,17 @@
 import unittest
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, patch
 
+from encourage.llm import ResponseWrapper
 from encourage.llm.inference_runner import BatchInferenceRunner
+from encourage.metrics.answer_faithfulness import (
+    AnswerFaithfulness,
+    ExampleNLI,
+    ExampleSplit,
+    OutputNLI,
+    OutputSplit,
+    Verdict,
+)
+from encourage.prompts import PromptCollection
 from tests.fake_responses import create_responses
 
 
@@ -12,29 +22,63 @@ class TestMetrics(unittest.TestCase):
         # Create a mock runner
         self.runner = create_autospec(BatchInferenceRunner)
 
-    ## TODO: fix the test
-    # def test_answer_faithfulness(self):
-    #     mock_response = OutputNLI(
-    #         verdicts=[
-    #             Verdict(statement="", reason="", verdict=1),
-    #             Verdict(statement="", reason="", verdict=0),
-    #         ]
-    #     )
+    @patch("nltk.sent_tokenize", return_value=["A single sentence."])
+    def test_answer_faithfulness_allows_custom_sys_prompts_and_examples(self, _mock_sent_tokenize):
+        split_example = ExampleSplit(
+            question="Q?",
+            answer="A.",
+            sentence="A.",
+            output=OutputSplit(simpler_statements=["A"]),
+        )
+        nli_example = ExampleNLI(
+            context="Context",
+            statements=["A"],
+            output=OutputNLI(verdicts=[Verdict(statement="A", reason="Supported", verdict=1)]),
+        )
 
-    #     self.runner.run.return_value = ResponseWrapper([mock_response])
+        metric = AnswerFaithfulness(
+            runner=self.runner,
+            split_examples=[split_example],
+            nli_examples=[nli_example],
+            split_sys_prompt="split-system",
+            nli_sys_prompt="nli-system",
+        )
 
-    #     # Instantiate AnswerFaithfulness
-    #     metric = AnswerFaithfulness(runner=self.runner)
+        input_responses = ResponseWrapper(
+            create_responses(
+                n=1,
+                response_content_list=["A single sentence."],
+            )
+        )
 
-    #     # Wrap the responses as a ResponseWrapper
-    #     wrapped_responses = ResponseWrapper(self.responses)
+        split_output = ResponseWrapper(
+            create_responses(
+                n=1,
+                response_content_list=['{"simpler_statements": ["Claim 1"]}'],
+            )
+        )
+        nli_output = ResponseWrapper(
+            create_responses(
+                n=1,
+                response_content_list=[
+                    '{"verdicts": [{"statement": "Claim 1", "reason": "Supported", "verdict": 1}]}'
+                ],
+            )
+        )
+        self.runner.run.side_effect = [split_output, nli_output]
 
-    #     # Invoke the metric
-    #     result = metric(wrapped_responses)
+        with patch.object(
+            PromptCollection,
+            "create_prompts",
+            side_effect=["split", "nli"],
+        ) as mocked:
+            result = metric(input_responses)
 
-    # # Check the result
-    # self.assertIn("supported", result.misc)
-    # self.assertIn("total", result.misc)
+        split_call = mocked.call_args_list[0].kwargs
+        nli_call = mocked.call_args_list[1].kwargs
 
-    # # Specific test checks, these may vary depending on your mocked output logic
-    # self.assertAlmostEqual(result.score, 0.5, places=1)
+        self.assertEqual(split_call["sys_prompts"], "split-system")
+        self.assertEqual(nli_call["sys_prompts"], "nli-system")
+        self.assertEqual(split_call["contexts"][0].prompt_vars["examples"], [split_example])
+        self.assertEqual(nli_call["contexts"][0].prompt_vars["examples"], [nli_example])
+        self.assertEqual(result.score, 1.0)

@@ -24,6 +24,14 @@ class Response:
     finished_time: float = 0.0
     processing_time: float = field(init=False)
 
+    @staticmethod
+    def _truncate_text(value: Any, max_length: int = 50) -> str:
+        """Truncate text values for compact summary output."""
+        text = str(value)
+        if len(text) <= max_length:
+            return text
+        return f"{text[:max_length]}[...]"
+
     def __post_init__(self) -> None:
         """Calculate processing time."""
         self.processing_time = self.finished_time - self.arrival_time
@@ -42,22 +50,25 @@ class Response:
         """Get formatted finished time."""
         return self.format_timestamp(self.finished_time)
 
-    def to_string(self) -> str:
+    def to_string(self, truncated: bool = False) -> str:
         """Get the response details as a formatted string."""
+        user_prompt = self._truncate_text(self.user_prompt, 50) if truncated else self.user_prompt
         response_details = [
             "-" * 50,
-            f"🧑‍💻 User Prompt:\n{self.user_prompt}",
+            f"🧑‍💻 User Prompt:\n{user_prompt}",
         ]
 
         if self.context.documents:
             response_details.append("📄 Context Documents:")
             for idx, document in enumerate(self.context.documents):
-                response_details.append(
-                    f"  {idx + 1}. {document.content} (Score: {document.score})"
+                content = (
+                    self._truncate_text(document.content, 50) if truncated else document.content
                 )
+                response_details.append(f"  {idx + 1}. {content} (Score: {document.score})")
             response_details.append(" Prompt Variables:")
             for key, value in self.context.prompt_vars.items():
-                response_details.append(f"  {key}: {value}")
+                prompt_value = self._truncate_text(value, 50) if truncated else str(value)
+                response_details.append(f"  {key}: {prompt_value}")
 
         if self.sys_prompt and len(self.sys_prompt) > 50:
             system_prompt = f"{self.sys_prompt[:50]}[...]\n"
@@ -113,6 +124,6 @@ class Response:
             finished_time=response_dict["finished_time"],
         )
 
-    def print_response(self) -> None:
+    def print_response(self, truncated: bool = False) -> None:
         """Print or log the response details for a specific response."""
-        print(self.to_string())
+        print(self.to_string(truncated=truncated))
