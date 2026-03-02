@@ -149,16 +149,20 @@ class BatchInferenceRunner(InferenceRunner):
         model_name: str,
         base_url: str = "http://localhost:18123/v1/",
         env_var_name: str = "VLLM_API_KEY",
+        max_workers: int = 100,
+        batch_size: int = 50,
     ):
         super().__init__(sampling_parameters, model_name, base_url, env_var_name)
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
+        self.max_workers = max_workers
+        self.batch_size = batch_size
 
     def run(
         self,
         prompt_collection: PromptCollection,
         response_format: Type[BaseModel] | str | None = None,
-        max_workers: int = 100,
-        batch_size: int = 50,
+        max_workers: int | None = None,
+        batch_size: int | None = None,
     ) -> ResponseWrapper:
         """Run the model with the given queries."""
         extra_body: dict[str, Any] = {}
@@ -182,8 +186,8 @@ class BatchInferenceRunner(InferenceRunner):
             client=self.client,
             prompt_collection=prompt_collection,
             args=args,
-            max_workers=max_workers,
-            batch_size=batch_size,
+            max_workers=max_workers if max_workers is not None else self.max_workers,
+            batch_size=batch_size if batch_size is not None else self.batch_size,
         )
         return ResponseWrapper.from_prompt_collection(all_responses, prompt_collection)
 
