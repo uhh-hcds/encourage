@@ -20,7 +20,7 @@ class TestBaseRAGIntegration(unittest.TestCase):
                 Document(
                     id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"), content="Here is an example content"
                 ),
-                Document(id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content="Here is example content"),
+                Document(id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content="Here is an example content"),
             ],
             [
                 Document(
