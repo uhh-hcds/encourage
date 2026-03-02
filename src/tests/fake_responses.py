@@ -187,7 +187,6 @@ def create_mock_request_outputs(
     contents: Optional[list[str]] = None,
 ) -> list[RequestOutput]:
     """Generate n mock RequestOutput objects."""
-    completion_outputs: list[CompletionOutput] = []
     completion_outputs = [
         CompletionOutput(
             i,
