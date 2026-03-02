@@ -20,7 +20,9 @@ class TestBaseRAGIntegration(unittest.TestCase):
                 Document(
                     id=uuid.uuid5(uuid.NAMESPACE_DNS, "2"), content="Here is an example content"
                 ),
-                Document(id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content="Here is example content"),
+                Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, "1"), content="Here is an example content"
+                ),
             ],
             [
                 Document(
@@ -65,10 +67,14 @@ class TestBaseRAGIntegration(unittest.TestCase):
         # Create test documents directly instead of dataframe
         self.documents = [
             Document(
-                id=uuid.uuid4(), content="AI is a field of study.", meta_data=MetaData({"id": "1"})
+                id=uuid.uuid4(),
+                content="AI is a field of study.",
+                meta_data=MetaData({"doc_id": "1"}),
             ),
             Document(
-                id=uuid.uuid4(), content="ML is a subset of AI.", meta_data=MetaData({"id": "2"})
+                id=uuid.uuid4(),
+                content="ML is a subset of AI.",
+                meta_data=MetaData({"doc_id": "2"}),
             ),
         ]
 
