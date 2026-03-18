@@ -13,6 +13,7 @@
 !.gitlab-ci.yml
 !.pre-commit-config.yaml
 !.vscode
+!.github
 
 # User-specific package list
 requirements/extra.txt
