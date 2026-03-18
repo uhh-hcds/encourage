@@ -1,5 +1,3 @@
-# Documentation (documentation.md)
-
 ---
 name: Documentation
 about: Improve or add documentation

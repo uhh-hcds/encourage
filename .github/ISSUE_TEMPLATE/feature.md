@@ -1,5 +1,3 @@
-# Feature Request (feature.md)
-
 ---
 name: Feature Request
 about: Suggest a new feature
