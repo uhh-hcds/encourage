@@ -52,12 +52,21 @@ class MetaData:
             from encourage.prompts.context import Document
 
             if isinstance(value, dict) and "content" in value:
-                from uuid import UUID
+                import uuid
 
                 document_id: str = value.get("id", "")
                 content: str = value.get("content", "")
-                meta_data: MetaData = value.get("metadata", {})
-                return Document(id=UUID(document_id), content=content, meta_data=meta_data)
+                meta_data_value: Any = value.get("meta_data", {})
+                meta_data = (
+                    MetaData.from_dict(meta_data_value)
+                    if isinstance(meta_data_value, dict)
+                    else MetaData()
+                )
+                return Document(
+                    id=uuid.uuid5(uuid.NAMESPACE_DNS, document_id),
+                    content=content,
+                    meta_data=meta_data,
+                )
             return value
 
         converted_dict: dict = {key: convert_value(value) for key, value in meta_dict.items()}

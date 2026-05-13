@@ -151,11 +151,13 @@ class BatchInferenceRunner(InferenceRunner):
         env_var_name: str = "VLLM_API_KEY",
         max_workers: int = 100,
         batch_size: int = 50,
+        reasoning: bool = False,
     ):
         super().__init__(sampling_parameters, model_name, base_url, env_var_name)
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key)
         self.max_workers = max_workers
         self.batch_size = batch_size
+        self.reasoning = reasoning
 
     def run(
         self,
@@ -163,6 +165,7 @@ class BatchInferenceRunner(InferenceRunner):
         response_format: Type[BaseModel] | str | None = None,
         max_workers: int | None = None,
         batch_size: int | None = None,
+        reasoning: bool | None = None,
     ) -> ResponseWrapper:
         """Run the model with the given queries."""
         extra_body: dict[str, Any] = {}
@@ -171,6 +174,10 @@ class BatchInferenceRunner(InferenceRunner):
                 extra_body = {"structured_outputs": {"json": response_format.model_json_schema()}}
             if isinstance(response_format, str):
                 extra_body = {"structured_outputs": {"json": response_format}}
+
+        reasoning = reasoning if reasoning is not None else self.reasoning
+        if reasoning:
+            extra_body["chat_template_kwargs"] = {"enable_thinking": True}
 
         # Prepare args for process_batches
         args: dict[str, Any] = {
