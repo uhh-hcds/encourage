@@ -42,7 +42,7 @@ dev = [
     "notebook>=7.4.2",
     "matplotlib>=3.9.1",
     "ipywidgets>=8.1.5",
-    "tuna==0.5.11",
+    "tuna==0.5.15",
 ]
 ci = [
     "ruff",
