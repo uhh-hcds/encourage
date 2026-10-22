@@ -4,9 +4,16 @@ import logging
 from abc import abstractmethod
 from enum import Enum
 
+import torch
+
 from encourage.prompts.context import Document
 
 logger = logging.getLogger(__name__)
+
+
+def _default_device() -> str:
+    """Return 'cuda' if a CUDA GPU is available, otherwise 'cpu'."""
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class RerankerModel(str, Enum):
@@ -34,7 +41,7 @@ class Reranker:
     def __init__(
         self,
         rerank_ratio: float = 1.0,
-        device: str = "cuda",
+        device: str = _default_device(),
     ) -> None:
         """Initialize a Reranker with configuration.
 

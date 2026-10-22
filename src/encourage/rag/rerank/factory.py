@@ -1,6 +1,6 @@
 """Factory to create the correct reranker subclass."""
 
-from encourage.rag.rerank.base import Reranker, RerankerModel
+from encourage.rag.rerank.base import Reranker, RerankerModel, _default_device
 from encourage.rag.rerank.models import JinaV3, MSMarco
 
 
@@ -8,7 +8,7 @@ class RerankerFactory:
     """Factory to create the correct reranker subclass."""
 
     @staticmethod
-    def create(rerank_ratio: float, model: str, device: str = "cuda") -> Reranker:
+    def create(rerank_ratio: float, model: str, device: str = _default_device()) -> Reranker:
         """Create a Reranker instance based on the specified model."""
         if isinstance(model, str):
             try:

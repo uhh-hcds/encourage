@@ -8,7 +8,7 @@ from sentence_transformers import CrossEncoder
 from transformers import AutoModel
 
 from encourage.prompts.context import Document
-from encourage.rag.rerank.base import Reranker
+from encourage.rag.rerank.base import Reranker, _default_device
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class MSMarco(Reranker):
     """Reranker using the MS MARCO cross-encoder model."""
 
-    def __init__(self, rerank_ratio: float, device: str = "cuda") -> None:
+    def __init__(self, rerank_ratio: float, device: str = _default_device()) -> None:
         super().__init__(rerank_ratio=rerank_ratio, device=device)
         self.reranker_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device=device)
 
@@ -46,7 +46,7 @@ class MSMarco(Reranker):
 class JinaV3(Reranker):
     """Reranker using the Jina V3 cross-encoder model."""
 
-    def __init__(self, rerank_ratio: float, device: str = "cuda") -> None:
+    def __init__(self, rerank_ratio: float, device: str = _default_device()) -> None:
         super().__init__(rerank_ratio=rerank_ratio, device=device)
         self.reranker_model = AutoModel.from_pretrained(
             "jinaai/jina-reranker-v3",

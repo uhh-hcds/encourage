@@ -10,7 +10,7 @@ from encourage.llm import BatchInferenceRunner, ResponseWrapper
 from encourage.prompts import PromptCollection
 from encourage.prompts.context import Context, Document
 from encourage.prompts.meta_data import MetaData
-from encourage.rag.base.config import BaseRAGConfig
+from encourage.rag.base.config import BaseRAGConfig, _default_device
 from encourage.rag.base.enum import RAGMethod
 from encourage.rag.base.factory import RAGFactory
 from encourage.rag.base.interface import RAGMethodInterface
@@ -68,9 +68,8 @@ class BaseRAG(RAGMethodInterface):
         self.batch_size_query = config.batch_size_query
         self.client = self.init_db()
 
-    def get_embedding_model(self, name: str, device: str = "cuda") -> Any:
+    def get_embedding_model(self, name: str, device: str = _default_device()) -> Any:
         """Return embedding model based on name."""
-        # TODO: Add support for other embedding models in the future.
         # key_map = {
         #     "Google": (
         #         "GOOGLE_API_KEY",

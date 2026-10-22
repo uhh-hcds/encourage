@@ -2,9 +2,15 @@
 
 from typing import Any, Optional
 
+import torch
 from pydantic import BaseModel, ConfigDict
 
 from encourage.llm.inference_runner import InferenceRunner
+
+
+def _default_device() -> str:
+    """Return 'cuda' if a CUDA GPU is available, otherwise 'cpu'."""
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class BaseRAGConfig(BaseModel):
@@ -34,7 +40,7 @@ class BaseRAGConfig(BaseModel):
     runner: Optional[InferenceRunner] = None
     additional_prompt: str = ""
     where: Optional[dict[str, str]] = None
-    device: str = "cuda"
+    device: str = _default_device()
     template_name: str = ""
     batch_size_insert: int = 2000
     batch_size_query: int = 200
